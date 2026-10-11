@@ -1,5 +1,5 @@
-import { PlaceholderScreen } from '@/features/placeholder/PlaceholderScreen';
+import { RegionScreen } from '@/features/onboarding/RegionScreen';
 
 export default function OnboardingRegion() {
-  return <PlaceholderScreen name="onboarding/region" />;
+  return <RegionScreen />;
 }

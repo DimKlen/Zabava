@@ -38,6 +38,7 @@ const config: ExpoConfig = {
     'expo-web-browser',
     'expo-font',
     'expo-apple-authentication',
+    'expo-notifications',
     ['expo-status-bar', { style: 'light' }],
     [
       'expo-splash-screen',

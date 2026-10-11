@@ -1,5 +1,5 @@
-import { PlaceholderScreen } from '@/features/placeholder/PlaceholderScreen';
+import { PlatformsScreen } from '@/features/onboarding/PlatformsScreen';
 
 export default function OnboardingPlatforms() {
-  return <PlaceholderScreen name="onboarding/platforms" />;
+  return <PlatformsScreen />;
 }

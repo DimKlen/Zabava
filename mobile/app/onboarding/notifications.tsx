@@ -1,5 +1,5 @@
-import { PlaceholderScreen } from '@/features/placeholder/PlaceholderScreen';
+import { NotificationsScreen } from '@/features/onboarding/NotificationsScreen';
 
 export default function OnboardingNotifications() {
-  return <PlaceholderScreen name="onboarding/notifications" />;
+  return <NotificationsScreen />;
 }
