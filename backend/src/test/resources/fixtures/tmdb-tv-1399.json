@@ -1,0 +1,37 @@
+{
+  "id": 1399,
+  "name": "The Bear",
+  "original_name": "The Bear",
+  "overview": "Un jeune chef reprend la sandwicherie familiale à Chicago.",
+  "poster_path": "/bear.jpg",
+  "backdrop_path": "/bear-bg.jpg",
+  "first_air_date": "2022-06-23",
+  "status": "Returning Series",
+  "original_language": "en",
+  "popularity": 88.1,
+  "episode_run_time": [32],
+  "genres": [{ "id": 18, "name": "Drame" }, { "id": 35, "name": "Comédie" }],
+  "origin_country": ["US"],
+  "networks": [{ "id": 88, "name": "FX" }],
+  "created_by": [{ "id": 9, "name": "Christopher Storer" }],
+  "production_companies": [{ "id": 1, "name": "FX Productions" }],
+  "external_ids": { "imdb_id": "tt14452776" },
+  "keywords": { "results": [{ "id": 3, "name": "chef" }] },
+  "seasons": [
+    { "season_number": 0, "name": "Spéciaux", "episode_count": 1, "air_date": "2023-01-01" },
+    { "season_number": 1, "name": "Saison 1", "episode_count": 3, "air_date": "2026-09-01" }
+  ],
+  "content_ratings": { "results": [{ "iso_3166_1": "CA", "rating": "16+" }] },
+  "credits": { "cast": [{ "id": 1, "name": "Jeremy Allen White", "character": "Carmy" }], "crew": [] },
+  "videos": { "results": [] },
+  "watch/providers": {
+    "results": {
+      "CA": {
+        "link": "https://www.themoviedb.org/tv/1399/watch?locale=CA",
+        "flatrate": [{ "provider_id": 337, "provider_name": "Disney Plus", "logo_path": "/disney.jpg", "display_priority": 2 }]
+      }
+    }
+  },
+  "recommendations": { "results": [] },
+  "similar": { "results": [] }
+}

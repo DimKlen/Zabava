@@ -1,0 +1,161 @@
+package com.zabava.api.catalog;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+
+import com.zabava.api.IntegrationTest;
+
+/** GET /titles/{type}/{tmdbId} et GET /titles/tv/{tmdbId}/seasons/{n}. */
+class TitlesIT extends IntegrationTest {
+
+    private UUID user;
+
+    @BeforeEach
+    void setUp() {
+        stubCatalog();
+        user = createUser("alice@example.com");
+    }
+
+    @Test
+    void ficheFilmComplete() throws Exception {
+        mvc.perform(as(user, get("/api/v1/titles/movie/603")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("movie-603"))
+                .andExpect(jsonPath("$.type").value("movie"))
+                .andExpect(jsonPath("$.title").value("L'Odyssée"))
+                .andExpect(jsonPath("$.year").value(2026))
+                .andExpect(jsonPath("$.runtime").value(170))
+                .andExpect(jsonPath("$.genres", contains("Aventure", "Fantastique")))
+                .andExpect(jsonPath("$.certification").value("13+"))
+                .andExpect(jsonPath("$.originalLanguage").value("Anglais"))
+                .andExpect(jsonPath("$.country").value("États-Unis"))
+                .andExpect(jsonPath("$.studio").value("Universal Pictures"))
+                // Région du profil : Canada.
+                .andExpect(jsonPath("$.releaseTheatrical").value("2026-10-20"))
+                .andExpect(jsonPath("$.releaseDigital").value("2026-12-18"))
+                .andExpect(jsonPath("$.availability.sub[0].name").value("Netflix"))
+                .andExpect(jsonPath("$.availability.sub[0].shortName").value("N"))
+                .andExpect(jsonPath("$.availability.rent[0].name").value("Apple TV"))
+                .andExpect(jsonPath("$.availability.buy", hasSize(0)))
+                .andExpect(jsonPath("$.availability.link").value("https://www.themoviedb.org/movie/603/watch?locale=CA"))
+                // Notes OMDb.
+                .andExpect(jsonPath("$.imdbRating").value(8.5))
+                .andExpect(jsonPath("$.imdbVotes").value(640312))
+                .andExpect(jsonPath("$.rtScore").value(92))
+                // Bande-annonce dans la langue de l'utilisateur d'abord.
+                .andExpect(jsonPath("$.trailerKey").value("fr-trailer"))
+                .andExpect(jsonPath("$.cast[1].name").value("Zendaya"))
+                .andExpect(jsonPath("$.crew.directors", contains("Christopher Nolan")))
+                .andExpect(jsonPath("$.crew.writers", contains("Christopher Nolan")))
+                // Saga : autres volets, triés par date.
+                .andExpect(jsonPath("$.collection.parts[*].id", contains("movie-602", "movie-604")))
+                // Similaires : même type, sans doublon.
+                .andExpect(jsonPath("$.similar[*].id", contains("movie-700", "movie-701")))
+                .andExpect(jsonPath("$.userTitle").doesNotExist());
+    }
+
+    @Test
+    void ficheGardeeEnBase() throws Exception {
+        mvc.perform(as(user, get("/api/v1/titles/movie/603"))).andExpect(status().isOk());
+
+        assertThat(db.sql("select imdb_id from titles where media_type = 'movie' and tmdb_id = 603")
+                        .query(String.class).single())
+                .isEqualTo("tt0133093");
+        assertThat(db.sql("select count(*) from release_dates").query(Long.class).single()).isEqualTo(3);
+        // Offres de toutes les régions, dont la France.
+        assertThat(db.sql("select count(*) from title_availability where region = 'FR'").query(Long.class).single())
+                .isEqualTo(1);
+        assertThat(db.sql("select name from providers where id = 8").query(String.class).single()).isEqualTo("Netflix");
+        // Offres déjà là quand le titre entre en base : connues « depuis toujours », pas des arrivées.
+        assertThat(db.sql("select count(*) from title_availability where first_seen_at > '2000-01-01'")
+                        .query(Long.class).single())
+                .isZero();
+    }
+
+    @Test
+    void ficheSerie() throws Exception {
+        mvc.perform(as(user, get("/api/v1/titles/tv/1399")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("tv-1399"))
+                .andExpect(jsonPath("$.status").value("En cours"))
+                .andExpect(jsonPath("$.ended").value(false))
+                .andExpect(jsonPath("$.network").value("FX"))
+                .andExpect(jsonPath("$.runtime").value(32))
+                .andExpect(jsonPath("$.certification").value("16+"))
+                .andExpect(jsonPath("$.crew.creators", contains("Christopher Storer")))
+                .andExpect(jsonPath("$.seasons[*].number", contains(0, 1)))
+                .andExpect(jsonPath("$.availability.sub[0].shortName").value("D+"))
+                // Pas de bande-annonce YouTube : champ absent, la section est masquée.
+                .andExpect(jsonPath("$.trailerKey").doesNotExist());
+    }
+
+    @Test
+    void serieAnimeeJaponaiseClasseeAnime() throws Exception {
+        mvc.perform(as(user, get("/api/v1/titles/tv/209867")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("anime-209867"))
+                .andExpect(jsonPath("$.type").value("anime"))
+                .andExpect(jsonPath("$.originalLanguage").value("Japonais"));
+        assertThat(db.sql("select is_anime from titles where tmdb_id = 209867").query(Boolean.class).single()).isTrue();
+    }
+
+    @Test
+    void titreInconnuRenvoie404() throws Exception {
+        mvc.perform(as(user, get("/api/v1/titles/movie/404")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("not_found"));
+    }
+
+    @Test
+    void ficheAvecMonSuivi() throws Exception {
+        mvc.perform(as(user, post("/api/v1/me/titles"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"tmdbId\": 603, \"type\": \"movie\", \"status\": \"towatch\"}"))
+                .andExpect(status().isCreated());
+        mvc.perform(as(user, get("/api/v1/titles/movie/603")))
+                .andExpect(jsonPath("$.userTitle.titleId").value("movie-603"))
+                .andExpect(jsonPath("$.userTitle.status").value("towatch"))
+                .andExpect(jsonPath("$.userTitle.notificationsEnabled").value(true));
+    }
+
+    @Test
+    void saisonAvecHeuresTvmazeEtEpisodesVus() throws Exception {
+        WIREMOCK.stubFor(com.github.tomakehurst.wiremock.client.WireMock.get(urlPathEqualTo("/tmdb/tv/1399/season/1"))
+                .willReturn(com.github.tomakehurst.wiremock.client.WireMock.okJson(
+                        fixture("tmdb-tv-1399-seasons.json").replaceFirst("(?s)^.*\"season/1\": ", "").replaceFirst("(?s)}\\s*$", ""))));
+
+        mvc.perform(as(user, get("/api/v1/titles/tv/1399/seasons/1")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.number").value(1))
+                .andExpect(jsonPath("$.episodes", hasSize(3)))
+                .andExpect(jsonPath("$.episodes[0].name").value("Système"))
+                .andExpect(jsonPath("$.episodes[0].airDate").value("2026-09-01"))
+                .andExpect(jsonPath("$.episodes[2].airstamp").value("2026-10-14T01:00:00Z"))
+                .andExpect(jsonPath("$.episodes[0].watchedAt").doesNotExist());
+
+        long firstEpisode = db.sql("select id from episodes where season_number = 1 and episode_number = 1")
+                .query(Long.class).single();
+        mvc.perform(as(user, post("/api/v1/me/episodes/watched"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"episodeIds\": [" + firstEpisode + "]}"))
+                .andExpect(status().isNoContent());
+
+        mvc.perform(as(user, get("/api/v1/titles/tv/1399/seasons/1")))
+                .andExpect(jsonPath("$.episodes[0].id").value(firstEpisode))
+                .andExpect(jsonPath("$.episodes[0].watchedAt").value("2026-10-11T12:00:00Z"));
+        WIREMOCK.verify(1, getRequestedFor(urlPathEqualTo("/tvmaze/lookup/shows")));
+    }
+}

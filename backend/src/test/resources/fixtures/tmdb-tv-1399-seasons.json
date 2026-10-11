@@ -1,0 +1,21 @@
+{
+  "id": 1399,
+  "name": "The Bear",
+  "season/0": {
+    "season_number": 0,
+    "name": "Spéciaux",
+    "episodes": [
+      { "episode_number": 1, "name": "Making-of", "air_date": "2023-01-01", "runtime": 20 }
+    ]
+  },
+  "season/1": {
+    "season_number": 1,
+    "name": "Saison 1",
+    "air_date": "2026-09-01",
+    "episodes": [
+      { "episode_number": 1, "name": "Système", "overview": "Carmy rentre à Chicago.", "air_date": "2026-09-01", "runtime": 30, "still_path": "/e1.jpg" },
+      { "episode_number": 2, "name": "Mains", "air_date": "2026-10-01", "runtime": 31 },
+      { "episode_number": 3, "name": "Bolognese", "air_date": "2026-10-13", "runtime": 32 }
+    ]
+  }
+}
