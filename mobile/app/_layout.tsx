@@ -12,6 +12,9 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { ActionSheetHost } from '@/components/ActionSheet';
+import { DialogHost } from '@/components/Dialog';
+import { ToastHost } from '@/components/Toast';
 import { colors, durations } from '@/theme/tokens';
 
 // Le splash reste affiché jusqu'au chargement des polices Inter.
@@ -51,7 +54,12 @@ export default function RootLayout() {
             name="search"
             options={{ animation: 'fade', animationDuration: durations.fadeSearch }}
           />
+          <Stack.Screen name="dev/kitchen-sink" options={pushOptions} />
         </Stack>
+        {/* Empilement : écran < Toast < ActionSheet / sheets < Dialog. */}
+        <ToastHost />
+        <ActionSheetHost />
+        <DialogHost />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
