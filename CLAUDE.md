@@ -65,6 +65,14 @@ specs/                 # spécification (lecture seule)
 - Le backend demande Java 21. Le `java` par défaut de la machine est en version 25 : pointe `JAVA_HOME` vers `C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot` pour Gradle.
 - Docker est requis pour `supabase start` et pour Testcontainers.
 
+## Versions réelles (écarts avec la spec)
+- **Expo SDK 57** (React Native 0.86, React 19.2) : la spec dit « SDK 52+ ». Installe toujours avec `npx expo install`, jamais `npm install <pkg>` directement.
+- **Reanimated 4** (avec `react-native-worklets`) au lieu de Reanimated 3 : l'API `useSharedValue` / `withTiming` / `Easing` décrite dans la spec reste valable.
+- **TypeScript 6** : les types globaux ne sont plus chargés automatiquement. `tsconfig.json` déclare `"types": ["jest"]` ; un test qui utilise des API Node ajoute `/// <reference types="node" />`.
+- Routes Expo Router dans `mobile/app/` (et non `src/app/`, malgré `mobile/AGENTS.md`) : c'est l'arborescence de la spec.
+- Dans le Stack racine, `index` doit rester le premier `Stack.Screen` déclaré : sur natif, le premier écran déclaré sert d'écran initial.
+- Android est toujours edge-to-edge. Dans Expo Go, la barre d'état reste noire ; elle est transparente dans un build natif.
+
 ## Mode de travail : autonomie maximale
 - Travaille de façon autonome jusqu'à ce que la tâche soit entièrement terminée. Ne t'arrête pas pour demander une confirmation sur des décisions de routine (nommage, structure de fichier, choix d'implémentation raisonnable, ajout de tests).
 - Quand un choix est ambigu mais réversible, prends la décision la plus raisonnable, applique-la, et note-la dans le résumé final au lieu de poser la question.
