@@ -60,7 +60,8 @@
     "test": "jest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "api:types": "npx --yes openapi-typescript@7.13.0 ../backend/build/openapi.json -o src/api/types.ts && prettier --write src/api/types.ts"
   },
   "private": true,
   "jest": {
