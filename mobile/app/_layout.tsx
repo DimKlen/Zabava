@@ -42,6 +42,8 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: colors.bg },
           }}
         >
+          {/* index en premier : sur natif, le premier écran déclaré sert d'écran initial. */}
+          <Stack.Screen name="index" />
           <Stack.Screen name="title/[type]/[id]" options={pushOptions} />
           <Stack.Screen name="person/[id]" options={pushOptions} />
           <Stack.Screen name="genre/[type]/[genre]" options={pushOptions} />
