@@ -72,6 +72,12 @@ specs/                 # spécification (lecture seule)
 - Routes Expo Router dans `mobile/app/` (et non `src/app/`, malgré `mobile/AGENTS.md`) : c'est l'arborescence de la spec.
 - Dans le Stack racine, `index` doit rester le premier `Stack.Screen` déclaré : sur natif, le premier écran déclaré sert d'écran initial.
 - Android est toujours edge-to-edge. Dans Expo Go, la barre d'état reste noire ; elle est transparente dans un build natif.
+- **Phosphor v3** : importe les icônes avec le suffixe `Icon` (`CheckIcon`, `CaretLeftIcon`…). Les noms sans suffixe de `specs/docs/02` §8 sont dépréciés, et certains (`Circle`) n'existent plus.
+- **Reanimated 4 + React Compiler** : lis et écris les valeurs animées avec `.get()` / `.set()`, jamais `.value =` (règle ESLint `react-hooks/immutability`). Toute fonction appelée depuis un geste ou un worklet doit porter la directive `'worklet'` (sinon plantage natif « Tried to synchronously call a Remote Function »). Rappel vers le JS : `scheduleOnRN` de `react-native-worklets`.
+- Pas de lecture de `ref.current` ni de `setState` synchrone dans un effet pendant le rendu (règles `react-hooks/refs` et `set-state-in-effect`) : ajuste l'état pendant le rendu (`prevX` / `setPrevX`).
+- **Testing Library v14** : `render`, `fireEvent`, `act` et `rerender` sont asynchrones (`await`). Les textes masqués aux lecteurs d'écran demandent `{ includeHiddenElements: true }`.
+- Surcouches (ActionSheet, Dialog) : l'action d'une option s'exécute juste après `close()`, sans attendre la fin de l'animation de sortie, qui peut être interrompue.
+- Écran de démonstration des composants : `/dev/kitchen-sink` (développement seulement), avec les identifiants de `specs/reference/data.js` pour retrouver les mêmes dégradés que le prototype.
 
 ## Mode de travail : autonomie maximale
 - Travaille de façon autonome jusqu'à ce que la tâche soit entièrement terminée. Ne t'arrête pas pour demander une confirmation sur des décisions de routine (nommage, structure de fichier, choix d'implémentation raisonnable, ajout de tests).

@@ -1,0 +1,11 @@
+import * as Haptics from 'expo-haptics';
+
+/** Retour haptique léger : coche d'un épisode, ajout pendant l'onboarding. */
+export function hapticLight(): void {
+  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+}
+
+/** Retour haptique moyen : appui long sur une affiche. */
+export function hapticMedium(): void {
+  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
+}

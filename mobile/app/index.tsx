@@ -23,6 +23,7 @@ export default function Index() {
         { label: '/person/505710', href: '/person/505710' },
         { label: '/genre/movie/28', href: '/genre/movie/28' },
         { label: '/search', href: '/search' },
+        { label: '/dev/kitchen-sink', href: '/dev/kitchen-sink' },
       ]}
     />
   );
