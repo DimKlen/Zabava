@@ -158,4 +158,33 @@ class TitlesIT extends IntegrationTest {
                 .andExpect(jsonPath("$.episodes[0].watchedAt").value("2026-10-11T12:00:00Z"));
         WIREMOCK.verify(1, getRequestedFor(urlPathEqualTo("/tvmaze/lookup/shows")));
     }
+
+    @Test
+    void tousLesEpisodesDUneSerieAvecMesVisionnages() throws Exception {
+        mvc.perform(as(user, get("/api/v1/titles/tv/1399/episodes")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].season", contains(0, 1, 1, 1)))
+                .andExpect(jsonPath("$[1].name").value("Système"))
+                .andExpect(jsonPath("$[3].airstamp").value("2026-10-14T01:00:00Z"))
+                .andExpect(jsonPath("$[1].watchedAt").doesNotExist());
+
+        long firstEpisode = db.sql("select id from episodes where season_number = 1 and episode_number = 1")
+                .query(Long.class).single();
+        mvc.perform(as(user, post("/api/v1/me/episodes/watched"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"episodeIds\": [" + firstEpisode + "]}"))
+                .andExpect(status().isNoContent());
+
+        mvc.perform(as(user, get("/api/v1/titles/tv/1399/episodes")))
+                .andExpect(jsonPath("$[1].id").value(firstEpisode))
+                .andExpect(jsonPath("$[1].watchedAt").value("2026-10-11T12:00:00Z"));
+        // Épisodes déjà complets en base : pas de second chargement TMDB.
+        WIREMOCK.verify(1, getRequestedFor(urlPathEqualTo("/tmdb/tv/1399")).withQueryParam(
+                "append_to_response", com.github.tomakehurst.wiremock.client.WireMock.matching(".*season/1.*")));
+    }
+
+    @Test
+    void episodesDUnFilmRenvoie400() throws Exception {
+        mvc.perform(as(user, get("/api/v1/titles/movie/603/episodes"))).andExpect(status().isBadRequest());
+    }
 }

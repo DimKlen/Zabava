@@ -425,8 +425,16 @@ public class TitleStore {
         return db.sql(EPISODE_SELECT + " where id in (:ids)").param("ids", ids).query(TitleStore::episodeRow).list();
     }
 
-    public boolean hasEpisodes(long titleId) {
-        return db.sql("select exists (select 1 from episodes where title_id = :id)")
+    /**
+     * Vrai si aucun épisode n'est en base, ou s'il en manque par rapport aux saisons
+     * (nouvelle saison ou nouveaux épisodes annoncés depuis le dernier chargement).
+     */
+    public boolean missingEpisodes(long titleId) {
+        return db.sql("""
+                select not exists (select 1 from episodes where title_id = :id)
+                  or coalesce((select sum(episode_count) from seasons where title_id = :id), 0)
+                     > (select count(*) from episodes where title_id = :id)
+                """)
                 .param("id", titleId)
                 .query(Boolean.class)
                 .single();

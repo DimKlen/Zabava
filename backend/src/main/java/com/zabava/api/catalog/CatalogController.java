@@ -14,6 +14,7 @@ import com.zabava.api.auth.CurrentUser;
 import com.zabava.api.catalog.DiscoverService.DiscoverQuery;
 import com.zabava.api.catalog.dto.CatalogDtos.Count;
 import com.zabava.api.catalog.dto.CatalogDtos.DiscoverResult;
+import com.zabava.api.catalog.dto.CatalogDtos.Episode;
 import com.zabava.api.catalog.dto.CatalogDtos.PersonDetail;
 import com.zabava.api.catalog.dto.CatalogDtos.Provider;
 import com.zabava.api.catalog.dto.CatalogDtos.SearchResult;
@@ -105,6 +106,14 @@ public class CatalogController {
             @PathVariable @Pattern(regexp = "movie|tv|anime") String type,
             @PathVariable int tmdbId) {
         return titles.detail(new TitleRef(MediaType.parse(type), tmdbId), prefs(user));
+    }
+
+    @GetMapping("/titles/{type}/{tmdbId}/episodes")
+    public List<Episode> episodes(
+            CurrentUser user,
+            @PathVariable @Pattern(regexp = "tv|anime") String type,
+            @PathVariable int tmdbId) {
+        return titles.allEpisodes(new TitleRef(MediaType.parse(type), tmdbId), prefs(user));
     }
 
     @GetMapping("/titles/tv/{tmdbId}/seasons/{number}")

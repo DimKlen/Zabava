@@ -164,6 +164,19 @@ public class TitleService {
                 rows.stream().map(e -> episode(e, watched.get(e.id()))).toList());
     }
 
+    // ─── Tous les épisodes ────────────────────────────────────────────────────
+
+    /**
+     * Épisodes de toutes les saisons d'une série, avec la date de visionnage de chacun :
+     * la fiche en a besoin pour le prochain épisode et les épisodes précédents à cocher.
+     */
+    public List<Episode> allEpisodes(TitleRef ref, Prefs prefs) {
+        if (!ref.type().isSeries()) throw ApiException.notFound("Pas d'épisodes pour un film");
+        TitleRow row = ensure(ref, prefs, true);
+        Map<Long, Instant> watched = library.watched(prefs.userId(), List.of(row.id()));
+        return store.episodes(row.id()).stream().map(e -> episode(e, watched.get(e.id()))).toList();
+    }
+
     public static Episode episode(EpisodeRow e, Instant watchedAt) {
         return new Episode(e.id(), e.season(), e.number(), e.name(), e.overview(), e.stillPath(), e.airDate(),
                 e.airstamp(), e.runtime(), e.imdbRating(), watchedAt);
@@ -180,7 +193,7 @@ public class TitleService {
         Optional<TitleRow> existing = store.find(tmdbType, ref.tmdbId());
         boolean fresh = existing.map(r -> r.updatedAt().isAfter(clock.instant().minus(TITLE_TTL))).orElse(false);
         boolean needsEpisodes = withEpisodes && "tv".equals(tmdbType)
-                && existing.map(r -> !store.hasEpisodes(r.id())).orElse(true);
+                && existing.map(r -> store.missingEpisodes(r.id())).orElse(true);
         if (fresh && !needsEpisodes) return existing.get();
 
         JsonNode d = details(tmdbType, ref.tmdbId(), prefs.language());
