@@ -1,11 +1,16 @@
+import type { SeriesEpisode } from '@/domain/series';
+import type { LibrarySeries } from '@/domain/seriesList';
 import type { LibraryMovie } from '@/domain/watchlist';
 import { useUiStore } from '@/store/ui';
 
-import { addTitle, patchTitle, removeTitle } from '../library';
+import { episodesKey } from '../episodes';
+import { addTitle, markEpisodes, patchTitle, removeTitle, unmarkEpisodes } from '../library';
 import {
   currentUserTitle,
   removeFromList,
+  setEpisodesWatched,
   setMovieWatched,
+  setSeriesAbandoned,
   setTitleAlerts,
   toggleInList,
   type ListTitle,
@@ -17,6 +22,8 @@ jest.mock('../library', () => ({
   addTitle: jest.fn(() => Promise.resolve()),
   patchTitle: jest.fn(() => Promise.resolve()),
   removeTitle: jest.fn(() => Promise.resolve()),
+  markEpisodes: jest.fn(() => Promise.resolve()),
+  unmarkEpisodes: jest.fn(() => Promise.resolve()),
 }));
 jest.mock('../queryClient', () => {
   const { QueryClient } = jest.requireActual('@tanstack/react-query');
@@ -212,6 +219,140 @@ describe('removeFromList', () => {
     removeFromList(asTitle(monteCristo));
     expect(useUiStore.getState().toast?.message).toBe('Retiré de ma liste');
     expect(useUiStore.getState().toast?.undo).toBeDefined();
+  });
+});
+
+describe('séries', () => {
+  const T1 = '2026-09-01T20:00:00.000Z';
+  const T2 = '2026-10-05T20:00:00.000Z';
+  const episode = (id: number, number: number, watchedAt?: string): SeriesEpisode => ({
+    id,
+    season: 1,
+    number,
+    airDate: '2026-09-01',
+    watchedAt,
+  });
+  const bearEpisodes = [episode(11, 1, T1), episode(12, 2, T2), episode(13, 3)];
+  const bear: LibrarySeries = {
+    id: 'tv-1',
+    tmdbId: 1,
+    type: 'tv',
+    title: 'The Bear',
+    network: 'FX',
+    ended: false,
+    availability: { sub: [], rent: [], buy: [] },
+    userTitle: {
+      titleId: 'tv-1',
+      status: 'following',
+      addedAt: '2026-08-01T10:00:00.000Z',
+      notificationsEnabled: false,
+    },
+    episodes: bearEpisodes,
+  };
+  const bearTitle: ListTitle = { id: 'tv-1', tmdbId: 1, type: 'tv', title: 'The Bear' };
+  const series = () => queryClient.getQueryData<LibrarySeries[]>(watchlistKey('tv')) ?? [];
+  const watchedIds = () =>
+    (series()[0]?.episodes ?? []).filter((e) => e.watchedAt).map((e) => e.id);
+  const ficheEpisodes = () =>
+    queryClient.getQueryData<SeriesEpisode[]>(episodesKey('tv', 1)) ?? [];
+
+  beforeEach(() => {
+    queryClient.setQueryData(watchlistKey('tv'), [bear]);
+    queryClient.setQueryData(episodesKey('tv', 1), bearEpisodes);
+  });
+
+  it('cocher la carte avance aussitôt, puis « Annuler » décoche, à l’écran et en base', async () => {
+    setEpisodesWatched(bearTitle, [episode(13, 3)], true);
+    expect(useUiStore.getState().toast?.message).toBe('Épisode marqué comme vu');
+    await flush();
+    expect(watchedIds()).toEqual([11, 12, 13]);
+    expect(ficheEpisodes().find((e) => e.id === 13)?.watchedAt).toBeDefined();
+    expect(markEpisodes).toHaveBeenCalledWith([13]);
+
+    undo();
+    await flush();
+    expect(series()).toEqual([bear]);
+    expect(ficheEpisodes()).toEqual(bearEpisodes);
+    expect(unmarkEpisodes).toHaveBeenCalledWith([13]);
+  });
+
+  it('« Oui » au dialogue : un seul toast pour n épisodes', async () => {
+    setEpisodesWatched(bearTitle, [episode(13, 3), episode(14, 4)], true);
+    expect(useUiStore.getState().toast?.message).toBe('2 épisodes marqués comme vus');
+  });
+
+  it('décocher une saison puis « Annuler » recoche avec les dates d’origine', async () => {
+    setEpisodesWatched(bearTitle, [episode(11, 1, T1), episode(12, 2, T2)], false);
+    expect(useUiStore.getState().toast?.message).toBe('Saison décochée');
+    await flush();
+    expect(watchedIds()).toEqual([]);
+    expect(unmarkEpisodes).toHaveBeenCalledWith([11, 12]);
+
+    undo();
+    await flush();
+    expect(series()).toEqual([bear]);
+    expect(markEpisodes).toHaveBeenCalledWith([11], T1);
+    expect(markEpisodes).toHaveBeenCalledWith([12], T2);
+  });
+
+  it('décocher un épisode : « Épisode décoché »', () => {
+    setEpisodesWatched(bearTitle, [episode(12, 2, T2)], false);
+    expect(useUiStore.getState().toast?.message).toBe('Épisode décoché');
+  });
+
+  it('cocher un épisode d’une série hors liste la suit ; « Annuler » la retire', async () => {
+    const pitt: ListTitle = { id: 'tv-9', tmdbId: 9, type: 'tv', title: 'The Pitt' };
+    queryClient.setQueryData(episodesKey('tv', 9), [episode(91, 1)]);
+    setEpisodesWatched(pitt, [episode(91, 1)], true);
+    await flush();
+    expect(currentUserTitle(pitt)?.status).toBe('following');
+    expect(series().map((s) => s.id)).toEqual(['tv-9', 'tv-1']);
+
+    undo();
+    await flush();
+    expect(currentUserTitle(pitt)).toBeUndefined();
+    expect(removeTitle).toHaveBeenCalledWith('tv-9');
+    expect(unmarkEpisodes).not.toHaveBeenCalled();
+  });
+
+  it('swipe → Abandonner, puis « Annuler » la remet à sa place', async () => {
+    setSeriesAbandoned(bearTitle, true);
+    expect(useUiStore.getState().toast?.message).toBe('Série abandonnée');
+    await flush();
+    expect(series()[0]?.userTitle.status).toBe('abandoned');
+    expect(patchTitle).toHaveBeenCalledWith('tv-1', {
+      status: 'abandoned',
+      notificationsEnabled: undefined,
+    });
+
+    undo();
+    await flush();
+    expect(series()).toEqual([bear]);
+    expect(patchTitle).toHaveBeenLastCalledWith('tv-1', {
+      status: 'following',
+      notificationsEnabled: undefined,
+    });
+  });
+
+  it('« Ne plus suivre » efface les épisodes vus ; « Annuler » remet tout comme avant', async () => {
+    removeFromList(bearTitle, 'Série retirée');
+    expect(useUiStore.getState().toast?.message).toBe('Série retirée');
+    await flush();
+    expect(series()).toEqual([]);
+    expect(ficheEpisodes().every((e) => !e.watchedAt)).toBe(true);
+    expect(removeTitle).toHaveBeenCalledWith('tv-1');
+
+    undo();
+    await flush();
+    expect(series()).toEqual([bear]);
+    expect(ficheEpisodes()).toEqual(bearEpisodes);
+    expect(addTitle).toHaveBeenCalledWith(1, 'tv', 'following', {
+      notificationsEnabled: false,
+      addedAt: '2026-08-01T10:00:00.000Z',
+      watchedAt: undefined,
+    });
+    expect(markEpisodes).toHaveBeenCalledWith([11], T1);
+    expect(markEpisodes).toHaveBeenCalledWith([12], T2);
   });
 });
 
