@@ -120,6 +120,13 @@ Une tâche n'est terminée que si :
    - tester en conditions réelles (émulateur + backend + base de développement) les parcours principaux et les critères d'acceptation, en vérifiant la base après chaque action qui la modifie ;
    - remettre la base de développement dans son état initial si un test l'a modifiée ;
    - lister dans le résumé final ce qui a été vérifié, ce qui ne l'a pas été (et pourquoi), et les bugs trouvés pendant la revue.
+7. **Captures dans la PR** : chaque PR d'étape montre les nouvelles fonctionnalités en images (voir « Captures de PR »).
+
+## Captures de PR
+- Capture dans l'émulateur (Android SDK `platform-tools\adb.exe`) : `adb shell screencap -p /sdcard/x.png` puis `adb pull` (jamais `adb exec-out … > fichier` en PowerShell, qui corrompt le binaire). Vidéo : `adb shell screenrecord --time-limit N /sdcard/x.mp4` pendant qu'on pilote l'app (`adb shell input tap/swipe`) ; un écran immobile donne une vidéo vide.
+- Conversion en GIF (seul format animé affiché dans une PR sans passer par l'interface web) avec ffmpeg (installé par winget, `Gyan.FFmpeg`) : `ffmpeg -i x.mp4 -filter_complex "[0:v]fps=12,scale=360:-1:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse" x.gif`. Garder chaque GIF sous ~5 Mo.
+- Hébergement : branche orpheline `pr-media` du dépôt (jamais fusionnée, ne pèse pas sur `main`), un dossier par étape (`etape-06/…`). Dans la description de la PR : `![légende](https://github.com/DimKlen/Zabava/blob/pr-media/etape-06/x.png?raw=true)` (dépôt privé : visible par les personnes qui y ont accès). L'API GitHub ne permet pas de téléverser des pièces jointes comme le glisser-déposer du site.
+- Pousser `pr-media` fait partie de la publication de la PR : autorisé quand la PR l'est. Aucune donnée personnelle réelle à l'écran (compte de test).
 
 Termine par un résumé court : ce qui a changé, les fichiers touchés, les décisions prises, ce qui reste éventuellement à faire.
 
