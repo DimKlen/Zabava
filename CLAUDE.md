@@ -68,6 +68,7 @@ specs/                 # spécification (lecture seule)
 ### Projet Supabase hébergé (développement)
 - Projet `yavjdvphnsnpgchfjpah` (https://yavjdvphnsnpgchfjpah.supabase.co), relié par `supabase link`. Pooler : `aws-1-ca-central-1.pooler.supabase.com:5432`, utilisateur `postgres.yavjdvphnsnpgchfjpah`.
 - C'est la base de **développement** (pas de production, pas de vraies données) : tu es autorisé à y lancer `supabase db push`, `supabase migration …` et `supabase link` sans demander, et à régler les variables d'environnement du backend (`setx`).
+- Redirect URLs autorisées : `zabava://**,exp://**`. Supabase **refuse toute adresse de retour vers une IP privée** (`exp://192.168.…`, `10.0.2.2`) et renvoie alors vers la Site URL (`localhost:3000`). Pour tester la connexion dans Expo Go : `npx expo start --tunnel` (hôte `*.exp.direct`, accepté), ou un build de développement (`zabava://`).
 - Les secrets restent dans les variables d'environnement utilisateur Windows, saisies par moi : `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `DATABASE_PASSWORD`, `SUPABASE_SERVICE_ROLE_KEY`, `TMDB_API_KEY`. Tu peux les charger dans une commande (`[Environment]::GetEnvironmentVariable(…, 'User')`), jamais les afficher, les copier dans un fichier ou les commiter.
 
 ## Versions réelles (écarts avec la spec)
