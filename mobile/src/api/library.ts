@@ -2,9 +2,21 @@ import type { MediaType, UserTitle } from '@/domain/types';
 
 import { api } from './http';
 
+/** Valeurs d'origine renvoyées par « Annuler » après un retrait. */
+export type AddTitleExtras = {
+  addedAt?: string;
+  watchedAt?: string;
+  notificationsEnabled?: boolean;
+};
+
 /** Ajoute un titre à la liste (`POST /me/titles`). */
-export async function addTitle(tmdbId: number, type: MediaType, status: UserTitle['status']) {
-  await api('/me/titles', { method: 'POST', body: { tmdbId, type, status } });
+export async function addTitle(
+  tmdbId: number,
+  type: MediaType,
+  status: UserTitle['status'],
+  extras: AddTitleExtras = {},
+) {
+  await api('/me/titles', { method: 'POST', body: { tmdbId, type, status, ...extras } });
 }
 
 /** Change le statut ou les alertes d'un titre de la liste (`PATCH /me/titles/{id}`). */

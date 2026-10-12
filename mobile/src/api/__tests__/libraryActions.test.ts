@@ -69,7 +69,9 @@ describe('toggleInList', () => {
     await flush();
 
     expect(ids()).toEqual(['movie-693134', 'movie-1', 'movie-2']);
-    expect(addTitle).toHaveBeenCalledWith(693134, 'movie', 'towatch');
+    expect(addTitle).toHaveBeenCalledWith(693134, 'movie', 'towatch', {
+      notificationsEnabled: true,
+    });
     expect(patchTitle).not.toHaveBeenCalled();
   });
 
@@ -96,7 +98,7 @@ describe('toggleInList', () => {
   it('suit une série, avec le toast « Série suivie »', async () => {
     toggleInList({ id: 'tv-1', tmdbId: 1, type: 'tv', title: 'The Bear' });
     await flush();
-    expect(addTitle).toHaveBeenCalledWith(1, 'tv', 'following');
+    expect(addTitle).toHaveBeenCalledWith(1, 'tv', 'following', { notificationsEnabled: true });
     expect(useUiStore.getState().toast?.message).toBe('Série suivie');
   });
 
@@ -116,8 +118,11 @@ describe('toggleInList', () => {
     await flush();
 
     expect(currentUserTitle(dune)?.notificationsEnabled).toBe(false);
-    expect(addTitle).toHaveBeenCalledWith(693134, 'movie', 'towatch');
-    expect(patchTitle).toHaveBeenCalledWith('movie-693134', { notificationsEnabled: false });
+    // Le choix part avec l'ajout : pas de requête supplémentaire.
+    expect(addTitle).toHaveBeenCalledWith(693134, 'movie', 'towatch', {
+      notificationsEnabled: false,
+    });
+    expect(patchTitle).not.toHaveBeenCalled();
   });
 });
 
@@ -136,14 +141,17 @@ describe('Annuler ne touche que le titre concerné', () => {
     expect(ids()).toEqual(['movie-1', 'movie-693134', 'movie-2']);
   });
 
-  it('annuler un retrait remet aussi les alertes coupées', async () => {
+  it('annuler un retrait renvoie la date d’ajout et les alertes d’origine', async () => {
     removeFromList(asTitle(anatomie));
     await flush();
     undo();
     await flush();
 
-    expect(addTitle).toHaveBeenCalledWith(2, 'movie', 'towatch');
-    expect(patchTitle).toHaveBeenCalledWith('movie-2', { notificationsEnabled: false });
+    expect(addTitle).toHaveBeenCalledWith(2, 'movie', 'towatch', {
+      notificationsEnabled: false,
+      addedAt: '2026-10-01T10:00:00.000Z',
+      watchedAt: undefined,
+    });
     expect(list()).toEqual([monteCristo, anatomie]);
   });
 });
@@ -193,7 +201,9 @@ describe('setMovieWatched', () => {
   it('un film hors liste marqué vu y entre directement en Vu', async () => {
     setMovieWatched(dune, true);
     await flush();
-    expect(addTitle).toHaveBeenCalledWith(693134, 'movie', 'watched');
+    expect(addTitle).toHaveBeenCalledWith(693134, 'movie', 'watched', {
+      notificationsEnabled: true,
+    });
   });
 });
 

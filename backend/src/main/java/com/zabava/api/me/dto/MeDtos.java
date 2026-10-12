@@ -59,10 +59,17 @@ public final class MeDtos {
     public record PushTokenRequest(
             @NotBlank String expoToken, @NotBlank @Pattern(regexp = "ios|android") String platform, String timezone) {}
 
+    /**
+     * Ajout d'un titre. Les trois derniers champs sont facultatifs : « Annuler » après un
+     * retrait les renvoie pour remettre le titre exactement comme avant.
+     */
     public record AddTitleRequest(
             @NotNull Integer tmdbId,
             @NotBlank @Pattern(regexp = "movie|tv|anime") String type,
-            @NotBlank @Pattern(regexp = "towatch|watched|following|abandoned") String status) {}
+            @NotBlank @Pattern(regexp = "towatch|watched|following|abandoned") String status,
+            Instant addedAt,
+            Instant watchedAt,
+            Boolean notificationsEnabled) {}
 
     public record PatchTitleRequest(
             @Pattern(regexp = "towatch|watched|following|abandoned") String status,

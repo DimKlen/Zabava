@@ -327,6 +327,11 @@ export interface components {
       tmdbId: number;
       type: string;
       status: string;
+      /** Format: date-time */
+      addedAt?: string;
+      /** Format: date-time */
+      watchedAt?: string;
+      notificationsEnabled?: boolean;
     };
     UserTitle: {
       titleId?: string;

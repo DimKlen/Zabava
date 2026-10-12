@@ -108,18 +108,25 @@ function restoreTitle(title: ListTitle, snapshot: TitleSnapshot): void {
   setDetailUserTitle(title, snapshot.detailUserTitle);
 }
 
-/** Requêtes qui font passer le serveur de `from` à `to`. */
-async function sync(title: ListTitle, from: UserTitle | undefined, to: UserTitle | undefined) {
+/**
+ * Requêtes qui font passer le serveur de `from` à `to`. `restore` : « Annuler » d'un
+ * retrait, qui renvoie les dates d'origine pour remettre le titre exactement comme avant.
+ */
+async function sync(
+  title: ListTitle,
+  from: UserTitle | undefined,
+  to: UserTitle | undefined,
+  restore = false,
+) {
   if (!to) {
     if (from) await removeTitle(title.id);
     return;
   }
   if (!from) {
-    await addTitle(title.tmdbId, title.type, to.status);
-    // L'ajout active les alertes côté serveur : on reporte un choix contraire.
-    if (!to.notificationsEnabled) {
-      await patchTitle(title.id, { notificationsEnabled: false });
-    }
+    await addTitle(title.tmdbId, title.type, to.status, {
+      notificationsEnabled: to.notificationsEnabled,
+      ...(restore ? { addedAt: to.addedAt, watchedAt: to.watchedAt } : {}),
+    });
     return;
   }
   const status = from.status !== to.status ? to.status : undefined;
@@ -181,7 +188,7 @@ function change({ title, next, message, undoable }: Change): void {
     void applied.then(async (saved) => {
       await cancelRefetch(title);
       restoreTitle(title, saved);
-      enqueue(title, () => sync(title, next, snapshotUserTitle(saved))).catch(() => {
+      enqueue(title, () => sync(title, next, snapshotUserTitle(saved), true)).catch(() => {
         void queryClient.invalidateQueries({ queryKey: watchlistKey(title.type) });
         showToast(SAVE_FAILED);
       });
