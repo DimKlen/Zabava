@@ -184,6 +184,18 @@ class TitlesIT extends IntegrationTest {
     }
 
     @Test
+    void episodesRechargesQuandIlEnManqueParRapportAuxSaisons() throws Exception {
+        mvc.perform(as(user, get("/api/v1/titles/tv/1399/episodes"))).andExpect(status().isOk());
+        // Nouvel épisode annoncé : la saison en compte un de plus que la base.
+        db.sql("delete from episodes where season_number = 1 and episode_number = 3").update();
+
+        mvc.perform(as(user, get("/api/v1/titles/tv/1399/episodes")))
+                .andExpect(status().isOk())
+                // Sans rechargement, il n'en reviendrait que 3.
+                .andExpect(jsonPath("$", hasSize(4)));
+    }
+
+    @Test
     void episodesDUnFilmRenvoie400() throws Exception {
         mvc.perform(as(user, get("/api/v1/titles/movie/603/episodes"))).andExpect(status().isBadRequest());
     }

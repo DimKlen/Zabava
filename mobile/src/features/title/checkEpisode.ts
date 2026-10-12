@@ -1,6 +1,5 @@
 import { setEpisodesWatched, type ListTitle } from '@/api/libraryActions';
 import { previousDialogTitle, previousUnwatched, type SeriesEpisode } from '@/domain/series';
-import { hapticLight } from '@/lib/haptics';
 import { openDialog } from '@/store/ui';
 
 /**
@@ -32,10 +31,8 @@ export function checkEpisode(
       {
         label: 'Oui',
         variant: 'primary',
-        onPress: () => {
-          hapticLight();
-          setEpisodesWatched(series, [...previous, episode], true);
-        },
+        // Le retour haptique est déjà parti au tap sur la coche.
+        onPress: () => setEpisodesWatched(series, [...previous, episode], true),
       },
     ],
   });
