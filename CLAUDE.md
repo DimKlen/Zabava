@@ -60,6 +60,7 @@ specs/                 # spécification (lecture seule)
 - Mobile : `cd mobile && npx expo start` · tests : `npm test` (Jest + @testing-library/react-native) · types : `npx tsc --noEmit` · lint : `npx eslint .`
 - Backend : `cd backend && ./gradlew bootRun` · tests : `./gradlew test`
 - Base : `supabase start` puis `supabase db reset`
+- CI GitHub (`.github/workflows/ci.yml`, à chaque PR et push sur `main`) : mobile (types, lint, tests, bundle Android et iOS), backend (`./gradlew build`, tests Testcontainers compris), et contrôle que `mobile/src/api/types.ts` est régénéré après un changement de l'API.
 
 ## Environnement (Windows)
 - Le backend demande Java 21. Le `java` par défaut de la machine est en version 25 : pointe `JAVA_HOME` vers `C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot` pour Gradle.
