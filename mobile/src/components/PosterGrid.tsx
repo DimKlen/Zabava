@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import type { ReactElement, Ref } from 'react';
 import {
   FlatList,
   StyleSheet,
@@ -30,6 +30,8 @@ type Props<T> = Omit<
   paddingTop?: number;
   paddingBottom?: number;
   contentContainerStyle?: StyleProp<ViewStyle>;
+  /** Pour remonter en haut au re-tap de l'onglet (useScrollToTop). */
+  ref?: Ref<FlatList<T>>;
 };
 
 /** Grille d'affiches 3 colonnes, gap 8, marges 16. */

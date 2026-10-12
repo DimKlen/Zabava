@@ -1,5 +1,5 @@
-import { PlaceholderScreen } from '@/features/placeholder/PlaceholderScreen';
+import { WatchlistScreen } from '@/features/watchlist/WatchlistScreen';
 
 export default function Watchlist() {
-  return <PlaceholderScreen name="(tabs)/watchlist" />;
+  return <WatchlistScreen />;
 }
