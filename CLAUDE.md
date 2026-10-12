@@ -65,6 +65,11 @@ specs/                 # spécification (lecture seule)
 - Le backend demande Java 21. Le `java` par défaut de la machine est en version 25 : pointe `JAVA_HOME` vers `C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot` pour Gradle.
 - Docker est requis pour `supabase start` et pour Testcontainers.
 
+### Projet Supabase hébergé (développement)
+- Projet `yavjdvphnsnpgchfjpah` (https://yavjdvphnsnpgchfjpah.supabase.co), relié par `supabase link`. Pooler : `aws-1-ca-central-1.pooler.supabase.com:5432`, utilisateur `postgres.yavjdvphnsnpgchfjpah`.
+- C'est la base de **développement** (pas de production, pas de vraies données) : tu es autorisé à y lancer `supabase db push`, `supabase migration …` et `supabase link` sans demander, et à régler les variables d'environnement du backend (`setx`).
+- Les secrets restent dans les variables d'environnement utilisateur Windows, saisies par moi : `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `DATABASE_PASSWORD`, `SUPABASE_SERVICE_ROLE_KEY`, `TMDB_API_KEY`. Tu peux les charger dans une commande (`[Environment]::GetEnvironmentVariable(…, 'User')`), jamais les afficher, les copier dans un fichier ou les commiter.
+
 ## Versions réelles (écarts avec la spec)
 - **Expo SDK 57** (React Native 0.86, React 19.2) : la spec dit « SDK 52+ ». Installe toujours avec `npx expo install`, jamais `npm install <pkg>` directement.
 - **Reanimated 4** (avec `react-native-worklets`) au lieu de Reanimated 3 : l'API `useSharedValue` / `withTiming` / `Easing` décrite dans la spec reste valable.
