@@ -234,9 +234,13 @@ function enqueue(title: ListTitle, request: () => Promise<void>): Promise<void> 
   return next;
 }
 
-/** Interrompt un rechargement en cours : à sa fin, il écraserait la mise à jour optimiste. */
-function cancelRefetch(title: ListTitle): Promise<void> {
-  return queryClient.cancelQueries({ predicate: isTypeQuery(title.type) });
+/**
+ * Interrompt un rechargement en cours : à sa fin, il écraserait la mise à jour optimiste.
+ * `revert: false` : le rechargement interrompu ne remet pas les données d'avant lui, ce qui
+ * permet d'appliquer le changement tout de suite, sans attendre la fin de l'annulation.
+ */
+function cancelRefetch(title: ListTitle): void {
+  void queryClient.cancelQueries({ predicate: isTypeQuery(title.type) }, { revert: false });
 }
 
 type Step<S> = {
@@ -252,25 +256,24 @@ type Step<S> = {
   undoable: boolean;
 };
 
+/** Applique le changement tout de suite (deux taps rapides voient déjà le résultat du premier). */
 function run<S>({ title, apply, restore, send, sendBack, message, undoable }: Step<S>): void {
-  const applied = cancelRefetch(title).then(apply);
+  cancelRefetch(title);
+  const saved = apply();
 
-  void applied.then((saved) =>
-    enqueue(title, () => send(saved)).catch(() => {
-      restore(saved);
+  enqueue(title, () => send(saved)).catch(() => {
+    restore(saved);
+    showToast(SAVE_FAILED);
+  });
+
+  const undo = () => {
+    cancelRefetch(title);
+    restore(saved);
+    enqueue(title, () => sendBack(saved)).catch(() => {
+      void queryClient.invalidateQueries({ predicate: isTypeQuery(title.type) });
       showToast(SAVE_FAILED);
-    }),
-  );
-
-  const undo = () =>
-    void applied.then(async (saved) => {
-      await cancelRefetch(title);
-      restore(saved);
-      enqueue(title, () => sendBack(saved)).catch(() => {
-        void queryClient.invalidateQueries({ predicate: isTypeQuery(title.type) });
-        showToast(SAVE_FAILED);
-      });
     });
+  };
 
   showToast(message, undoable ? undo : undefined);
 }

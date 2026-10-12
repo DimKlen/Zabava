@@ -275,6 +275,28 @@ describe('séries', () => {
     expect(unmarkEpisodes).toHaveBeenCalledWith([13]);
   });
 
+  it('la carte avance et « Annuler » la remet immédiatement, sans attendre de rechargement', async () => {
+    // Un rechargement de Ma liste est en cours (après une action précédente).
+    void queryClient
+      .fetchQuery({
+        queryKey: watchlistKey('tv'),
+        queryFn: () => new Promise<LibrarySeries[]>(() => undefined),
+        staleTime: 0,
+      })
+      // Interrompu par l'action : rejeté avec CancelledError.
+      .catch(() => undefined);
+
+    setEpisodesWatched(bearTitle, [episode(13, 3)], true);
+    // Même tick : deux taps rapides voient déjà l'épisode suivant.
+    expect(watchedIds()).toEqual([11, 12, 13]);
+
+    undo();
+    expect(series()).toEqual([bear]);
+    await flush();
+    // Le rechargement interrompu n'a pas remis l'état optimiste.
+    expect(series()).toEqual([bear]);
+  });
+
   it('« Oui » au dialogue : un seul toast pour n épisodes', async () => {
     setEpisodesWatched(bearTitle, [episode(13, 3), episode(14, 4)], true);
     expect(useUiStore.getState().toast?.message).toBe('2 épisodes marqués comme vus');
