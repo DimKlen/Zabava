@@ -77,8 +77,18 @@ public class TmdbClient {
     public static TreeMap<String, String> params(String... pairs) {
         var map = new TreeMap<String, String>();
         for (int i = 0; i + 1 < pairs.length; i += 2) {
-            if (pairs[i + 1] != null) map.put(pairs[i], pairs[i + 1]);
+            String value = "language".equals(pairs[i]) ? tmdbLanguage(pairs[i + 1]) : pairs[i + 1];
+            if (value != null) map.put(pairs[i], value);
         }
         return map;
+    }
+
+    /**
+     * Langue envoyée à TMDB : toujours le français de France pour le français. TMDB n'a
+     * presque pas de traductions fr-CA et renvoie alors le titre original (« 葬送のフリーレン »
+     * au lieu de « Frieren »). La région (plateformes, dates de sortie) ne change pas.
+     */
+    public static String tmdbLanguage(String language) {
+        return language != null && language.startsWith("fr") ? "fr-FR" : language;
     }
 }

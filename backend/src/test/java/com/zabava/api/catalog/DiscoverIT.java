@@ -60,7 +60,8 @@ class DiscoverIT extends IntegrationTest {
                 .andExpect(jsonPath("$.totalPages").value(3));
         WIREMOCK.verify(getRequestedFor(urlPathEqualTo("/tmdb/search/multi"))
                 .withQueryParam("query", equalTo("zen"))
-                .withQueryParam("language", equalTo("fr-CA"))
+                // Profil en fr-CA : TMDB reçoit le français de France (traductions bien plus complètes).
+                .withQueryParam("language", equalTo("fr-FR"))
                 .withQueryParam("include_adult", equalTo("false"))
                 .withHeader("Authorization", equalTo("Bearer eyJ-test-v4-read-access-token-longer-than-32-characters")));
     }
