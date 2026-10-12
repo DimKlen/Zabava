@@ -426,18 +426,28 @@ public class TitleStore {
     }
 
     /**
-     * Vrai si aucun épisode n'est en base, ou s'il en manque par rapport aux saisons
-     * (nouvelle saison ou nouveaux épisodes annoncés depuis le dernier chargement).
+     * Vrai s'il faut recharger les épisodes : jamais chargés, chargés avant {@code loadedBefore}
+     * (noms, dates et heures changent), ou incomplets par rapport aux saisons (nouvelle saison).
      */
-    public boolean missingEpisodes(long titleId) {
+    public boolean episodesOutdated(long titleId, Instant loadedBefore) {
         return db.sql("""
                 select not exists (select 1 from episodes where title_id = :id)
+                  or (select episodes_updated_at is null or episodes_updated_at < :before
+                      from titles where id = :id)
                   or coalesce((select sum(episode_count) from seasons where title_id = :id), 0)
                      > (select count(*) from episodes where title_id = :id)
                 """)
                 .param("id", titleId)
+                .param("before", Timestamp.from(loadedBefore))
                 .query(Boolean.class)
                 .single();
+    }
+
+    public void markEpisodesLoaded(long titleId, Instant at) {
+        db.sql("update titles set episodes_updated_at = :at where id = :id")
+                .param("at", Timestamp.from(at))
+                .param("id", titleId)
+                .update();
     }
 
     // ─── Lecture ──────────────────────────────────────────────────────────────
