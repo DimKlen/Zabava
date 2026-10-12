@@ -1,6 +1,21 @@
 /**
- * Formats fr-CA — specs/docs/10 §5. Les formats de date arrivent à l'étape 5.
+ * Formats fr-CA — specs/docs/10 §5.
  */
+import { parseLocalDate } from './dates';
+
+/** Jour court : « 2026-12-18 » → « 18 déc. » (`fShort`). */
+export function formatShortDate(iso: string): string {
+  return parseLocalDate(iso).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+}
+
+/** Date longue : « 2026-12-18 » → « 18 décembre 2026 » (`fLong`). */
+export function formatLongDate(iso: string): string {
+  return parseLocalDate(iso).toLocaleDateString('fr-CA', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
 
 const NBSP = '\u00a0';
 
