@@ -125,7 +125,7 @@ Termine par un résumé court : ce qui a changé, les fichiers touchés, les dé
 - Ne fais jamais de `push --force` ni de `push` sans que je le demande.
 
 ## Interdits
-- Ne lis ni ne modifie jamais `.env*` ou les fichiers de secrets.
+- Ne lis ni ne modifie jamais `.env*` ou les fichiers de secrets. Seule exception : `mobile/.env`, que tu peux créer, lire et modifier ; il ne contient que des variables `EXPO_PUBLIC_*` (publiques par nature, embarquées dans l'app), jamais de secret serveur.
 - Ne commite jamais de secrets, tokens ou clés.
 - Ne modifie pas les fichiers de config CI/CD sans demande explicite.
 - Ne modifie pas le contenu de `specs/` sans demande explicite.
