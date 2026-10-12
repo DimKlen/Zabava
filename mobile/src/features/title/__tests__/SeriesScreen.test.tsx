@@ -4,7 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { setEpisodesWatched, toggleInList } from '@/api/libraryActions';
 import type { TitleDetail } from '@/api/titles';
 import { DialogHost } from '@/components/Dialog';
-import { formatRelativeDay, formatTime } from '@/domain/format';
+import { formatRelativeDay, formatShortDate, formatTime } from '@/domain/format';
 import type { SeriesEpisode } from '@/domain/series';
 import { useUiStore } from '@/store/ui';
 
@@ -104,7 +104,12 @@ describe('SeriesScreen', () => {
   it('méta, prochain épisode daté, bouton « Suivie », saison du prochain épisode', async () => {
     await renderSeries();
     expect(screen.getByText('2022 · Disney+ · En cours')).toBeTruthy();
-    expect(screen.getByText('Prochain épisode : S02 E01 le 14 oct.')).toBeTruthy();
+    // Jour local de l'heure de diffusion (14 oct. à Toronto, 15 oct. en UTC sur la CI).
+    expect(
+      screen.getByText(
+        `Prochain épisode : S02 E01 le ${formatShortDate(new Date('2026-10-15T01:00:00Z'))}`,
+      ),
+    ).toBeTruthy();
     expect(screen.getByText('Suivie')).toBeTruthy();
     // Saisons 1, 2 puis Spéciaux ; saison par défaut = celle du prochain épisode (S01 E05).
     expect(screen.getByText('Spéciaux')).toBeTruthy();
