@@ -1,16 +1,33 @@
 import type { MediaType, UserTitle } from '@/domain/types';
 
 import { api } from './http';
-import { queryClient } from './queryClient';
+
+/** Valeurs d'origine renvoyées par « Annuler » après un retrait. */
+export type AddTitleExtras = {
+  addedAt?: string;
+  watchedAt?: string;
+  notificationsEnabled?: boolean;
+};
 
 /** Ajoute un titre à la liste (`POST /me/titles`). */
-export async function addTitle(tmdbId: number, type: MediaType, status: UserTitle['status']) {
-  await api('/me/titles', { method: 'POST', body: { tmdbId, type, status } });
-  void queryClient.invalidateQueries({ queryKey: ['watchlist', type] });
+export async function addTitle(
+  tmdbId: number,
+  type: MediaType,
+  status: UserTitle['status'],
+  extras: AddTitleExtras = {},
+) {
+  await api('/me/titles', { method: 'POST', body: { tmdbId, type, status, ...extras } });
+}
+
+/** Change le statut ou les alertes d'un titre de la liste (`PATCH /me/titles/{id}`). */
+export async function patchTitle(
+  titleId: string,
+  patch: { status?: UserTitle['status']; notificationsEnabled?: boolean },
+) {
+  await api(`/me/titles/${encodeURIComponent(titleId)}`, { method: 'PATCH', body: patch });
 }
 
 /** Retire un titre de la liste (`DELETE /me/titles/{type}-{tmdbId}`). */
-export async function removeTitle(titleId: string, type: MediaType) {
+export async function removeTitle(titleId: string) {
   await api(`/me/titles/${encodeURIComponent(titleId)}`, { method: 'DELETE' });
-  void queryClient.invalidateQueries({ queryKey: ['watchlist', type] });
 }

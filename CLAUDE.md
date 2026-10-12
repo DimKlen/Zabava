@@ -113,6 +113,13 @@ Une tâche n'est terminée que si :
 3. Les tests existants passent, et les nouvelles fonctionnalités ont des tests.
 4. Tu as vérifié le résultat (lancé les tests concernés, pas juste supposé).
 5. Pour une étape de `specs/etapes/` : chaque critère d'acceptation est vérifié, et l'UI est comparée au prototype.
+6. **Revue approfondie systématique**, faite d'office avant d'annoncer une étape terminée, sans attendre qu'on la demande :
+   - relire tout le diff de l'étape (`git diff main...HEAD`) en le confrontant à la spec et au prototype : textes mot pour mot, valeurs, comportements, cas limites ;
+   - chercher activement les bugs : concurrence et ordre des requêtes, mises à jour optimistes et « Annuler » (l'état d'avant doit revenir exactement, à l'écran **et** en base), états de chargement, d'erreur et vides, données absentes ou nulles, rechargements, hors ligne ;
+   - écrire un test pour chaque bug trouvé, vérifier qu'il échoue sans la correction, puis corriger ;
+   - tester en conditions réelles (émulateur + backend + base de développement) les parcours principaux et les critères d'acceptation, en vérifiant la base après chaque action qui la modifie ;
+   - remettre la base de développement dans son état initial si un test l'a modifiée ;
+   - lister dans le résumé final ce qui a été vérifié, ce qui ne l'a pas été (et pourquoi), et les bugs trouvés pendant la revue.
 
 Termine par un résumé court : ce qui a changé, les fichiers touchés, les décisions prises, ce qui reste éventuellement à faire.
 

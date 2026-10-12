@@ -42,7 +42,7 @@ describe('useOnboardingTitles', () => {
     await act(async () => result.current.toggle(dune));
 
     expect(result.current.added.size).toBe(0);
-    expect(removeTitle).toHaveBeenCalledWith('movie-693134', 'movie');
+    expect(removeTitle).toHaveBeenCalledWith('movie-693134');
   });
 
   it('rétablit l’état si l’ajout échoue', async () => {

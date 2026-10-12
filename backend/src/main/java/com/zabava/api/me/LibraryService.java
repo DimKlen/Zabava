@@ -49,8 +49,15 @@ public class LibraryService {
         MediaType type = MediaType.parse(request.type());
         checkStatus(type, request.status());
         TitleRow row = titles.ensure(new TitleRef(type, request.tmdbId()), prefs, type.isSeries());
-        Instant watchedAt = "watched".equals(request.status()) ? clock.instant() : null;
-        library.upsert(prefs.userId(), row.id(), request.status(), watchedAt);
+        Instant now = clock.instant();
+        Instant watchedAt = "watched".equals(request.status()) ? notAfter(request.watchedAt(), now) : null;
+        library.upsert(
+                prefs.userId(),
+                row.id(),
+                request.status(),
+                watchedAt,
+                request.addedAt() == null ? null : notAfter(request.addedAt(), now),
+                request.notificationsEnabled());
         return current(prefs.userId(), row);
     }
 
@@ -110,6 +117,11 @@ public class LibraryService {
     private UserTitle current(UUID userId, TitleRow row) {
         UserTitleRow userTitle = library.find(userId, row.id()).orElseThrow();
         return TitleService.userTitle(row.type(), row.tmdbId(), userTitle);
+    }
+
+    /** Date fournie par l'app, bornée à maintenant ; absente → maintenant. */
+    private static Instant notAfter(Instant requested, Instant now) {
+        return requested == null || requested.isAfter(now) ? now : requested;
     }
 
     private static void checkStatus(MediaType type, String status) {

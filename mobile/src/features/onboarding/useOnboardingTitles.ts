@@ -30,7 +30,7 @@ export function useOnboardingTitles() {
       .then(() =>
         adding
           ? addTitle(title.tmdbId, title.type, initialStatus(title.type))
-          : removeTitle(title.id, title.type),
+          : removeTitle(title.id),
       )
       .catch(() => setAdded((current) => toggled(current, title.id, !adding)));
     chains.current.set(title.id, next);

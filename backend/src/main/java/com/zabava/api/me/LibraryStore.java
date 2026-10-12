@@ -43,17 +43,27 @@ public class LibraryStore {
     }
 
     /** Crée la ligne, ou met à jour son statut si le titre est déjà dans la liste. */
-    public void upsert(UUID userId, long titleId, String status, Instant watchedAt) {
+    /**
+     * Ajoute ou met à jour un titre. {@code addedAt} et {@code notificationsEnabled} nuls :
+     * valeurs par défaut à l'ajout, inchangées si le titre est déjà dans la liste.
+     */
+    public void upsert(
+            UUID userId, long titleId, String status, Instant watchedAt, Instant addedAt, Boolean notificationsEnabled) {
         db.sql("""
-                insert into user_titles (user_id, title_id, status, watched_at)
-                values (:user, :title, :status, :watched)
+                insert into user_titles (user_id, title_id, status, watched_at, added_at, notifications_enabled)
+                values (:user, :title, :status, :watched,
+                  coalesce(cast(:added as timestamptz), now()), coalesce(cast(:notif as boolean), true))
                 on conflict (user_id, title_id) do update set status = excluded.status,
-                  watched_at = excluded.watched_at
+                  watched_at = excluded.watched_at,
+                  added_at = coalesce(cast(:added as timestamptz), user_titles.added_at),
+                  notifications_enabled = coalesce(cast(:notif as boolean), user_titles.notifications_enabled)
                 """)
                 .param("user", userId)
                 .param("title", titleId)
                 .param("status", status)
                 .param("watched", ts(watchedAt))
+                .param("added", ts(addedAt))
+                .param("notif", notificationsEnabled)
                 .update();
     }
 

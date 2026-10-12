@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import type { PosterBadge } from '@/domain/badge';
 import { posterInitial } from '@/domain/initials';
 import type { Title } from '@/domain/types';
 import { easeTiming } from '@/lib/animation';
@@ -19,8 +20,6 @@ import { fonts, typography } from '@/theme/typography';
 
 import { GradientFill } from './GradientFill';
 import { PressableScale } from './PressableScale';
-
-export type PosterBadge = { text: string; highlight?: boolean };
 
 type Props = {
   title: Pick<Title, 'id' | 'title' | 'posterPath'>;

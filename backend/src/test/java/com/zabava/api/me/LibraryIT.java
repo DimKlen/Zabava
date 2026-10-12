@@ -95,6 +95,29 @@ class LibraryIT extends IntegrationTest {
     }
 
     @Test
+    void annulerUnRetraitRemetLeTitreCommeAvant() throws Exception {
+        // « Annuler » renvoie la date d'ajout, la date de visionnage et les alertes d'origine.
+        mvc.perform(json(post("/api/v1/me/titles"), """
+                        {"tmdbId": 603, "type": "movie", "status": "watched",
+                         "addedAt": "2026-09-01T08:00:00Z", "watchedAt": "2026-09-20T21:00:00Z",
+                         "notificationsEnabled": false}
+                        """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.addedAt").value("2026-09-01T08:00:00Z"))
+                .andExpect(jsonPath("$.watchedAt").value("2026-09-20T21:00:00Z"))
+                .andExpect(jsonPath("$.notificationsEnabled").value(false));
+    }
+
+    @Test
+    void uneDateDAjoutFutureEstRameneeAMaintenant() throws Exception {
+        mvc.perform(json(post("/api/v1/me/titles"), """
+                        {"tmdbId": 603, "type": "movie", "status": "towatch", "addedAt": "2030-01-01T00:00:00Z"}
+                        """))
+                .andExpect(jsonPath("$.addedAt").value("2026-10-11T12:00:00Z"))
+                .andExpect(jsonPath("$.notificationsEnabled").value(true));
+    }
+
+    @Test
     void couperLesAlertesDuTitre() throws Exception {
         add(603, "movie", "towatch");
         mvc.perform(json(patch("/api/v1/me/titles/movie-603"), "{\"notificationsEnabled\": false}"))
