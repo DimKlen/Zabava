@@ -27,61 +27,70 @@ jest.mock('@/lib/haptics', () => ({ hapticLight: jest.fn() }));
 
 const dune: ListTitle = { id: 'movie-693134', tmdbId: 693134, type: 'movie', title: 'Dune' };
 
-const monteCristo: LibraryMovie = {
-  id: 'movie-1',
-  tmdbId: 1,
-  title: 'Le Comte de Monte-Cristo',
-  availability: { sub: [], rent: [], buy: [] },
-  userTitle: {
-    titleId: 'movie-1',
-    status: 'towatch',
-    addedAt: '2026-10-01T10:00:00.000Z',
-    notificationsEnabled: true,
-  },
-};
+function libraryMovie(id: string, title: string, notificationsEnabled = true): LibraryMovie {
+  return {
+    id,
+    tmdbId: Number(id.split('-')[1]),
+    title,
+    availability: { sub: [], rent: [], buy: [] },
+    userTitle: {
+      titleId: id,
+      status: 'towatch',
+      addedAt: '2026-10-01T10:00:00.000Z',
+      notificationsEnabled,
+    },
+  };
+}
+
+const monteCristo = libraryMovie('movie-1', 'Le Comte de Monte-Cristo');
+const anatomie = libraryMovie('movie-2', "Anatomie d'une chute", false);
+const asTitle = (movie: LibraryMovie): ListTitle => ({ ...movie, type: 'movie' });
 
 const list = () => queryClient.getQueryData<LibraryMovie[]>(watchlistKey('movie')) ?? [];
+const ids = () => list().map((film) => film.id);
 const flush = () => new Promise((resolve) => setImmediate(resolve));
+const undo = () => useUiStore.getState().undoToast();
 
 beforeEach(() => {
   jest.clearAllMocks();
   queryClient.clear();
-  queryClient.setQueryData(watchlistKey('movie'), [monteCristo]);
+  queryClient.setQueryData(watchlistKey('movie'), [monteCristo, anatomie]);
   useUiStore.getState().hideToast();
+  useUiStore.setState({ alertsOff: {} });
 });
 
 // Arrête le minuteur de 5 s du dernier toast.
 afterAll(() => useUiStore.getState().hideToast());
 
 describe('toggleInList', () => {
-  it('ajoute tout de suite à Ma liste et envoie la requête', async () => {
+  it('ajoute à Ma liste sans attendre le serveur, puis envoie la requête', async () => {
     toggleInList(dune);
-
-    expect(list().map((film) => film.id)).toEqual(['movie-693134', 'movie-1']);
     expect(useUiStore.getState().toast?.message).toBe('Ajouté à ma liste');
     await flush();
+
+    expect(ids()).toEqual(['movie-693134', 'movie-1', 'movie-2']);
     expect(addTitle).toHaveBeenCalledWith(693134, 'movie', 'towatch');
+    expect(patchTitle).not.toHaveBeenCalled();
   });
 
   it('« Annuler » remet l’état d’avant, à l’écran et en base', async () => {
     toggleInList(dune);
     await flush();
-
-    useUiStore.getState().undoToast();
+    undo();
     await flush();
 
-    expect(list()).toEqual([monteCristo]);
-    expect(removeTitle).toHaveBeenCalledWith('movie-693134', 'movie');
+    expect(list()).toEqual([monteCristo, anatomie]);
+    expect(removeTitle).toHaveBeenCalledWith('movie-693134');
     expect(useUiStore.getState().toast).toBeNull();
   });
 
   it('retire un titre déjà dans la liste', async () => {
-    toggleInList({ ...monteCristo, type: 'movie' });
-
-    expect(list()).toEqual([]);
+    toggleInList(asTitle(monteCristo));
     expect(useUiStore.getState().toast?.message).toBe('Retiré de ma liste');
     await flush();
-    expect(removeTitle).toHaveBeenCalledWith('movie-1', 'movie');
+
+    expect(ids()).toEqual(['movie-2']);
+    expect(removeTitle).toHaveBeenCalledWith('movie-1');
   });
 
   it('suit une série, avec le toast « Série suivie »', async () => {
@@ -91,34 +100,91 @@ describe('toggleInList', () => {
     expect(useUiStore.getState().toast?.message).toBe('Série suivie');
   });
 
-  it('restaure l’instantané si le serveur refuse', async () => {
+  it('restaure l’état d’avant si le serveur refuse', async () => {
     jest.mocked(addTitle).mockRejectedValueOnce(new Error('500'));
 
     toggleInList(dune);
     await flush();
 
-    expect(list()).toEqual([monteCristo]);
+    expect(list()).toEqual([monteCristo, anatomie]);
     expect(useUiStore.getState().toast?.message).toBe("Impossible d'enregistrer, réessaie");
+  });
+
+  it('reprend les alertes coupées hors liste au moment de l’ajout', async () => {
+    setTitleAlerts(dune, false);
+    toggleInList(dune);
+    await flush();
+
+    expect(currentUserTitle(dune)?.notificationsEnabled).toBe(false);
+    expect(addTitle).toHaveBeenCalledWith(693134, 'movie', 'towatch');
+    expect(patchTitle).toHaveBeenCalledWith('movie-693134', { notificationsEnabled: false });
+  });
+});
+
+describe('Annuler ne touche que le titre concerné', () => {
+  it('annuler un retrait remet le film à sa place, sans défaire une autre action', async () => {
+    removeFromList(asTitle(monteCristo));
+    await flush();
+    const undoFirst = useUiStore.getState().toast?.undo;
+
+    toggleInList(dune);
+    await flush();
+    undoFirst?.();
+    await flush();
+
+    // Dune reste ajouté ; Monte-Cristo revient en tête, comme avant.
+    expect(ids()).toEqual(['movie-1', 'movie-693134', 'movie-2']);
+  });
+
+  it('annuler un retrait remet aussi les alertes coupées', async () => {
+    removeFromList(asTitle(anatomie));
+    await flush();
+    undo();
+    await flush();
+
+    expect(addTitle).toHaveBeenCalledWith(2, 'movie', 'towatch');
+    expect(patchTitle).toHaveBeenCalledWith('movie-2', { notificationsEnabled: false });
+    expect(list()).toEqual([monteCristo, anatomie]);
+  });
+});
+
+describe('rechargement de Ma liste', () => {
+  it('attend la fin de toutes les requêtes avant de recharger', async () => {
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    let resolveAdd: () => void = () => undefined;
+    jest
+      .mocked(addTitle)
+      .mockImplementationOnce(() => new Promise<void>((resolve) => (resolveAdd = resolve)));
+
+    toggleInList(dune);
+    removeFromList(asTitle(monteCristo));
+    await flush();
+    expect(invalidate).not.toHaveBeenCalled();
+
+    resolveAdd();
+    await flush();
+    expect(invalidate).toHaveBeenCalledTimes(1);
+    invalidate.mockRestore();
   });
 });
 
 describe('setMovieWatched', () => {
-  const film: ListTitle = { ...monteCristo, type: 'movie' };
+  const film = asTitle(monteCristo);
 
   it('passe le film en Vu, puis « Annuler » le remet dans À voir', async () => {
     setMovieWatched(film, true);
+    await flush();
     expect(currentUserTitle(film)?.status).toBe('watched');
     expect(useUiStore.getState().toast?.message).toBe('Marqué comme vu');
-    await flush();
-    expect(patchTitle).toHaveBeenCalledWith('movie-1', 'movie', {
+    expect(patchTitle).toHaveBeenCalledWith('movie-1', {
       status: 'watched',
       notificationsEnabled: undefined,
     });
 
-    useUiStore.getState().undoToast();
+    undo();
     await flush();
     expect(currentUserTitle(film)?.status).toBe('towatch');
-    expect(patchTitle).toHaveBeenLastCalledWith('movie-1', 'movie', {
+    expect(patchTitle).toHaveBeenLastCalledWith('movie-1', {
       status: 'towatch',
       notificationsEnabled: undefined,
     });
@@ -133,7 +199,7 @@ describe('setMovieWatched', () => {
 
 describe('removeFromList', () => {
   it('affiche « Retiré de ma liste » avec Annuler', () => {
-    removeFromList({ ...monteCristo, type: 'movie' });
+    removeFromList(asTitle(monteCristo));
     expect(useUiStore.getState().toast?.message).toBe('Retiré de ma liste');
     expect(useUiStore.getState().toast?.undo).toBeDefined();
   });
@@ -141,11 +207,11 @@ describe('removeFromList', () => {
 
 describe('setTitleAlerts', () => {
   it('coupe les alertes d’un titre de la liste, sans Annuler', async () => {
-    setTitleAlerts({ ...monteCristo, type: 'movie' }, false);
+    setTitleAlerts(asTitle(monteCristo), false);
     expect(useUiStore.getState().toast?.message).toBe('Alertes coupées pour ce titre');
     expect(useUiStore.getState().toast?.undo).toBeUndefined();
     await flush();
-    expect(patchTitle).toHaveBeenCalledWith('movie-1', 'movie', {
+    expect(patchTitle).toHaveBeenCalledWith('movie-1', {
       status: undefined,
       notificationsEnabled: false,
     });

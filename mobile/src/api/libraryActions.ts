@@ -1,10 +1,8 @@
 /**
  * Actions sur la liste (specs/docs/10 §4) : mise à jour optimiste du cache, toast
- * avec « Annuler » (qui restaure l'instantané et rejoue l'inverse), et retour à
- * l'instantané si le serveur refuse.
+ * avec « Annuler » (qui restaure l'état d'avant du titre et rejoue l'inverse), et
+ * retour à cet état si le serveur refuse.
  */
-import type { QueryKey } from '@tanstack/react-query';
-
 import { initialStatus } from '@/domain/onboarding';
 import type { Availability, MediaType, UserTitle } from '@/domain/types';
 import type { LibraryMovie } from '@/domain/watchlist';
@@ -30,25 +28,35 @@ export type ListTitle = {
 
 const SAVE_FAILED = "Impossible d'enregistrer, réessaie";
 
-type Snapshot = [QueryKey, unknown][];
+/** État d'un seul titre dans le cache, pour Annuler sans toucher aux autres titres. */
+type TitleSnapshot = {
+  listEntry?: LibraryMovie;
+  listIndex: number;
+  detailUserTitle?: UserTitle;
+};
 
-function snapshot(): Snapshot {
-  return [
-    ...queryClient.getQueriesData({ queryKey: ['watchlist'] }),
-    ...queryClient.getQueriesData({ queryKey: ['title'] }),
-  ];
+function movieList(): LibraryMovie[] | undefined {
+  return queryClient.getQueryData<LibraryMovie[]>(watchlistKey('movie'));
 }
 
-function restore(saved: Snapshot): void {
-  for (const [key, data] of saved) queryClient.setQueryData(key, data);
+function snapshotTitle(title: ListTitle): TitleSnapshot {
+  const list = title.type === 'movie' ? movieList() : undefined;
+  const listIndex = list?.findIndex((item) => item.id === title.id) ?? -1;
+  return {
+    listEntry: listIndex >= 0 ? list?.[listIndex] : undefined,
+    listIndex,
+    detailUserTitle: queryClient.getQueryData<TitleDetail>(titleKey(title.type, title.tmdbId))
+      ?.userTitle,
+  };
+}
+
+function snapshotUserTitle(snapshot: TitleSnapshot): UserTitle | undefined {
+  return snapshot.listEntry?.userTitle ?? snapshot.detailUserTitle;
 }
 
 /** Statut actuel du titre, lu dans Ma liste puis dans sa fiche. */
 export function currentUserTitle(title: ListTitle): UserTitle | undefined {
-  const list = queryClient.getQueryData<LibraryMovie[]>(watchlistKey(title.type));
-  const inList = list?.find((item) => item.id === title.id)?.userTitle;
-  if (inList) return inList;
-  return queryClient.getQueryData<TitleDetail>(titleKey(title.type, title.tmdbId))?.userTitle;
+  return snapshotUserTitle(snapshotTitle(title));
 }
 
 function toLibraryMovie(title: ListTitle, userTitle: UserTitle): LibraryMovie {
@@ -64,79 +72,121 @@ function toLibraryMovie(title: ListTitle, userTitle: UserTitle): LibraryMovie {
   };
 }
 
-/** Applique le nouveau statut à Ma liste et à la fiche, sans attendre le serveur. */
-function applyUserTitle(title: ListTitle, userTitle: UserTitle | undefined): void {
-  if (title.type === 'movie') {
-    queryClient.setQueryData<LibraryMovie[]>(watchlistKey('movie'), (list) => {
-      if (!list) return list;
-      const others = list.filter((item) => item.id !== title.id);
-      if (!userTitle) return others;
-      const existing = list.find((item) => item.id === title.id);
-      const updated = existing ? { ...existing, userTitle } : toLibraryMovie(title, userTitle);
-      return existing
-        ? list.map((item) => (item.id === title.id ? updated : item))
-        : [updated, ...others];
-    });
-  }
+function setDetailUserTitle(title: ListTitle, userTitle: UserTitle | undefined): void {
   queryClient.setQueryData<TitleDetail>(titleKey(title.type, title.tmdbId), (detail) =>
     detail ? { ...detail, userTitle } : detail,
   );
 }
 
-/** Requête qui fait passer le serveur de `from` à `to`. */
+/** Applique le nouveau statut à Ma liste et à la fiche, sans attendre le serveur. */
+function applyUserTitle(title: ListTitle, userTitle: UserTitle | undefined): void {
+  if (title.type === 'movie') {
+    queryClient.setQueryData<LibraryMovie[]>(watchlistKey('movie'), (list) => {
+      if (!list) return list;
+      if (!userTitle) return list.filter((item) => item.id !== title.id);
+      const existing = list.find((item) => item.id === title.id);
+      if (existing) {
+        return list.map((item) => (item.id === title.id ? { ...item, userTitle } : item));
+      }
+      return [toLibraryMovie(title, userTitle), ...list];
+    });
+  }
+  setDetailUserTitle(title, userTitle);
+}
+
+/** Remet le titre tel qu'il était (même place dans Ma liste), sans toucher aux autres. */
+function restoreTitle(title: ListTitle, snapshot: TitleSnapshot): void {
+  if (title.type === 'movie') {
+    queryClient.setQueryData<LibraryMovie[]>(watchlistKey('movie'), (list) => {
+      if (!list) return list;
+      const others = list.filter((item) => item.id !== title.id);
+      if (!snapshot.listEntry) return others;
+      const index = Math.min(Math.max(snapshot.listIndex, 0), others.length);
+      return [...others.slice(0, index), snapshot.listEntry, ...others.slice(index)];
+    });
+  }
+  setDetailUserTitle(title, snapshot.detailUserTitle);
+}
+
+/** Requêtes qui font passer le serveur de `from` à `to`. */
 async function sync(title: ListTitle, from: UserTitle | undefined, to: UserTitle | undefined) {
   if (!to) {
-    if (from) await removeTitle(title.id, title.type);
+    if (from) await removeTitle(title.id);
     return;
   }
   if (!from) {
     await addTitle(title.tmdbId, title.type, to.status);
+    // L'ajout active les alertes côté serveur : on reporte un choix contraire.
+    if (!to.notificationsEnabled) {
+      await patchTitle(title.id, { notificationsEnabled: false });
+    }
     return;
   }
-  if (from.status !== to.status || from.notificationsEnabled !== to.notificationsEnabled) {
-    await patchTitle(title.id, title.type, {
-      status: from.status !== to.status ? to.status : undefined,
-      notificationsEnabled:
-        from.notificationsEnabled !== to.notificationsEnabled ? to.notificationsEnabled : undefined,
-    });
+  const status = from.status !== to.status ? to.status : undefined;
+  const notificationsEnabled =
+    from.notificationsEnabled !== to.notificationsEnabled ? to.notificationsEnabled : undefined;
+  if (status !== undefined || notificationsEnabled !== undefined) {
+    await patchTitle(title.id, { status, notificationsEnabled });
   }
 }
 
 // Une file par titre : un ajout suivi d'un « Annuler » arrive au serveur dans l'ordre.
 const queues = new Map<string, Promise<void>>();
+// Requêtes en cours par type : Ma liste n'est rechargée qu'une fois toutes terminées,
+// pour qu'un rechargement n'écrase pas une action pas encore envoyée.
+const pending = new Map<MediaType, number>();
 
-function enqueue(id: string, request: () => Promise<void>): Promise<void> {
-  const next = (queues.get(id) ?? Promise.resolve()).catch(() => undefined).then(request);
-  queues.set(id, next);
+function enqueue(title: ListTitle, request: () => Promise<void>): Promise<void> {
+  const next = (queues.get(title.id) ?? Promise.resolve()).catch(() => undefined).then(request);
+  queues.set(title.id, next);
+  pending.set(title.type, (pending.get(title.type) ?? 0) + 1);
+
+  const settle = () => {
+    if (queues.get(title.id) === next) queues.delete(title.id);
+    const left = (pending.get(title.type) ?? 1) - 1;
+    pending.set(title.type, left);
+    if (left === 0) void queryClient.invalidateQueries({ queryKey: watchlistKey(title.type) });
+  };
+  next.then(settle, settle);
   return next;
+}
+
+/** Interrompt un rechargement en cours : à sa fin, il écraserait la mise à jour optimiste. */
+function cancelRefetch(title: ListTitle): Promise<void> {
+  return queryClient.cancelQueries({ queryKey: watchlistKey(title.type) });
 }
 
 type Change = {
   title: ListTitle;
   next: UserTitle | undefined;
-  /** Texte du toast ; sans texte, pas de toast. */
-  message?: string;
+  message: string;
   undoable: boolean;
 };
 
 function change({ title, next, message, undoable }: Change): void {
-  const previous = currentUserTitle(title);
-  const saved = snapshot();
-  applyUserTitle(title, next);
-
-  enqueue(title.id, () => sync(title, previous, next)).catch(() => {
-    restore(saved);
-    showToast(SAVE_FAILED);
+  const applied = cancelRefetch(title).then(() => {
+    const saved = snapshotTitle(title);
+    applyUserTitle(title, next);
+    return saved;
   });
 
-  if (!message) return;
-  const undo = () => {
-    restore(saved);
-    enqueue(title.id, () => sync(title, next, previous)).catch(() => {
-      void queryClient.invalidateQueries({ queryKey: watchlistKey(title.type) });
+  void applied.then((saved) =>
+    enqueue(title, () => sync(title, snapshotUserTitle(saved), next)).catch(() => {
+      restoreTitle(title, saved);
       showToast(SAVE_FAILED);
+    }),
+  );
+
+  const undo = () =>
+    void applied.then(async (saved) => {
+      await cancelRefetch(title);
+      restoreTitle(title, saved);
+      enqueue(title, () => sync(title, next, snapshotUserTitle(saved))).catch(() => {
+        void queryClient.invalidateQueries({ queryKey: watchlistKey(title.type) });
+        showToast(SAVE_FAILED);
+      });
     });
-  };
+
   showToast(message, undoable ? undo : undefined);
 }
 
@@ -147,7 +197,9 @@ function newUserTitle(title: ListTitle, status: UserTitle['status'], base?: User
     status,
     addedAt: base?.addedAt ?? now,
     watchedAt: status === 'watched' ? now : undefined,
-    notificationsEnabled: base?.notificationsEnabled ?? true,
+    // Hors liste, la cloche a pu être coupée : le choix est repris à l'ajout.
+    notificationsEnabled:
+      base?.notificationsEnabled ?? !(useUiStore.getState().alertsOff[title.id] ?? false),
   };
 }
 

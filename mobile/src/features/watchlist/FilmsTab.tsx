@@ -1,6 +1,6 @@
 import { router, useScrollToTop } from 'expo-router';
 import { FilmStripIcon } from 'phosphor-react-native';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { removeFromList } from '@/api/libraryActions';
@@ -39,8 +39,20 @@ export function FilmsTab() {
   const watchlist = useMovieWatchlist();
   const myProviderIds = useProfile().data?.providerIds ?? [];
   const delayDone = useMinimumDelay(MIN_SKELETON_MS);
-  const { filmSegment, filmFilter, filmSort, setFilmSegment, setFilmFilter, setFilmSort } =
-    useUiStore();
+  const filmSegment = useUiStore((s) => s.filmSegment);
+  const filmFilter = useUiStore((s) => s.filmFilter);
+  const filmSort = useUiStore((s) => s.filmSort);
+  const setFilmSegment = useUiStore((s) => s.setFilmSegment);
+  const setFilmFilter = useUiStore((s) => s.setFilmFilter);
+  const setFilmSort = useUiStore((s) => s.setFilmSort);
+  // Indicateur réservé au geste « tirer pour rafraîchir », pas aux rechargements
+  // déclenchés après un ajout ou un retrait.
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = async () => {
+    setRefreshing(true);
+    await watchlist.refetch();
+    setRefreshing(false);
+  };
 
   const now = new Date();
   const inSegment = filmsInSegment(watchlist.data ?? [], filmSegment);
@@ -87,6 +99,7 @@ export function FilmsTab() {
   return (
     <PosterGrid<LibraryMovie>
       ref={listRef}
+      testID="films-grid"
       data={films}
       keyExtractor={(film) => film.id}
       ListHeaderComponent={
@@ -106,8 +119,8 @@ export function FilmsTab() {
       paddingBottom={24}
       refreshControl={
         <RefreshControl
-          refreshing={watchlist.isRefetching}
-          onRefresh={() => void watchlist.refetch()}
+          refreshing={refreshing}
+          onRefresh={() => void refresh()}
           tintColor={colors.accent}
           colors={[colors.accent]}
         />

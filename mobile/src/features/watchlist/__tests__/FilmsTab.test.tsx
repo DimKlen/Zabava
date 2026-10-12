@@ -25,7 +25,8 @@ jest.mock('@/api/watchlist', () => ({
   useMovieWatchlist: () => ({
     data: mockFilms,
     isError: false,
-    isRefetching: false,
+    // Rechargement automatique en cours (après un ajout ou un retrait).
+    isRefetching: true,
     refetch: jest.fn(),
   }),
 }));
@@ -152,5 +153,19 @@ describe('FilmsTab', () => {
     await renderTab();
     await fireEvent.press(screen.getByText('Vus'));
     expect(screen.getByText("Aucun film vu pour l'instant")).toBeTruthy();
+  });
+  it('pas d’indicateur de rafraîchissement pendant un rechargement automatique', async () => {
+    await renderTab();
+    const grid = screen.getByTestId('films-grid');
+    expect(grid.props.refreshControl.props.refreshing).toBe(false);
+  });
+
+  it('pas de squelettes au retour sur l’onglet', async () => {
+    const first = await render(<FilmsTab />);
+    await act(() => jest.advanceTimersByTime(700));
+    await first.unmount();
+
+    await render(<FilmsTab />);
+    expect(screen.getByText("9 films · appui long pour plus d'options")).toBeTruthy();
   });
 });
