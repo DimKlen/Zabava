@@ -79,6 +79,15 @@ specs/                 # spécification (lecture seule)
 - Surcouches (ActionSheet, Dialog) : l'action d'une option s'exécute juste après `close()`, sans attendre la fin de l'animation de sortie, qui peut être interrompue.
 - Écran de démonstration des composants : `/dev/kitchen-sink` (développement seulement), avec les identifiants de `specs/reference/data.js` pour retrouver les mêmes dégradés que le prototype.
 
+### Backend
+- **Spring Boot 4.1** (la spec dit 3, qui n'est plus maintenue gratuitement). Starters découpés par module : `spring-boot-starter-webmvc`, `-restclient`, `-security-oauth2-resource-server`… Appels sortants avec `RestClient`, pas `WebClient`.
+- **Jackson 3** (`tools.jackson.databind`) : `asString()` au lieu de `asText()`, `values()` / `properties()` pour parcourir ; `asInt()` sans valeur par défaut lève une erreur. Passe par `common/Json.java`.
+- **JWT Supabase signés en ES256** (clés asymétriques) : vérification par le JWKS du projet, déduit de `SUPABASE_URL` par défaut. Le secret HS256 ne sert que si `SUPABASE_JWKS_URI` est vide (cas des tests).
+- Paramètres SQL potentiellement nuls : `cast(:x as text)` dans les `coalesce` et les `case`, sinon Postgres refuse le type inconnu.
+- Spring Initializr peut être en panne : le projet Gradle a été écrit à la main (`backend/build.gradle.kts`).
+- Types TypeScript de l'API : `cd mobile && npm run api:types` (après `./gradlew test`, qui exporte `backend/build/openapi.json`). `openapi-typescript` passe par `npx` à version figée : il n'accepte pas TypeScript 6 en dépendance.
+- Sous Windows, les blocs heredoc de bash échouent souvent sur les apostrophes : écrire les fichiers avec l'outil Write.
+
 ## Mode de travail : autonomie maximale
 - Travaille de façon autonome jusqu'à ce que la tâche soit entièrement terminée. Ne t'arrête pas pour demander une confirmation sur des décisions de routine (nommage, structure de fichier, choix d'implémentation raisonnable, ajout de tests).
 - Quand un choix est ambigu mais réversible, prends la décision la plus raisonnable, applique-la, et note-la dans le résumé final au lieu de poser la question.

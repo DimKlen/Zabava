@@ -1,0 +1,77 @@
+{
+  "id": 603,
+  "title": "L'Odyssée",
+  "original_title": "The Odyssey",
+  "overview": "Après la guerre de Troie, Ulysse entreprend un long voyage de retour vers Ithaque.",
+  "poster_path": "/odyssey.jpg",
+  "backdrop_path": "/odyssey-bg.jpg",
+  "release_date": "2026-07-17",
+  "runtime": 170,
+  "original_language": "en",
+  "popularity": 412.5,
+  "vote_average": 7.9,
+  "genres": [{ "id": 12, "name": "Aventure" }, { "id": 14, "name": "Fantastique" }],
+  "origin_country": ["US"],
+  "production_countries": [{ "iso_3166_1": "US", "name": "United States of America" }],
+  "production_companies": [{ "id": 33, "name": "Universal Pictures" }],
+  "belongs_to_collection": { "id": 9001, "name": "L'Odyssée - Saga" },
+  "external_ids": { "imdb_id": "tt0133093" },
+  "keywords": { "keywords": [{ "id": 1, "name": "mythology" }] },
+  "credits": {
+    "cast": [
+      { "id": 1892, "name": "Matt Damon", "character": "Ulysse", "profile_path": "/damon.jpg" },
+      { "id": 505710, "name": "Zendaya", "character": "Athéna", "profile_path": "/zendaya.jpg" }
+    ],
+    "crew": [
+      { "id": 525, "name": "Christopher Nolan", "job": "Director" },
+      { "id": 525, "name": "Christopher Nolan", "job": "Screenplay" }
+    ]
+  },
+  "videos": {
+    "results": [
+      { "key": "en-trailer", "site": "YouTube", "type": "Trailer", "iso_639_1": "en" },
+      { "key": "fr-trailer", "site": "YouTube", "type": "Trailer", "iso_639_1": "fr" },
+      { "key": "teaser", "site": "YouTube", "type": "Teaser", "iso_639_1": "fr" }
+    ]
+  },
+  "release_dates": {
+    "results": [
+      {
+        "iso_3166_1": "CA",
+        "release_dates": [
+          { "type": 3, "release_date": "2026-10-20T00:00:00.000Z", "certification": "13+" },
+          { "type": 4, "release_date": "2026-12-18T00:00:00.000Z", "certification": "" }
+        ]
+      },
+      {
+        "iso_3166_1": "US",
+        "release_dates": [{ "type": 3, "release_date": "2026-10-16T00:00:00.000Z", "certification": "PG-13" }]
+      }
+    ]
+  },
+  "watch/providers": {
+    "results": {
+      "CA": {
+        "link": "https://www.themoviedb.org/movie/603/watch?locale=CA",
+        "flatrate": [{ "provider_id": 8, "provider_name": "Netflix", "logo_path": "/netflix.jpg", "display_priority": 1 }],
+        "rent": [{ "provider_id": 2, "provider_name": "Apple TV", "logo_path": "/apple.jpg", "display_priority": 4 }]
+      },
+      "FR": {
+        "link": "https://www.themoviedb.org/movie/603/watch?locale=FR",
+        "buy": [{ "provider_id": 2, "provider_name": "Apple TV", "logo_path": "/apple.jpg", "display_priority": 4 }]
+      }
+    }
+  },
+  "recommendations": {
+    "results": [
+      { "id": 700, "media_type": "movie", "title": "Dune : Troisième partie", "release_date": "2026-12-18", "popularity": 300 },
+      { "id": 1399, "media_type": "tv", "name": "The Bear", "first_air_date": "2022-06-23", "popularity": 50 }
+    ]
+  },
+  "similar": {
+    "results": [
+      { "id": 700, "title": "Dune : Troisième partie", "release_date": "2026-12-18", "popularity": 300 },
+      { "id": 701, "title": "F1", "release_date": "2025-06-27", "popularity": 120 }
+    ]
+  }
+}

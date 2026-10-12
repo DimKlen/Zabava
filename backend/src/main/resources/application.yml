@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: zabava-api
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://127.0.0.1:54322/postgres}
+    username: ${DATABASE_USER:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+  cache:
+    type: caffeine
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: ${PORT:8080}
+
+zabava:
+  supabase:
+    url: ${SUPABASE_URL:http://127.0.0.1:54321}
+    jwt-secret: ${SUPABASE_JWT_SECRET:}
+    # JWKS du projet (JWT ES256). Vide → vérification par jwt-secret (HS256 historique).
+    jwks-uri: ${SUPABASE_JWKS_URI:${zabava.supabase.url}/auth/v1/.well-known/jwks.json}
+    service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
+  tmdb:
+    base-url: ${TMDB_BASE_URL:https://api.themoviedb.org/3}
+    api-key: ${TMDB_API_KEY:}
+  omdb:
+    base-url: ${OMDB_BASE_URL:https://www.omdbapi.com}
+    api-key: ${OMDB_API_KEY:}
+  tvmaze:
+    base-url: ${TVMAZE_BASE_URL:https://api.tvmaze.com}
+
+springdoc:
+  api-docs:
+    path: /api/docs
+  swagger-ui:
+    path: /api/docs/ui
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
