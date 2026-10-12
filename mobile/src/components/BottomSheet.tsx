@@ -17,6 +17,8 @@ const DRAG_CLOSE_DISTANCE = 80;
 const DRAG_CLOSE_VELOCITY = 800;
 /** Position de départ avant la première mesure : le panneau reste hors écran. */
 const OFFSCREEN = 2000;
+/** Au-dessus du panneau (shadowLg). */
+export const OVERLAY_ELEVATION = shadows.shadowLg.elevation + 1;
 
 type Props = {
   visible: boolean;
@@ -25,13 +27,22 @@ type Props = {
   enterDuration: number;
   panelStyle?: StyleProp<ViewStyle>;
   children: ReactNode;
+  /** Au-dessus du panneau, dans la même fenêtre (toast de la fiche épisode). */
+  overlay?: ReactNode;
 };
 
 /**
  * Bottom sheet maison (Modal transparent + Reanimated) : le visuel doit être exact.
  * Scrim en fondu 200 ms, panneau qui monte, sortie en 200 ms.
  */
-export function BottomSheet({ visible, onClose, enterDuration, panelStyle, children }: Props) {
+export function BottomSheet({
+  visible,
+  onClose,
+  enterDuration,
+  panelStyle,
+  children,
+  overlay,
+}: Props) {
   // Reste monté pendant l'animation de sortie.
   const [mounted, setMounted] = useState(visible);
   const [prevVisible, setPrevVisible] = useState(visible);
@@ -99,6 +110,11 @@ export function BottomSheet({ visible, onClose, enterDuration, panelStyle, child
             {children}
           </SheetPanel>
         </GestureDetector>
+        {overlay ? (
+          <View pointerEvents="box-none" style={styles.overlay} testID="sheet-overlay">
+            {overlay}
+          </View>
+        ) : null}
       </GestureHandlerRootView>
     </Modal>
   );
@@ -159,6 +175,17 @@ const styles = StyleSheet.create({
     borderTopRightRadius: radii.rXl,
     ...shadows.shadowLg,
     borderBottomWidth: 0,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    // Sur Android, l'élévation passe avant l'ordre de rendu (dessin et toucher) :
+    // sans elle, le panneau (shadowLg) recouvrirait le toast et capterait « Annuler ».
+    zIndex: 1,
+    elevation: OVERLAY_ELEVATION,
   },
   handle: {
     alignSelf: 'center',

@@ -1,4 +1,12 @@
-import { episodeCode, formatPercent, formatRating, formatRuntime, formatVotes } from '../format';
+import {
+  episodeCode,
+  formatPercent,
+  formatRating,
+  formatRelativeDay,
+  formatRuntime,
+  formatTime,
+  formatVotes,
+} from '../format';
 
 describe('formatRating', () => {
   it.each([
@@ -40,4 +48,24 @@ describe('formatRuntime', () => {
 it('episodeCode garde deux chiffres minimum', () => {
   expect(episodeCode(4, 3)).toBe('S04 E03');
   expect(episodeCode(12, 105)).toBe('S12 E105');
+});
+
+describe('formatRelativeDay (jours calendaires locaux)', () => {
+  const lateEvening = new Date(2026, 9, 10, 23, 59);
+
+  it('passe à « Demain » à minuit, pas après 24 h', () => {
+    expect(formatRelativeDay(new Date(2026, 9, 10, 23, 59, 30), lateEvening)).toBe("Aujourd'hui");
+    expect(formatRelativeDay(new Date(2026, 9, 11, 0, 1), lateEvening)).toBe('Demain');
+    expect(formatRelativeDay(new Date(2026, 9, 11, 23, 0), new Date(2026, 9, 10, 0, 5))).toBe(
+      'Demain',
+    );
+  });
+
+  it('sinon le jour court : « ven. 16 oct. »', () => {
+    expect(formatRelativeDay(new Date(2026, 9, 16, 21, 0), lateEvening)).toBe('ven. 16 oct.');
+  });
+
+  it('heure : « 21 h 00 »', () => {
+    expect(formatTime(new Date(2026, 9, 16, 21, 0))).toBe('21 h 00');
+  });
 });

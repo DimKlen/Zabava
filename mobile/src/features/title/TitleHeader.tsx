@@ -1,6 +1,5 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
 import { BellRingingIcon, BellSlashIcon, CaretLeftIcon } from 'phosphor-react-native';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -10,6 +9,7 @@ import { GradientFill } from '@/components/GradientFill';
 import { Poster } from '@/components/Poster';
 import { RoundIconButton } from '@/components/RoundIconButton';
 import { tmdbImage } from '@/lib/tmdb';
+import { goBack } from '@/lib/navigation';
 import { colors, durations } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
@@ -57,11 +57,7 @@ export function TitleHeader({
         ) : null}
         <LinearGradient colors={[colors.bgA25, colors.bg]} style={StyleSheet.absoluteFill} />
         <View style={[styles.buttons, { top: insets.top + 3 }]}>
-          <RoundIconButton
-            icon={CaretLeftIcon}
-            accessibilityLabel="Retour"
-            onPress={() => router.back()}
-          />
+          <RoundIconButton icon={CaretLeftIcon} accessibilityLabel="Retour" onPress={goBack} />
           <View style={styles.right}>
             <RoundIconButton
               icon={alertsOn ? BellRingingIcon : BellSlashIcon}

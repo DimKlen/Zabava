@@ -31,10 +31,13 @@ const base: TitleDetail = {
   genres: ['Science-fiction', 'Aventure'],
   certification: '13+',
   releaseTheatrical: '2026-12-18',
+  seasons: [],
   availability: { sub: [], rent: [], buy: [] },
   cast: [],
   directors: ['Denis Villeneuve'],
   writers: [],
+  creators: [],
+  networks: [],
   collection: [],
   similar: [],
 };

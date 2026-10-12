@@ -1,4 +1,5 @@
 /** Conversion des réponses de l'API vers le modèle client (specs/docs/10 §1). */
+import type { SeriesEpisode } from '@/domain/series';
 import type { Availability, MediaType, UserTitle } from '@/domain/types';
 
 import { toProvider } from './catalog';
@@ -6,6 +7,31 @@ import type { components } from './types';
 
 type ApiAvailability = components['schemas']['Availability'];
 type ApiUserTitle = components['schemas']['UserTitle'];
+type ApiEpisode = components['schemas']['Episode'] | components['schemas']['WatchlistEpisode'];
+
+/** Épisode de Ma liste ou de la fiche ; null s'il manque son identité. */
+export function toSeriesEpisode(episode: ApiEpisode): SeriesEpisode | null {
+  if (episode.id === undefined || episode.season === undefined || episode.number === undefined) {
+    return null;
+  }
+  return {
+    id: episode.id,
+    season: episode.season,
+    number: episode.number,
+    name: episode.name,
+    overview: 'overview' in episode ? episode.overview : undefined,
+    stillPath: episode.stillPath,
+    airDate: episode.airDate,
+    airstamp: episode.airstamp,
+    runtime: episode.runtime,
+    imdbRating: 'imdbRating' in episode ? episode.imdbRating : undefined,
+    watchedAt: episode.watchedAt,
+  };
+}
+
+export function toSeriesEpisodes(episodes: readonly ApiEpisode[] | undefined): SeriesEpisode[] {
+  return (episodes ?? []).map(toSeriesEpisode).filter(isDefined);
+}
 
 function isDefined<T>(value: T | null): value is T {
   return value !== null;

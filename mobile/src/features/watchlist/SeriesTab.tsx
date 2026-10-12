@@ -1,0 +1,162 @@
+import { router, useScrollToTop } from 'expo-router';
+import { TelevisionSimpleIcon } from 'phosphor-react-native';
+import { useRef, useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+
+import { useProfile } from '@/api/profile';
+import { useSeriesWatchlist } from '@/api/watchlist';
+import { EmptyState } from '@/components/EmptyState';
+import { LoadError } from '@/components/LoadError';
+import { SectionHeader } from '@/components/SectionHeader';
+import { SkeletonCard } from '@/components/Skeleton';
+import { groupSeries, type SeriesGroup } from '@/domain/seriesList';
+import { useUiStore } from '@/store/ui';
+import { colors } from '@/theme/tokens';
+import { typography } from '@/theme/typography';
+
+import { CompactSeriesRow } from './CompactSeriesRow';
+import { NotStartedCarousel } from './NotStartedCarousel';
+import { SeriesCard } from './SeriesCard';
+import { useMinimumDelay } from './useMinimumDelay';
+
+const MIN_SKELETON_MS = 700;
+const SKELETONS = [0, 1, 2];
+
+const EMPTY = {
+  tv: { title: 'Aucune série suivie', cta: 'Découvrir des séries' },
+  anime: { title: 'Aucun animé suivi', cta: 'Découvrir des animés' },
+} as const;
+
+/** Ma liste › Séries ou Animés (specs/docs/06) : six sections repliables. */
+export function SeriesTab({ type }: { type: 'tv' | 'anime' }) {
+  const scrollRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollRef);
+  const watchlist = useSeriesWatchlist(type);
+  const spoilerProtection = useProfile().data?.spoilerProtection ?? false;
+  const delayDone = useMinimumDelay(MIN_SKELETON_MS);
+  const collapsed = useUiStore((s) => s.collapsedSections);
+  const toggleSection = useUiStore((s) => s.toggleSection);
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = async () => {
+    setRefreshing(true);
+    await watchlist.refetch();
+    setRefreshing(false);
+  };
+
+  if (!watchlist.data || !delayDone) {
+    return watchlist.isError ? (
+      <LoadError onRetry={() => void watchlist.refetch()} />
+    ) : (
+      <View style={styles.skeletons} testID="series-skeletons">
+        {SKELETONS.map((key) => (
+          <SkeletonCard key={key} />
+        ))}
+      </View>
+    );
+  }
+
+  const groups = groupSeries(watchlist.data, new Date());
+  const hasCards = groups.some((group) => group.key === 'watch');
+
+  return (
+    <ScrollView
+      ref={scrollRef}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => void refresh()}
+          tintColor={colors.accent}
+          colors={[colors.accent]}
+        />
+      }
+      testID="series-list"
+    >
+      {hasCards ? (
+        <Text style={styles.hint}>
+          Coche pour avancer · glisse une carte vers la gauche pour plus d&apos;actions
+        </Text>
+      ) : null}
+      {groups.map((group) => {
+        const open = !collapsed[group.key];
+        return (
+          <View key={group.key} style={styles.section}>
+            <SectionHeader
+              title={group.title}
+              count={group.entries.length}
+              open={open}
+              onToggle={() => toggleSection(group.key)}
+            />
+            {open ? <SectionContent group={group} spoilerProtection={spoilerProtection} /> : null}
+          </View>
+        );
+      })}
+      {groups.length === 0 ? (
+        <EmptyState
+          icon={TelevisionSimpleIcon}
+          title={EMPTY[type].title}
+          action={{ label: EMPTY[type].cta, onPress: () => router.navigate('/(tabs)/discover') }}
+        />
+      ) : null}
+    </ScrollView>
+  );
+}
+
+function SectionContent({
+  group,
+  spoilerProtection,
+}: {
+  group: SeriesGroup;
+  spoilerProtection: boolean;
+}) {
+  switch (group.kind) {
+    case 'cards':
+      return (
+        <View style={styles.cards}>
+          {group.entries.map((entry) => (
+            <SeriesCard key={entry.series.id} entry={entry} spoilerProtection={spoilerProtection} />
+          ))}
+        </View>
+      );
+    case 'carousel':
+      return <NotStartedCarousel entries={group.entries} />;
+    case 'rows':
+      return (
+        <View style={styles.rows}>
+          {group.entries.map((entry) => (
+            <CompactSeriesRow key={entry.series.id} entry={entry} section={group.key} />
+          ))}
+        </View>
+      );
+  }
+}
+
+const styles = StyleSheet.create({
+  content: {
+    paddingBottom: 24,
+  },
+  skeletons: {
+    gap: 8,
+    paddingTop: 20,
+    paddingHorizontal: 16,
+  },
+  hint: {
+    ...typography.small,
+    paddingTop: 12,
+    paddingHorizontal: 16,
+    color: colors.neutral500,
+  },
+  section: {
+    marginTop: 14,
+  },
+  cards: {
+    gap: 8,
+    paddingTop: 4,
+    paddingHorizontal: 16,
+  },
+  rows: {
+    gap: 4,
+    paddingTop: 4,
+    paddingHorizontal: 16,
+  },
+});

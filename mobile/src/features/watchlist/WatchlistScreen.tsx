@@ -6,11 +6,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { UnderlineTabs } from '@/components/UnderlineTabs';
-import { PlaceholderScreen } from '@/features/placeholder/PlaceholderScreen';
 import { showToast, useUiStore } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 
 import { FilmsTab } from './FilmsTab';
+import { SeriesTab } from './SeriesTab';
 
 const TABS = [
   { key: 'movie', label: 'Films' },
@@ -26,7 +26,7 @@ function openSearch() {
   router.push('/search');
 }
 
-/** Ma liste (specs/docs/06). Séries et Animés arrivent à l'étape 6. */
+/** Ma liste (specs/docs/06) : Films, Séries, Animés. */
 export function WatchlistScreen() {
   const insets = useSafeAreaInsets();
   const tab = useUiStore((s) => s.watchlistTab);
@@ -38,7 +38,7 @@ export function WatchlistScreen() {
       <ScreenHeader title="Ma liste" onSearch={openSearch} />
       <UnderlineTabs tabs={TABS} value={tab} onChange={setTab} />
       <View style={styles.content}>
-        {tab === 'movie' ? <FilmsTab /> : <PlaceholderScreen name={`watchlist › ${tab}`} />}
+        {tab === 'movie' ? <FilmsTab /> : <SeriesTab key={tab} type={tab} />}
       </View>
     </View>
   );

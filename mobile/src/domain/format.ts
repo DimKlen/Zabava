@@ -1,20 +1,36 @@
 /**
  * Formats fr-CA — specs/docs/10 §5.
  */
-import { parseLocalDate } from './dates';
+import { calendarDaysBetween, parseLocalDate } from './dates';
+
+const asDate = (value: string | Date) =>
+  typeof value === 'string' ? parseLocalDate(value) : value;
 
 /** Jour court : « 2026-12-18 » → « 18 déc. » (`fShort`). */
-export function formatShortDate(iso: string): string {
-  return parseLocalDate(iso).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+export function formatShortDate(value: string | Date): string {
+  return asDate(value).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
 }
 
 /** Date longue : « 2026-12-18 » → « 18 décembre 2026 » (`fLong`). */
-export function formatLongDate(iso: string): string {
-  return parseLocalDate(iso).toLocaleDateString('fr-CA', {
+export function formatLongDate(value: string | Date): string {
+  return asDate(value).toLocaleDateString('fr-CA', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
+}
+
+/** Jour relatif : « Aujourd'hui », « Demain », sinon « ven. 16 oct. » (`fDay`). */
+export function formatRelativeDay(date: Date, now: Date): string {
+  const days = calendarDaysBetween(now, date);
+  if (days === 0) return "Aujourd'hui";
+  if (days === 1) return 'Demain';
+  return date.toLocaleDateString('fr-CA', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+/** Heure locale : « 21 h 00 ». */
+export function formatTime(date: Date): string {
+  return date.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
 }
 
 const NBSP = '\u00a0';

@@ -36,11 +36,18 @@ export type TitleDetail = {
   releaseTheatrical?: string;
   releaseDigital?: string;
   network?: string;
+  /** Séries : « En cours », « Terminée » ou « Annulée ». */
+  status?: string;
+  ended?: boolean;
+  /** Séries : saisons annoncées par TMDB (Spéciaux = 0). */
+  seasons: { number: number; episodeCount?: number }[];
   availability: Availability;
   trailerKey?: string;
   cast: CastMember[];
   directors: string[];
   writers: string[];
+  creators: string[];
+  networks: string[];
   /** Autres volets de la saga, triés par date. */
   collection: PosterTitle[];
   similar: PosterTitle[];
@@ -102,11 +109,20 @@ export function toTitleDetail(
     releaseTheatrical: detail.releaseTheatrical,
     releaseDigital: detail.releaseDigital,
     network: detail.network,
+    status: detail.status,
+    ended: detail.ended,
+    seasons: (detail.seasons ?? []).flatMap((season) =>
+      season.number === undefined
+        ? []
+        : [{ number: season.number, episodeCount: season.episodeCount }],
+    ),
     availability: toAvailability(detail.availability),
     trailerKey: detail.trailerKey,
     cast: toCast(detail.cast),
     directors: detail.crew?.directors ?? [],
     writers: detail.crew?.writers ?? [],
+    creators: detail.crew?.creators ?? [],
+    networks: detail.crew?.networks ?? [],
     collection: toPosters(collectionParts, resolvedType, id),
     similar: toPosters(detail.similar, resolvedType).slice(0, 8),
     userTitle: toUserTitle(detail.userTitle, id),

@@ -8,14 +8,19 @@ export function parseLocalDate(iso: string): Date {
   return new Date(year, month - 1, day);
 }
 
-function startOfDay(date: Date): Date {
+export function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 /**
- * Écart en jours calendaires entre aujourd'hui et une date ISO : 0 = aujourd'hui,
- * 1 = demain, −1 = hier. Arrondi pour absorber les changements d'heure.
+ * Écart en jours calendaires locaux entre `now` et `date` : 0 = même jour,
+ * 1 = lendemain, −1 = veille. Arrondi pour absorber les changements d'heure.
  */
+export function calendarDaysBetween(now: Date, date: Date): number {
+  return Math.round((startOfDay(date).getTime() - startOfDay(now).getTime()) / DAY_MS);
+}
+
+/** Écart en jours calendaires entre aujourd'hui et une date ISO (« 2026-12-18 »). */
 export function daysFromToday(iso: string, now: Date): number {
-  return Math.round((parseLocalDate(iso).getTime() - startOfDay(now).getTime()) / DAY_MS);
+  return calendarDaysBetween(now, parseLocalDate(iso));
 }

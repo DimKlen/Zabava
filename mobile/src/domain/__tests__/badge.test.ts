@@ -59,9 +59,29 @@ describe('posterBadge (même texte que le prototype)', () => {
     ).toBeNull();
   });
 
-  it("une série affiche sa plateforme ou chaîne d'origine", () => {
-    const show = { ...film('sinners'), type: 'tv' as const, network: 'FX' };
-    expect(posterBadge(show, MY_PROVIDER_IDS, TODAY)).toEqual({ text: 'FX' });
+  it("une série affiche sa plateforme d'abonnement, sinon sa chaîne d'origine", () => {
+    const disney = { id: 337, name: 'Disney+', short: 'D+' };
+    const show = {
+      ...film('sinners'),
+      type: 'tv' as const,
+      network: 'FX',
+      availability: { sub: [disney], rent: [], buy: [] },
+    };
+    expect(posterBadge(show, MY_PROVIDER_IDS, TODAY)).toEqual({ text: 'Disney+' });
+    expect(
+      posterBadge(
+        { ...show, availability: { sub: [disney, crave], rent: [], buy: [] } },
+        MY_PROVIDER_IDS,
+        TODAY,
+      ),
+    ).toEqual({ text: 'Crave' });
+    expect(
+      posterBadge(
+        { ...show, availability: { sub: [], rent: [apple], buy: [] } },
+        MY_PROVIDER_IDS,
+        TODAY,
+      ),
+    ).toEqual({ text: 'FX' });
   });
 });
 

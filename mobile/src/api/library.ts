@@ -27,7 +27,20 @@ export async function patchTitle(
   await api(`/me/titles/${encodeURIComponent(titleId)}`, { method: 'PATCH', body: patch });
 }
 
-/** Retire un titre de la liste (`DELETE /me/titles/{type}-{tmdbId}`). */
+/** Retire un titre de la liste (`DELETE /me/titles/{type}-{tmdbId}`), épisodes vus compris. */
 export async function removeTitle(titleId: string) {
   await api(`/me/titles/${encodeURIComponent(titleId)}`, { method: 'DELETE' });
+}
+
+/**
+ * Coche des épisodes (`POST /me/episodes/watched`, idempotent). `watchedAt` : date
+ * d'origine renvoyée par « Annuler » ; absente, le serveur prend maintenant.
+ */
+export async function markEpisodes(episodeIds: number[], watchedAt?: string) {
+  await api('/me/episodes/watched', { method: 'POST', body: { episodeIds, watchedAt } });
+}
+
+/** Décoche des épisodes (`DELETE /me/episodes/watched`). */
+export async function unmarkEpisodes(episodeIds: number[]) {
+  await api('/me/episodes/watched', { method: 'DELETE', body: { episodeIds } });
 }

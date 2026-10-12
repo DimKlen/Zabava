@@ -11,13 +11,26 @@ export type BadgeTitle = MovieAvailability & {
   network?: string;
 };
 
+/**
+ * Plateforme d'une série : abonnement (une des miennes d'abord), sinon la chaîne
+ * d'origine. Shōgun affiche « Disney+ » et non « FX » (capture 08).
+ */
+export function seriesPlatform(
+  title: Pick<BadgeTitle, 'availability' | 'network'>,
+  myProviderIds: readonly number[],
+): string | undefined {
+  const sub = title.availability.sub;
+  const platform = sub.find((p) => myProviderIds.includes(p.id)) ?? sub[0];
+  return platform?.name ?? title.network;
+}
+
 export function posterBadge(
   title: BadgeTitle,
   myProviderIds: readonly number[],
   now: Date,
 ): PosterBadge | null {
   if (title.type !== 'movie') {
-    const name = title.network ?? title.availability.sub[0]?.name;
+    const name = seriesPlatform(title, myProviderIds);
     return name ? { text: name } : null;
   }
   switch (movieState(title, now)) {
