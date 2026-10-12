@@ -1,5 +1,5 @@
-import { PlaceholderScreen } from '@/features/placeholder/PlaceholderScreen';
+import { LoginScreen } from '@/features/onboarding/LoginScreen';
 
 export default function Login() {
-  return <PlaceholderScreen name="login" />;
+  return <LoginScreen />;
 }

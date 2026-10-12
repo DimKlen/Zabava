@@ -1,5 +1,5 @@
-import { PlaceholderScreen } from '@/features/placeholder/PlaceholderScreen';
+import { TitlesScreen } from '@/features/onboarding/TitlesScreen';
 
 export default function OnboardingTitles() {
-  return <PlaceholderScreen name="onboarding/titles" />;
+  return <TitlesScreen />;
 }

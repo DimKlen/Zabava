@@ -65,6 +65,12 @@ specs/                 # spécification (lecture seule)
 - Le backend demande Java 21. Le `java` par défaut de la machine est en version 25 : pointe `JAVA_HOME` vers `C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot` pour Gradle.
 - Docker est requis pour `supabase start` et pour Testcontainers.
 
+### Projet Supabase hébergé (développement)
+- Projet `yavjdvphnsnpgchfjpah` (https://yavjdvphnsnpgchfjpah.supabase.co), relié par `supabase link`. Pooler : `aws-1-ca-central-1.pooler.supabase.com:5432`, utilisateur `postgres.yavjdvphnsnpgchfjpah`.
+- C'est la base de **développement** (pas de production, pas de vraies données) : tu es autorisé à y lancer `supabase db push`, `supabase migration …` et `supabase link` sans demander, et à régler les variables d'environnement du backend (`setx`).
+- Redirect URLs autorisées : `zabava://**,exp://**`. Supabase **refuse toute adresse de retour vers une IP privée** (`exp://192.168.…`, `10.0.2.2`) et renvoie alors vers la Site URL (`localhost:3000`). Pour tester la connexion dans Expo Go : `npx expo start --tunnel` (hôte `*.exp.direct`, accepté), ou un build de développement (`zabava://`).
+- Les secrets restent dans les variables d'environnement utilisateur Windows, saisies par moi : `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `DATABASE_PASSWORD`, `SUPABASE_SERVICE_ROLE_KEY`, `TMDB_API_KEY`. Tu peux les charger dans une commande (`[Environment]::GetEnvironmentVariable(…, 'User')`), jamais les afficher, les copier dans un fichier ou les commiter.
+
 ## Versions réelles (écarts avec la spec)
 - **Expo SDK 57** (React Native 0.86, React 19.2) : la spec dit « SDK 52+ ». Installe toujours avec `npx expo install`, jamais `npm install <pkg>` directement.
 - **Reanimated 4** (avec `react-native-worklets`) au lieu de Reanimated 3 : l'API `useSharedValue` / `withTiming` / `Easing` décrite dans la spec reste valable.
@@ -125,7 +131,7 @@ Termine par un résumé court : ce qui a changé, les fichiers touchés, les dé
 - Ne fais jamais de `push --force` ni de `push` sans que je le demande.
 
 ## Interdits
-- Ne lis ni ne modifie jamais `.env*` ou les fichiers de secrets.
+- Ne lis ni ne modifie jamais `.env*` ou les fichiers de secrets. Seule exception : `mobile/.env`, que tu peux créer, lire et modifier ; il ne contient que des variables `EXPO_PUBLIC_*` (publiques par nature, embarquées dans l'app), jamais de secret serveur.
 - Ne commite jamais de secrets, tokens ou clés.
 - Ne modifie pas les fichiers de config CI/CD sans demande explicite.
 - Ne modifie pas le contenu de `specs/` sans demande explicite.
