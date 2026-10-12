@@ -5,6 +5,8 @@
 import type { Icon } from 'phosphor-react-native';
 import { create } from 'zustand';
 
+import type { SeriesSection } from '@/domain/series';
+import { DEFAULT_COLLAPSED } from '@/domain/seriesList';
 import type { MediaType } from '@/domain/types';
 import type { FilmFilter, FilmSegment, FilmSort } from '@/domain/watchlist';
 import { durations } from '@/theme/tokens';
@@ -55,6 +57,8 @@ type UiState = {
   filmSort: FilmSort;
   /** Cloche d'un titre hors liste : préférence locale (true = alertes coupées). */
   alertsOff: Record<string, boolean>;
+  /** Sections repliées de Séries / Animés, gardées pendant la session. */
+  collapsedSections: Partial<Record<SeriesSection, boolean>>;
 
   showToast: (message: string, undo?: () => void) => void;
   hideToast: () => void;
@@ -69,6 +73,7 @@ type UiState = {
   setFilmFilter: (filter: FilmFilter) => void;
   setFilmSort: (sort: FilmSort) => void;
   setAlertsOff: (titleId: string, off: boolean) => void;
+  toggleSection: (section: SeriesSection) => void;
 };
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
@@ -91,6 +96,7 @@ export const useUiStore = create<UiState>()((set, get) => ({
   filmFilter: 'all',
   filmSort: 'added',
   alertsOff: {},
+  collapsedSections: { ...DEFAULT_COLLAPSED },
 
   // Un nouveau toast remplace le précédent et relance le minuteur de 5 s.
   showToast: (message, undo) => {
@@ -126,6 +132,10 @@ export const useUiStore = create<UiState>()((set, get) => ({
   setFilmFilter: (filmFilter) => set({ filmFilter }),
   setFilmSort: (filmSort) => set({ filmSort }),
   setAlertsOff: (titleId, off) => set((s) => ({ alertsOff: { ...s.alertsOff, [titleId]: off } })),
+  toggleSection: (section) =>
+    set((s) => ({
+      collapsedSections: { ...s.collapsedSections, [section]: !s.collapsedSections[section] },
+    })),
 }));
 
 // Raccourcis utilisables hors des composants (mutations, handlers).

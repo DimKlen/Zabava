@@ -3,7 +3,8 @@
  */
 import { calendarDaysBetween, parseLocalDate } from './dates';
 
-const asDate = (value: string | Date) => (typeof value === 'string' ? parseLocalDate(value) : value);
+const asDate = (value: string | Date) =>
+  typeof value === 'string' ? parseLocalDate(value) : value;
 
 /** Jour court : « 2026-12-18 » → « 18 déc. » (`fShort`). */
 export function formatShortDate(value: string | Date): string {

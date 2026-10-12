@@ -28,35 +28,120 @@ type ProtoUserTitle = {
 };
 
 const SERIES: ProtoSeries[] = [
-  { id: 'bear', type: 'tv', title: 'The Bear', network: 'FX', seasons: [[8, 8], [10, 10], [10, 10], [10, 10]] },
-  { id: 'whitelotus', type: 'tv', title: 'The White Lotus', network: 'HBO', seasons: [[6, 6], [7, 7], [8, 8]] },
-  { id: 'tlou', type: 'tv', title: 'The Last of Us', network: 'HBO', seasons: [[9, 9], [7, 7]] },
-  { id: 'severance', type: 'tv', title: 'Dissociation', network: 'Apple TV+', seasons: [[9, 9], [10, 10]] },
+  {
+    id: 'bear',
+    type: 'tv',
+    title: 'The Bear',
+    network: 'FX',
+    seasons: [
+      [8, 8],
+      [10, 10],
+      [10, 10],
+      [10, 10],
+    ],
+  },
+  {
+    id: 'whitelotus',
+    type: 'tv',
+    title: 'The White Lotus',
+    network: 'HBO',
+    seasons: [
+      [6, 6],
+      [7, 7],
+      [8, 8],
+    ],
+  },
+  {
+    id: 'tlou',
+    type: 'tv',
+    title: 'The Last of Us',
+    network: 'HBO',
+    seasons: [
+      [9, 9],
+      [7, 7],
+    ],
+  },
+  {
+    id: 'severance',
+    type: 'tv',
+    title: 'Dissociation',
+    network: 'Apple TV+',
+    seasons: [
+      [9, 9],
+      [10, 10],
+    ],
+  },
   {
     id: 'slow',
     type: 'tv',
     title: 'Slow Horses',
     network: 'Apple TV+',
-    seasons: [[6, 6], [6, 6], [6, 6], [6, 6], [6, 6], [6, 3]],
+    seasons: [
+      [6, 6],
+      [6, 6],
+      [6, 6],
+      [6, 6],
+      [6, 6],
+      [6, 3],
+    ],
     next: 4,
   },
-  { id: 'shogun', type: 'tv', title: 'Shōgun', network: 'FX', seasons: [[10, 10], [10, 0]], next: 25 },
-  { id: 'andor', type: 'tv', title: 'Andor', network: 'Disney+', ended: true, seasons: [[12, 12], [12, 12]] },
+  {
+    id: 'shogun',
+    type: 'tv',
+    title: 'Shōgun',
+    network: 'FX',
+    seasons: [
+      [10, 10],
+      [10, 0],
+    ],
+    next: 25,
+  },
+  {
+    id: 'andor',
+    type: 'tv',
+    title: 'Andor',
+    network: 'Disney+',
+    ended: true,
+    seasons: [
+      [12, 12],
+      [12, 12],
+    ],
+  },
   {
     id: 'stranger',
     type: 'tv',
     title: 'Stranger Things',
     network: 'Netflix',
     ended: true,
-    seasons: [[8, 8], [9, 9], [8, 8], [9, 9], [8, 8]],
+    seasons: [
+      [8, 8],
+      [9, 9],
+      [8, 8],
+      [9, 9],
+      [8, 8],
+    ],
   },
-  { id: 'frieren', type: 'anime', title: 'Frieren', network: 'Crunchyroll', seasons: [[28, 28], [10, 10]] },
+  {
+    id: 'frieren',
+    type: 'anime',
+    title: 'Frieren',
+    network: 'Crunchyroll',
+    seasons: [
+      [28, 28],
+      [10, 10],
+    ],
+  },
   {
     id: 'jjk',
     type: 'anime',
     title: 'Jujutsu Kaisen',
     network: 'Crunchyroll',
-    seasons: [[24, 24], [23, 23], [12, 6]],
+    seasons: [
+      [24, 24],
+      [23, 23],
+      [12, 6],
+    ],
     next: 3,
   },
   {
@@ -64,11 +149,34 @@ const SERIES: ProtoSeries[] = [
     type: 'anime',
     title: 'Dandadan',
     network: 'MBS',
-    seasons: [[12, 12], [12, 12], [12, 2]],
+    seasons: [
+      [12, 12],
+      [12, 12],
+      [12, 2],
+    ],
     next: 6,
   },
-  { id: 'solo', type: 'anime', title: 'Solo Leveling', network: 'Crunchyroll', seasons: [[12, 12], [13, 13]] },
-  { id: 'spy', type: 'anime', title: 'Spy × Family', network: 'Crunchyroll', seasons: [[25, 25], [12, 12], [13, 13]] },
+  {
+    id: 'solo',
+    type: 'anime',
+    title: 'Solo Leveling',
+    network: 'Crunchyroll',
+    seasons: [
+      [12, 12],
+      [13, 13],
+    ],
+  },
+  {
+    id: 'spy',
+    type: 'anime',
+    title: 'Spy × Family',
+    network: 'Crunchyroll',
+    seasons: [
+      [25, 25],
+      [12, 12],
+      [13, 13],
+    ],
+  },
 ];
 
 const PROG: Record<string, ProtoProgress> = {
@@ -164,4 +272,6 @@ export function protoSeries(id: string): LibrarySeries {
 }
 
 export const PROTOTYPE_TV = SERIES.filter((s) => s.type === 'tv').map((s) => protoSeries(s.id));
-export const PROTOTYPE_ANIME = SERIES.filter((s) => s.type === 'anime').map((s) => protoSeries(s.id));
+export const PROTOTYPE_ANIME = SERIES.filter((s) => s.type === 'anime').map((s) =>
+  protoSeries(s.id),
+);

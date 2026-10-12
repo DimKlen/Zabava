@@ -1,32 +1,37 @@
-import { router } from 'expo-router';
 import { CaretLeftIcon } from 'phosphor-react-native';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useTitle } from '@/api/titles';
+import { useTitle, type TitleDetail } from '@/api/titles';
 import { GradientFill } from '@/components/GradientFill';
 import { LoadError } from '@/components/LoadError';
 import { RoundIconButton } from '@/components/RoundIconButton';
 import type { MediaType } from '@/domain/types';
-import { PlaceholderScreen } from '@/features/placeholder/PlaceholderScreen';
+import { goBack } from '@/lib/navigation';
 import { colors } from '@/theme/tokens';
 
 import { MovieScreen } from './MovieScreen';
+import { SeriesScreen } from './SeriesScreen';
 
-type Props = { type: MediaType; tmdbId: number };
+type Props = { type: MediaType; tmdbId: number; season?: number };
 
-/** Fiche titre : les séries et animés arrivent à l'étape 6. */
-export function TitleScreen({ type, tmdbId }: Props) {
-  if (type !== 'movie') return <PlaceholderScreen name={`title/${type}/${tmdbId}`} />;
-  return <MovieLoader tmdbId={tmdbId} />;
-}
+const isSeries = (detail: TitleDetail): detail is TitleDetail & { type: 'tv' | 'anime' } =>
+  detail.type !== 'movie';
 
-function MovieLoader({ tmdbId }: { tmdbId: number }) {
-  const title = useTitle('movie', tmdbId);
-  if (title.data) return <MovieScreen movie={title.data} />;
+/** Fiche titre : film, série ou animé. */
+export function TitleScreen({ type, tmdbId, season }: Props) {
+  const title = useTitle(type, tmdbId);
+  const detail = title.data;
+  if (detail) {
+    return isSeries(detail) ? (
+      <SeriesScreen series={detail} initialSeason={season} />
+    ) : (
+      <MovieScreen movie={detail} />
+    );
+  }
   return (
     <TitleLoading
-      gradientKey={`movie-${tmdbId}`}
+      gradientKey={`${type}-${tmdbId}`}
       error={title.isError}
       onRetry={() => void title.refetch()}
     />
@@ -43,11 +48,7 @@ function TitleLoading({ gradientKey, error, onRetry }: LoadingProps) {
       <View style={styles.backdrop}>
         <GradientFill gradientKey={gradientKey} />
         <View style={[styles.back, { top: insets.top + 3 }]}>
-          <RoundIconButton
-            icon={CaretLeftIcon}
-            accessibilityLabel="Retour"
-            onPress={() => router.back()}
-          />
+          <RoundIconButton icon={CaretLeftIcon} accessibilityLabel="Retour" onPress={goBack} />
         </View>
       </View>
       {error ? <LoadError onRetry={onRetry} /> : null}

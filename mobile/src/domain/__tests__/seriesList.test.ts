@@ -66,7 +66,9 @@ describe('libellés', () => {
   });
 
   it("l'anti-spoiler ne masque pas un épisode vu", () => {
-    expect(episodeTitle({ id: 1, season: 1, number: 2, name: 'Vu', watchedAt: 'x' }, true)).toBe('Vu');
+    expect(episodeTitle({ id: 1, season: 1, number: 2, name: 'Vu', watchedAt: 'x' }, true)).toBe(
+      'Vu',
+    );
   });
 
   it('épisode sans nom : « Épisode n »', () => {

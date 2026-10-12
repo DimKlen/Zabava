@@ -253,8 +253,7 @@ describe('séries', () => {
   const series = () => queryClient.getQueryData<LibrarySeries[]>(watchlistKey('tv')) ?? [];
   const watchedIds = () =>
     (series()[0]?.episodes ?? []).filter((e) => e.watchedAt).map((e) => e.id);
-  const ficheEpisodes = () =>
-    queryClient.getQueryData<SeriesEpisode[]>(episodesKey('tv', 1)) ?? [];
+  const ficheEpisodes = () => queryClient.getQueryData<SeriesEpisode[]>(episodesKey('tv', 1)) ?? [];
 
   beforeEach(() => {
     queryClient.setQueryData(watchlistKey('tv'), [bear]);

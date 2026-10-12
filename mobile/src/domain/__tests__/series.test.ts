@@ -31,11 +31,15 @@ const following: UserTitle = {
 
 describe('isAired', () => {
   it("se fie à l'heure exacte quand elle est connue", () => {
-    expect(isAired(ep(1, 1, { airstamp: new Date(TODAY.getTime() - 1000).toISOString() }), TODAY)).toBe(true);
-    expect(isAired(ep(1, 1, { airstamp: new Date(TODAY.getTime() + 1000).toISOString() }), TODAY)).toBe(false);
+    expect(
+      isAired(ep(1, 1, { airstamp: new Date(TODAY.getTime() - 1000).toISOString() }), TODAY),
+    ).toBe(true);
+    expect(
+      isAired(ep(1, 1, { airstamp: new Date(TODAY.getTime() + 1000).toISOString() }), TODAY),
+    ).toBe(false);
   });
 
-  it("sans heure, un épisode du jour est diffusé dès minuit", () => {
+  it('sans heure, un épisode du jour est diffusé dès minuit', () => {
     expect(isAired(ep(1, 1, { airstamp: undefined, airDate: '2026-10-10' }), TODAY)).toBe(true);
     expect(isAired(ep(1, 1, { airstamp: undefined, airDate: '2026-10-11' }), TODAY)).toBe(false);
   });
@@ -72,15 +76,22 @@ describe('seriesInfo', () => {
     expect(info.lastWatchedAt).toBe(new Date(daysAgo(2)).getTime());
   });
 
-  it("ne prend jamais un épisode non diffusé comme prochain épisode", () => {
-    const info = seriesInfo([ep(1, 1, { watchedAt: daysAgo(1) }), ep(1, 2, { airstamp: daysAhead(3) })], TODAY);
+  it('ne prend jamais un épisode non diffusé comme prochain épisode', () => {
+    const info = seriesInfo(
+      [ep(1, 1, { watchedAt: daysAgo(1) }), ep(1, 2, { airstamp: daysAhead(3) })],
+      TODAY,
+    );
     expect(info.next).toBeUndefined();
     expect(info.upcoming).toMatchObject({ season: 1, number: 2 });
   });
 
-  it("le prochain épisode à venir doit être daté", () => {
+  it('le prochain épisode à venir doit être daté', () => {
     const info = seriesInfo(
-      [ep(1, 1, { watchedAt: daysAgo(1) }), ep(2, 1, { airstamp: undefined }), ep(2, 2, { airstamp: daysAhead(9) })],
+      [
+        ep(1, 1, { watchedAt: daysAgo(1) }),
+        ep(2, 1, { airstamp: undefined }),
+        ep(2, 2, { airstamp: daysAhead(9) }),
+      ],
       TODAY,
     );
     expect(info.upcoming).toMatchObject({ season: 2, number: 2 });
@@ -117,13 +128,23 @@ describe('seriesSection (chaque ligne de docs/01 §3)', () => {
 
   it('épisode à voir et dernier visionnage récent → watch', () => {
     expect(
-      seriesSection(following, info([ep(1, 1, { watchedAt: daysAgo(30) }), ep(1, 2)]), false, TODAY),
+      seriesSection(
+        following,
+        info([ep(1, 1, { watchedAt: daysAgo(30) }), ep(1, 2)]),
+        false,
+        TODAY,
+      ),
     ).toBe('watch');
   });
 
   it('épisode à voir et dernier visionnage il y a plus de 30 jours → stale', () => {
     expect(
-      seriesSection(following, info([ep(1, 1, { watchedAt: daysAgo(31) }), ep(1, 2)]), false, TODAY),
+      seriesSection(
+        following,
+        info([ep(1, 1, { watchedAt: daysAgo(31) }), ep(1, 2)]),
+        false,
+        TODAY,
+      ),
     ).toBe('stale');
   });
 
@@ -171,7 +192,7 @@ describe('previousUnwatched', () => {
     expect(previousUnwatched(episodes, ep(2, 3), TODAY).map((e) => e.id)).toEqual([102, 201]);
   });
 
-  it("E08 alors que E05 à E07 ne sont pas vus : 3 épisodes précédents", () => {
+  it('E08 alors que E05 à E07 ne sont pas vus : 3 épisodes précédents', () => {
     const episodes = Array.from({ length: 10 }, (_, i) =>
       ep(1, i + 1, i < 4 ? { watchedAt: daysAgo(1) } : {}),
     );
@@ -245,6 +266,8 @@ describe('saisons de la fiche', () => {
   });
 
   it('sinon la dernière saison (hors spéciaux)', () => {
-    expect(defaultSeason([...protoSeries('andor').episodes, ep(0, 1, { watchedAt: daysAgo(1) })], TODAY)).toBe(2);
+    expect(
+      defaultSeason([...protoSeries('andor').episodes, ep(0, 1, { watchedAt: daysAgo(1) })], TODAY),
+    ).toBe(2);
   });
 });

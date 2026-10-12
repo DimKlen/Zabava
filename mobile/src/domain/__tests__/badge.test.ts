@@ -69,10 +69,18 @@ describe('posterBadge (même texte que le prototype)', () => {
     };
     expect(posterBadge(show, MY_PROVIDER_IDS, TODAY)).toEqual({ text: 'Disney+' });
     expect(
-      posterBadge({ ...show, availability: { sub: [disney, crave], rent: [], buy: [] } }, MY_PROVIDER_IDS, TODAY),
+      posterBadge(
+        { ...show, availability: { sub: [disney, crave], rent: [], buy: [] } },
+        MY_PROVIDER_IDS,
+        TODAY,
+      ),
     ).toEqual({ text: 'Crave' });
     expect(
-      posterBadge({ ...show, availability: { sub: [], rent: [apple], buy: [] } }, MY_PROVIDER_IDS, TODAY),
+      posterBadge(
+        { ...show, availability: { sub: [], rent: [apple], buy: [] } },
+        MY_PROVIDER_IDS,
+        TODAY,
+      ),
     ).toEqual({ text: 'FX' });
   });
 });

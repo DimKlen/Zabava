@@ -100,9 +100,13 @@ function toListEntry(title: ListTitle, userTitle: UserTitle): ListEntry {
 }
 
 function setDetailUserTitle(title: ListTitle, userTitle: UserTitle | undefined): void {
-  queryClient.setQueryData<TitleDetail>(titleKey(title.type, title.tmdbId), (detail) =>
-    detail ? { ...detail, userTitle } : detail,
-  );
+  const update = (detail: TitleDetail | undefined) => (detail ? { ...detail, userTitle } : detail);
+  queryClient.setQueryData<TitleDetail>(titleKey(title.type, title.tmdbId), update);
+  // Un animé ouvert par /title/tv/{id} est en cache sous « tv » : les deux clés suivent.
+  if (isSeries(title.type)) {
+    const other = title.type === 'tv' ? 'anime' : 'tv';
+    queryClient.setQueryData<TitleDetail>(titleKey(other, title.tmdbId), update);
+  }
 }
 
 /** Applique le nouveau statut à Ma liste et à la fiche, sans attendre le serveur. */
@@ -154,7 +158,9 @@ function applyEpisodes(title: ListTitle, states: EpisodeStates): void {
     );
   queryClient.setQueryData<ListEntry[]>(watchlistKey(title.type), (list) =>
     list?.map((item) =>
-      item.id === title.id && 'episodes' in item ? { ...item, episodes: patch(item.episodes) } : item,
+      item.id === title.id && 'episodes' in item
+        ? { ...item, episodes: patch(item.episodes) }
+        : item,
     ),
   );
   queryClient.setQueryData<SeriesEpisode[]>(episodesKey(title.type, title.tmdbId), (episodes) =>
@@ -424,7 +430,10 @@ export function setEpisodesWatched(
       const snapshot = snapshotTitle(title);
       const known = knownEpisodes(title);
       const previous: EpisodeStates = new Map(
-        ids.map((id) => [id, known.get(id)?.watchedAt ?? episodes.find((e) => e.id === id)?.watchedAt]),
+        ids.map((id) => [
+          id,
+          known.get(id)?.watchedAt ?? episodes.find((e) => e.id === id)?.watchedAt,
+        ]),
       );
       const followed =
         watched && !snapshotUserTitle(snapshot) ? newUserTitle(title, 'following') : undefined;

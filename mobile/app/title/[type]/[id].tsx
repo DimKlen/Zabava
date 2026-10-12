@@ -10,6 +10,13 @@ function toMediaType(type: string): MediaType {
 }
 
 export default function TitleDetail() {
-  const { type, id } = useLocalSearchParams<Params>();
-  return <TitleScreen type={toMediaType(type)} tmdbId={Number(id)} />;
+  const { type, id, season } = useLocalSearchParams<Params>();
+  const seasonNumber = season === undefined ? undefined : Number(season);
+  return (
+    <TitleScreen
+      type={toMediaType(type)}
+      tmdbId={Number(id)}
+      season={Number.isInteger(seasonNumber) ? seasonNumber : undefined}
+    />
+  );
 }

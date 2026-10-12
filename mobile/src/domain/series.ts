@@ -135,7 +135,10 @@ export type SeasonProgress = {
   complete: boolean;
 };
 
-export function seasonProgress(seasonEpisodes: readonly SeriesEpisode[], now: Date): SeasonProgress {
+export function seasonProgress(
+  seasonEpisodes: readonly SeriesEpisode[],
+  now: Date,
+): SeasonProgress {
   const aired = seasonEpisodes.filter((episode) => isAired(episode, now));
   const watched = aired.filter(isWatched).length;
   return {
