@@ -1,12 +1,11 @@
-import { onlineManager } from '@tanstack/react-query';
-import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { UnderlineTabs } from '@/components/UnderlineTabs';
-import { showToast, useUiStore } from '@/store/ui';
+import { openSearch } from '@/lib/discover';
+import { useUiStore } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 
 import { FilmsTab } from './FilmsTab';
@@ -17,14 +16,6 @@ const TABS = [
   { key: 'tv', label: 'Séries' },
   { key: 'anime', label: 'Animés' },
 ] as const;
-
-function openSearch() {
-  if (!onlineManager.isOnline()) {
-    showToast('Recherche indisponible hors ligne');
-    return;
-  }
-  router.push('/search');
-}
 
 /** Ma liste (specs/docs/06) : Films, Séries, Animés. */
 export function WatchlistScreen() {

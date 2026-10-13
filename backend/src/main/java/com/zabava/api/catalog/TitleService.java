@@ -354,7 +354,7 @@ public class TitleService {
     // ─── Champs de la fiche ───────────────────────────────────────────────────
 
     /** Dates de sortie par région : salle (types 2 et 3), numérique (4), physique (5). */
-    private static Map<String, Map<String, LocalDate>> releaseDates(JsonNode d) {
+    static Map<String, Map<String, LocalDate>> releaseDates(JsonNode d) {
         Map<String, Map<String, LocalDate>> result = new HashMap<>();
         for (JsonNode region : Json.array(d.path("release_dates"), "results")) {
             String code = Json.text(region, "iso_3166_1");
@@ -392,7 +392,7 @@ public class TitleService {
     }
 
     /** Offres de la région ; « Disponibilité inconnue » côté app si tout est vide. */
-    private static Availability availability(JsonNode d, String region) {
+    static Availability availability(JsonNode d, String region) {
         JsonNode r = d.path("watch/providers").path("results").path(region);
         if (r.isMissingNode()) return Availability.EMPTY;
         String link = Json.text(r, "link");
@@ -524,7 +524,7 @@ public class TitleService {
         return "Ended".equals(tmdbStatus) || "Canceled".equals(tmdbStatus);
     }
 
-    private static String network(JsonNode d) {
+    static String network(JsonNode d) {
         List<JsonNode> networks = Json.array(d, "networks");
         return networks.isEmpty() ? null : Json.text(networks.getFirst(), "name");
     }

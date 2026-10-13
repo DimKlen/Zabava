@@ -73,6 +73,17 @@ function snapshotUserTitle(snapshot: TitleSnapshot): UserTitle | undefined {
   return snapshot.listEntry?.userTitle ?? snapshot.detailUserTitle;
 }
 
+/**
+ * TMDB classe parfois un animé en série dans ses listes (mot-clé « anime » absent) :
+ * une série déjà suivie sous l'autre type garde le type de Ma liste.
+ */
+export function withLibraryType<T extends ListTitle>(title: T): T {
+  if (!isSeries(title.type)) return title;
+  const other = title.type === 'tv' ? 'anime' : 'tv';
+  const found = listOf(other)?.some((item) => item.tmdbId === title.tmdbId);
+  return found ? { ...title, type: other, id: `${other}-${title.tmdbId}` } : title;
+}
+
 /** Statut actuel du titre, lu dans Ma liste puis dans sa fiche. */
 export function currentUserTitle(title: ListTitle): UserTitle | undefined {
   return snapshotUserTitle(snapshotTitle(title));

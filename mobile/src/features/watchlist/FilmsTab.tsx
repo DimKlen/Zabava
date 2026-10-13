@@ -20,6 +20,7 @@ import {
   sortWatched,
   type LibraryMovie,
 } from '@/domain/watchlist';
+import { openDiscover } from '@/lib/discover';
 import { useUiStore } from '@/store/ui';
 import { colors, spacing } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
@@ -91,7 +92,7 @@ export function FilmsTab() {
   }
 
   const empty = emptyState(filmSegment === 'watched', inSegment.length === 0, {
-    discover: () => router.navigate('/(tabs)/discover'),
+    discover: () => openDiscover('movie'),
     showAll: () => setFilmFilter('all'),
     showToWatch: () => setFilmSegment('towatch'),
   });

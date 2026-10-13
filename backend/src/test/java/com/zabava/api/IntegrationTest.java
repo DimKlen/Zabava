@@ -88,6 +88,8 @@ public abstract class IntegrationTest {
         registry.add("zabava.supabase.url", () -> base + "/supabase");
         registry.add("zabava.supabase.service-role-key", () -> "service-role-test");
         registry.add("zabava.supabase.jwt-secret", () -> JWT_SECRET);
+        // Index des personnes populaires : chargé à la main par les tests qui en ont besoin.
+        registry.add("zabava.popular-people-pages", () -> 0);
     }
 
     @TestConfiguration

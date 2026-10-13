@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import com.zabava.api.catalog.dto.CatalogDtos.DiscoverResult;
 import com.zabava.api.catalog.dto.CatalogDtos.PersonDetail;
 import com.zabava.api.catalog.dto.CatalogDtos.PersonLite;
+import com.zabava.api.catalog.dto.CatalogDtos.Role;
 import com.zabava.api.catalog.dto.CatalogDtos.SearchResult;
 import com.zabava.api.catalog.dto.CatalogDtos.TitleLite;
 import com.zabava.api.common.ApiException;
@@ -33,6 +34,15 @@ public class DiscoverService {
 
     public static final int PAGE_SIZE = 20;
     private static final int MAX_PEOPLE_IN_ALL = 3;
+    /** Séries diffusées cette semaine examinées pour « Nouvelles saisons » et « Saison en cours ». */
+    private static final int SEASON_CANDIDATE_PAGES = 3;
+    private static final int ANIME_TRENDING_PAGES = 5;
+    /** Émissions où la personne joue son propre rôle : talk-shows, actualités, téléréalité. */
+    private static final Set<Integer> NON_FICTION_TV = Set.of(10763, 10764, 10767);
+    private static final java.util.regex.Pattern SELF =
+            java.util.regex.Pattern.compile("^(self|himself|herself|themselves|lui-même|elle-même)\\b.*",
+                    java.util.regex.Pattern.CASE_INSENSITIVE);
+    private static final int ROLES_IN_BIO = 3;
 
     /** Filtres de la recherche avancée (GET /discover). */
     public record DiscoverQuery(
@@ -49,16 +59,34 @@ public class DiscoverService {
             int page) {}
 
     private final TmdbClient tmdb;
+    private final PopularPeople popularPeople;
+    private final TitleFacts facts;
     private final Clock clock;
 
-    public DiscoverService(TmdbClient tmdb, Clock clock) {
+    public DiscoverService(TmdbClient tmdb, PopularPeople popularPeople, TitleFacts facts, Clock clock) {
         this.tmdb = tmdb;
+        this.popularPeople = popularPeople;
+        this.facts = facts;
         this.clock = clock;
     }
 
     // ─── Recherche ────────────────────────────────────────────────────────────
 
     public SearchResult search(String query, String type, int page, Prefs prefs) {
+        SearchResult tmdbResult = tmdbSearch(query, type, page, prefs);
+        if (!"all".equals(type) && !"person".equals(type)) return tmdbResult;
+
+        // Personnes populaires dont le nom commence par la requête, avant celles de TMDB.
+        List<PersonLite> popular = popularPeople.matching(query);
+        Set<Integer> popularIds = popular.stream().map(PersonLite::id).collect(Collectors.toSet());
+        List<PersonLite> people = new ArrayList<>(page == 1 ? popular : List.of());
+        tmdbResult.people().stream().filter(p -> !popularIds.contains(p.id())).forEach(people::add);
+        // « Tout » : jusqu'à 3 personnes en premier, puis les titres (specs/docs/08 §8.1).
+        if ("all".equals(type)) people = page == 1 ? people.stream().limit(MAX_PEOPLE_IN_ALL).toList() : List.of();
+        return new SearchResult(people, tmdbResult.titles(), page, tmdbResult.totalPages());
+    }
+
+    private SearchResult tmdbSearch(String query, String type, int page, Prefs prefs) {
         String path = switch (type) {
             case "all" -> "/search/multi";
             case "movie" -> "/search/movie";
@@ -89,8 +117,6 @@ public class DiscoverService {
                 if (matchesType(lite, type)) titles.add(lite);
             }
         }
-        // « Tout » : jusqu'à 3 personnes en premier, puis les titres (specs/docs/08 §8.1).
-        if ("all".equals(type)) people = page == 1 ? people.stream().limit(MAX_PEOPLE_IN_ALL).toList() : List.of();
         return new SearchResult(people, titles, page, body.path("total_pages").asInt(1));
     }
 
@@ -106,17 +132,40 @@ public class DiscoverService {
 
     public DiscoverResult discover(DiscoverQuery query, Prefs prefs) {
         if (!query.cast().isEmpty()) return discoverByCast(query, prefs);
-        List<TitleLite> results = new ArrayList<>();
+        Map<String, TitleLite> results = new LinkedHashMap<>();
         int total = 0;
         for (MediaType type : query.types()) {
             TreeMap<String, String> params = discoverParams(query, type, prefs);
             if (params == null) continue;
-            JsonNode body = tmdb.get("/discover/" + type.tmdbType(), params);
-            results.addAll(filterType(Json.map(body, "results", n -> TmdbMapper.lite(n, type.tmdbType())), type));
-            total += body.path("total_results").asInt(0);
+            for (TreeMap<String, String> variant : genreVariants(params, query, type)) {
+                JsonNode body = tmdb.get("/discover/" + type.tmdbType(), variant);
+                filterType(Json.map(body, "results", n -> TmdbMapper.lite(n, type.tmdbType())), type)
+                        .forEach(t -> results.putIfAbsent(t.id(), t));
+                total += body.path("total_results").asInt(0);
+            }
         }
-        results.sort(comparator(query.sort()));
-        return new DiscoverResult(results, total, query.page());
+        List<TitleLite> sorted = new ArrayList<>(results.values());
+        sorted.sort(comparator(query.sort()));
+        return new DiscoverResult(sorted, total, query.page());
+    }
+
+    /**
+     * Animés filtrés par genre : Animation ET le genre. TMDB ne sait pas combiner « ET » et « OU »
+     * dans {@code with_genres} : un appel par genre, résultats fusionnés (le total peut compter
+     * deux fois un animé de plusieurs genres).
+     */
+    private static List<TreeMap<String, String>> genreVariants(
+            TreeMap<String, String> params, DiscoverQuery q, MediaType type) {
+        if (type != MediaType.ANIME) return List.of(params);
+        List<Integer> genreIds = Genres.tmdbIds(q.genres(), false).stream()
+                .filter(id -> id != TmdbMapper.ANIMATION_GENRE)
+                .toList();
+        if (genreIds.isEmpty()) return List.of(params);
+        return genreIds.stream().map(id -> {
+            var variant = new TreeMap<>(params);
+            variant.put("with_genres", TmdbMapper.ANIMATION_GENRE + "," + id);
+            return variant;
+        }).toList();
     }
 
     public int count(DiscoverQuery query, Prefs prefs) {
@@ -196,7 +245,8 @@ public class DiscoverService {
                     TmdbClient.params("language", prefs.language()));
             for (JsonNode work : Json.array(body, "cast")) {
                 String mediaType = Json.text(work, "media_type");
-                if ("movie".equals(mediaType) || "tv".equals(mediaType)) {
+                // Ensemble à l'écran : pas sur le plateau d'un talk-show ni d'une cérémonie.
+                if (("movie".equals(mediaType) || "tv".equals(mediaType)) && isActingRole(work, mediaType)) {
                     credits.putIfAbsent(mediaType + ":" + work.path("id").asInt(), work);
                 }
             }
@@ -243,6 +293,22 @@ public class DiscoverService {
         boolean movie = type == MediaType.MOVIE;
         String region = prefs.region();
         var base = TmdbClient.params("language", prefs.language(), "page", String.valueOf(page));
+        if (movie && ("new_seasons".equals(list) || "season_anime".equals(list))
+                || "season_anime".equals(list) && type != MediaType.ANIME) {
+            throw ApiException.badRequest("Liste indisponible pour ce type : " + list);
+        }
+        switch (list) {
+            case "new_seasons" -> {
+                return bySeason(base, type, today, d -> seasonStartsNear(d, today));
+            }
+            case "season_anime" -> {
+                return bySeason(base, type, today, DiscoverService::seasonInProgress);
+            }
+            case "trending" -> {
+                if (type == MediaType.ANIME) return animeTrending(base, page);
+            }
+            default -> { }
+        }
         JsonNode body = switch (list) {
             case "trending" -> tmdb.get("/trending/" + type.tmdbType() + "/week", base);
             case "now_playing" -> movieOnly(type, () -> tmdb.get("/movie/now_playing", with(base, "region", region)));
@@ -263,15 +329,6 @@ public class DiscoverService {
                 if ("new_on_mine".equals(list)) p.put(movie ? "primary_release_date.lte" : "first_air_date.lte", today.toString());
                 yield tmdb.get("/discover/" + type.tmdbType(), animeFilter(type, p));
             }
-            case "new_seasons", "season_anime" -> {
-                if (movie || ("season_anime".equals(list) && type != MediaType.ANIME)) {
-                    throw ApiException.badRequest("Liste indisponible pour ce type : " + list);
-                }
-                yield tmdb.get("/discover/tv", animeFilter(type, with(base,
-                        "air_date.gte", today.minusDays(7).toString(),
-                        "air_date.lte", today.plusDays(7).toString(),
-                        "sort_by", "popularity.desc")));
-            }
             default -> throw ApiException.badRequest("Liste inconnue : " + list);
         };
         if (body == null) return new DiscoverResult(List.of(), 0, page);
@@ -280,6 +337,10 @@ public class DiscoverService {
         // Tendances films : hors titres pas encore sortis.
         if ("trending".equals(list) && movie) {
             results = results.stream().filter(t -> t.releaseDate() == null || !t.releaseDate().isAfter(today)).toList();
+        }
+        // Bientôt en salle : TMDB y laisse des films déjà sortis (parfois déjà en streaming).
+        if ("upcoming".equals(list)) {
+            results = results.stream().filter(t -> t.releaseDate() != null && t.releaseDate().isAfter(today)).toList();
         }
         return new DiscoverResult(results, body.path("total_results").asInt(results.size()), page);
     }
@@ -296,6 +357,72 @@ public class DiscoverService {
             params.put("with_origin_country", "JP");
         }
         return params;
+    }
+
+    /**
+     * Séries diffusées autour d'aujourd'hui (un épisode dans les 7 jours, avant ou après),
+     * gardées si leur fiche vérifie {@code keep}. TMDB ne filtre pas par date de saison.
+     */
+    private DiscoverResult bySeason(
+            TreeMap<String, String> base, MediaType type, LocalDate today, Predicate<JsonNode> keep) {
+        List<TitleLite> candidates = new ArrayList<>();
+        for (int page = 1; page <= SEASON_CANDIDATE_PAGES; page++) {
+            JsonNode body = tmdb.get("/discover/tv", animeFilter(type, with(base,
+                    "page", String.valueOf(page),
+                    "air_date.gte", today.minusDays(7).toString(),
+                    "air_date.lte", today.plusDays(7).toString(),
+                    "sort_by", "popularity.desc")));
+            candidates.addAll(filterType(Json.map(body, "results", n -> TmdbMapper.lite(n, "tv")), type));
+            if (page >= body.path("total_pages").asInt(1)) break;
+        }
+        List<TitleLite> kept = facts.parallel(candidates,
+                        t -> keep.test(facts.facts(MediaType.TV, t.tmdbId())) ? t : null).stream()
+                .limit(PAGE_SIZE)
+                .toList();
+        return new DiscoverResult(kept, kept.size(), 1);
+    }
+
+    /** Nouvelle saison : une saison (hors spéciaux) commence dans les 7 jours, avant ou après. */
+    static boolean seasonStartsNear(JsonNode tv, LocalDate today) {
+        return Json.array(tv, "seasons").stream().anyMatch(season -> {
+            LocalDate start = TmdbMapper.date(Json.text(season, "air_date"));
+            return season.path("season_number").asInt(0) > 0
+                    && start != null
+                    && !start.isBefore(today.minusDays(7))
+                    && !start.isAfter(today.plusDays(7));
+        });
+    }
+
+    /** Saison en cours : le dernier épisode diffusé et le prochain sont de la même saison. */
+    static boolean seasonInProgress(JsonNode tv) {
+        JsonNode last = tv.path("last_episode_to_air");
+        JsonNode next = tv.path("next_episode_to_air");
+        if (!last.isObject() || !next.isObject()) return false;
+        int season = last.path("season_number").asInt(-1);
+        return season > 0 && season == next.path("season_number").asInt(-2);
+    }
+
+    /**
+     * Tendances des animés : peu d'animés parmi les séries tendance ; on lit plusieurs pages,
+     * puis on complète avec les animés populaires.
+     */
+    private DiscoverResult animeTrending(TreeMap<String, String> base, int page) {
+        if (page > 1) return new DiscoverResult(List.of(), 0, page);
+        Map<String, TitleLite> results = new LinkedHashMap<>();
+        for (int p = 1; p <= ANIME_TRENDING_PAGES && results.size() < PAGE_SIZE; p++) {
+            JsonNode body = tmdb.get("/trending/tv/week", with(base, "page", String.valueOf(p)));
+            filterType(Json.map(body, "results", n -> TmdbMapper.lite(n, "tv")), MediaType.ANIME)
+                    .forEach(t -> results.putIfAbsent(t.id(), t));
+        }
+        if (results.size() < PAGE_SIZE) {
+            JsonNode popular = tmdb.get("/discover/tv", animeFilter(MediaType.ANIME, with(base,
+                    "page", "1",
+                    "sort_by", "popularity.desc")));
+            filterType(Json.map(popular, "results", n -> TmdbMapper.lite(n, "tv")), MediaType.ANIME)
+                    .forEach(t -> results.putIfAbsent(t.id(), t));
+        }
+        List<TitleLite> list = results.values().stream().limit(PAGE_SIZE).toList();
+        return new DiscoverResult(list, list.size(), 1);
     }
 
     // ─── Tendances ────────────────────────────────────────────────────────────
@@ -327,15 +454,24 @@ public class DiscoverService {
             biography = Json.text(tmdb.get("/person/" + id, TmdbClient.params("language", "en-US")), "biography");
         }
         Map<String, TitleLite> credits = new LinkedHashMap<>();
+        Map<String, String> characters = new LinkedHashMap<>();
         for (JsonNode work : Json.array(body.path("combined_credits"), "cast")) {
             String mediaType = Json.text(work, "media_type");
             if (!"movie".equals(mediaType) && !"tv".equals(mediaType)) continue;
+            if (!isActingRole(work, mediaType)) continue;
             TitleLite lite = TmdbMapper.lite(work, mediaType);
             credits.putIfAbsent(lite.id(), lite);
+            String character = Json.text(work, "character");
+            if (character != null) characters.putIfAbsent(lite.id(), character);
         }
         List<TitleLite> sorted = credits.values().stream()
                 .sorted(comparator("pop"))
                 .collect(Collectors.toCollection(ArrayList::new));
+        List<Role> roles = sorted.stream()
+                .filter(t -> characters.containsKey(t.id()) && t.title() != null)
+                .limit(ROLES_IN_BIO)
+                .map(t -> new Role(t.title(), characters.get(t.id())))
+                .toList();
         return new PersonDetail(
                 id,
                 Json.text(body, "name"),
@@ -344,7 +480,15 @@ public class DiscoverService {
                 TmdbMapper.date(Json.text(body, "birthday")),
                 Json.text(body, "place_of_birth"),
                 biography,
-                sorted);
+                sorted,
+                roles);
+    }
+
+    /** Filmographie : sans talk-shows, actualités, téléréalité ni apparitions en son propre nom. */
+    private static boolean isActingRole(JsonNode work, String mediaType) {
+        String character = Json.text(work, "character");
+        if (character != null && SELF.matcher(character.trim()).matches()) return false;
+        return !"tv".equals(mediaType) || TmdbMapper.genreIds(work).stream().noneMatch(NON_FICTION_TV::contains);
     }
 
     // ─── Outils ───────────────────────────────────────────────────────────────

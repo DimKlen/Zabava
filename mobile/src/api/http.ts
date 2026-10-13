@@ -17,6 +17,8 @@ export type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   query?: Query;
+  /** Annulation (TanStack Query passe le sien : requête abandonnée si la clé change). */
+  signal?: AbortSignal;
 };
 
 let onUnauthorized: () => void | Promise<void> = () => undefined;
@@ -48,7 +50,11 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
-function send(path: string, { method = 'GET', body, query }: RequestOptions, token?: string) {
+function send(
+  path: string,
+  { method = 'GET', body, query, signal }: RequestOptions,
+  token?: string,
+) {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
   if (body !== undefined) headers['Content-Type'] = 'application/json';
@@ -56,6 +62,7 @@ function send(path: string, { method = 'GET', body, query }: RequestOptions, tok
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
+    signal,
   });
 }
 

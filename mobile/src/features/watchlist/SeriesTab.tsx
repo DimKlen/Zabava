@@ -1,4 +1,4 @@
-import { router, useScrollToTop } from 'expo-router';
+import { useScrollToTop } from 'expo-router';
 import { TelevisionSimpleIcon } from 'phosphor-react-native';
 import { useRef, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -10,6 +10,7 @@ import { LoadError } from '@/components/LoadError';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SkeletonCard } from '@/components/Skeleton';
 import { groupSeries, type SeriesGroup } from '@/domain/seriesList';
+import { openDiscover } from '@/lib/discover';
 import { useUiStore } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
@@ -95,7 +96,7 @@ export function SeriesTab({ type }: { type: 'tv' | 'anime' }) {
         <EmptyState
           icon={TelevisionSimpleIcon}
           title={EMPTY[type].title}
-          action={{ label: EMPTY[type].cta, onPress: () => router.navigate('/(tabs)/discover') }}
+          action={{ label: EMPTY[type].cta, onPress: () => openDiscover(type) }}
         />
       ) : null}
     </ScrollView>

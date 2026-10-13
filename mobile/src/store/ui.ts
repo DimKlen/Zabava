@@ -59,6 +59,8 @@ type UiState = {
   alertsOff: Record<string, boolean>;
   /** Sections repliées de Séries / Animés, gardées pendant la session. */
   collapsedSections: Partial<Record<SeriesSection, boolean>>;
+  /** Onglet de Découvrir, gardé pendant la session. */
+  discoverTab: MediaType;
 
   showToast: (message: string, undo?: () => void) => void;
   hideToast: () => void;
@@ -74,6 +76,7 @@ type UiState = {
   setFilmSort: (sort: FilmSort) => void;
   setAlertsOff: (titleId: string, off: boolean) => void;
   toggleSection: (section: SeriesSection) => void;
+  setDiscoverTab: (tab: MediaType) => void;
 };
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
@@ -97,6 +100,7 @@ export const useUiStore = create<UiState>()((set, get) => ({
   filmSort: 'added',
   alertsOff: {},
   collapsedSections: { ...DEFAULT_COLLAPSED },
+  discoverTab: 'movie',
 
   // Un nouveau toast remplace le précédent et relance le minuteur de 5 s.
   showToast: (message, undo) => {
@@ -136,6 +140,7 @@ export const useUiStore = create<UiState>()((set, get) => ({
     set((s) => ({
       collapsedSections: { ...s.collapsedSections, [section]: !s.collapsedSections[section] },
     })),
+  setDiscoverTab: (discoverTab) => set({ discoverTab }),
 }));
 
 // Raccourcis utilisables hors des composants (mutations, handlers).
