@@ -164,6 +164,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/titles/badges': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['badges'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/search': {
     parameters: {
       query?: never;
@@ -509,6 +525,14 @@ export interface components {
       airDate?: string;
       episodes?: components['schemas']['Episode'][];
     };
+    TitleBadge: {
+      id?: string;
+      /** Format: date */
+      releaseTheatrical?: string;
+      availability?: components['schemas']['Availability'];
+      network?: string;
+      ended?: boolean;
+    };
     PersonLite: {
       /** Format: int32 */
       id?: number;
@@ -536,6 +560,11 @@ export interface components {
       placeOfBirth?: string;
       biography?: string;
       credits?: components['schemas']['TitleLite'][];
+      roles?: components['schemas']['Role'][];
+    };
+    Role: {
+      title?: string;
+      character?: string;
     };
     WatchlistEpisode: {
       /** Format: int64 */
@@ -917,6 +946,28 @@ export interface operations {
         };
         content: {
           '*/*': components['schemas']['SeasonDetail'];
+        };
+      };
+    };
+  };
+  badges: {
+    parameters: {
+      query: {
+        ids: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          '*/*': components['schemas']['TitleBadge'][];
         };
       };
     };

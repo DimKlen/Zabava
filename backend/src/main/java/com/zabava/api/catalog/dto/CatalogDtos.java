@@ -107,11 +107,22 @@ public final class CatalogDtos {
             LocalDate birthday,
             String placeOfBirth,
             String biography,
-            List<TitleLite> credits) {}
+            List<TitleLite> credits,
+            List<Role> roles) {}
+
+    /** Rôle marquant d'une personne (biographie générée quand TMDB n'en a pas). */
+    public record Role(String title, String character) {}
 
     public record SearchResult(List<PersonLite> people, List<TitleLite> titles, int page, int totalPages) {}
 
     public record DiscoverResult(List<TitleLite> results, int total, int page) {}
 
     public record Count(int total) {}
+
+    /**
+     * Ce qui manque à un {@link TitleLite} pour le badge de son affiche (specs/docs/01 §5) :
+     * sortie en salle dans la région, offres, chaîne d'origine et fin de production des séries.
+     */
+    public record TitleBadge(
+            String id, LocalDate releaseTheatrical, Availability availability, String network, Boolean ended) {}
 }

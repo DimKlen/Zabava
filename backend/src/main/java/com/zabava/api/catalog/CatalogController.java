@@ -19,8 +19,10 @@ import com.zabava.api.catalog.dto.CatalogDtos.PersonDetail;
 import com.zabava.api.catalog.dto.CatalogDtos.Provider;
 import com.zabava.api.catalog.dto.CatalogDtos.SearchResult;
 import com.zabava.api.catalog.dto.CatalogDtos.SeasonDetail;
+import com.zabava.api.catalog.dto.CatalogDtos.TitleBadge;
 import com.zabava.api.catalog.dto.CatalogDtos.TitleDetail;
 import com.zabava.api.catalog.dto.CatalogDtos.TitleLite;
+import com.zabava.api.common.ApiException;
 import com.zabava.api.common.MediaType;
 import com.zabava.api.common.TitleRef;
 import com.zabava.api.me.ProfileService;
@@ -38,15 +40,24 @@ import jakarta.validation.constraints.Pattern;
 @Validated
 public class CatalogController {
 
+    /** Affiches visibles d'une grille ou d'un carrousel, demandées en un appel. */
+    static final int MAX_BADGE_IDS = 60;
+
     private final DiscoverService discover;
     private final TitleService titles;
+    private final TitleFacts facts;
     private final ProviderService providers;
     private final ProfileService profiles;
 
     public CatalogController(
-            DiscoverService discover, TitleService titles, ProviderService providers, ProfileService profiles) {
+            DiscoverService discover,
+            TitleService titles,
+            TitleFacts facts,
+            ProviderService providers,
+            ProfileService profiles) {
         this.discover = discover;
         this.titles = titles;
+        this.facts = facts;
         this.providers = providers;
         this.profiles = profiles;
     }
@@ -98,6 +109,17 @@ public class CatalogController {
             @RequestParam(required = false) @Min(1) Integer maxRuntime) {
         return new Count(discover.count(
                 query(type, genres, cast, yearFrom, yearTo, minRating, providers, lang, maxRuntime, "pop", 1), prefs(user)));
+    }
+
+    /**
+     * Données de badge des affiches ({@code ids} : « movie-603,tv-1399 »). Les listes TMDB
+     * (Découvrir, filmographie, genre) n'ont ni plateformes ni date de sortie dans la région.
+     */
+    @GetMapping("/titles/badges")
+    public List<TitleBadge> badges(CurrentUser user, @RequestParam @NotBlank String ids) {
+        List<TitleRef> refs = csv(ids).stream().map(TitleRef::parse).distinct().toList();
+        if (refs.size() > MAX_BADGE_IDS) throw ApiException.badRequest("Au plus " + MAX_BADGE_IDS + " titres");
+        return facts.badges(refs, prefs(user).region());
     }
 
     @GetMapping("/titles/{type}/{tmdbId}")
