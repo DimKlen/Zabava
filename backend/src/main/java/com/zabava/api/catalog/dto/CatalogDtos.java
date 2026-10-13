@@ -12,7 +12,10 @@ public final class CatalogDtos {
 
     private CatalogDtos() {}
 
-    /** Titre résumé : résultats de recherche, listes, carrousels. */
+    /**
+     * Titre résumé : résultats de recherche, listes, carrousels. {@code badge} n'est rempli que
+     * par GET /discover (affiches de Découvrir, du genre et de la recherche avancée).
+     */
     public record TitleLite(
             String id,
             int tmdbId,
@@ -25,7 +28,14 @@ public final class CatalogDtos {
             String overview,
             LocalDate releaseDate,
             Double popularity,
-            Double voteAverage) {}
+            Double voteAverage,
+            TitleBadge badge) {
+
+        public TitleLite withBadge(TitleBadge value) {
+            return new TitleLite(id, tmdbId, type, title, originalTitle, year, posterPath, backdropPath,
+                    overview, releaseDate, popularity, voteAverage, value);
+        }
+    }
 
     public record PersonLite(int id, String name, String profilePath, List<String> knownFor) {}
 

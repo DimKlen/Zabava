@@ -90,7 +90,8 @@ public final class TmdbMapper {
                 Json.text(node, "overview"),
                 date,
                 Json.decimal(node, "popularity"),
-                Json.decimal(node, "vote_average"));
+                Json.decimal(node, "vote_average"),
+                null);
     }
 
     public static String title(JsonNode node) {

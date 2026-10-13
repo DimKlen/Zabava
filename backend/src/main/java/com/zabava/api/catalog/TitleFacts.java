@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.zabava.api.catalog.dto.CatalogDtos.TitleBadge;
+import com.zabava.api.catalog.dto.CatalogDtos.TitleLite;
 import com.zabava.api.common.Json;
 import com.zabava.api.common.MediaType;
 import com.zabava.api.common.TitleRef;
@@ -65,6 +66,14 @@ public class TitleFacts {
                     movie ? null : TitleService.network(d),
                     movie ? null : TitleService.isEnded(Json.text(d, "status")));
         });
+    }
+
+    /** Titres complétés par leurs données de badge (titre sans fiche TMDB : sans badge). */
+    public List<TitleLite> withBadges(List<TitleLite> titles, String region) {
+        List<TitleRef> refs = titles.stream().map(t -> TitleRef.parse(t.id())).toList();
+        Map<String, TitleBadge> byId = new java.util.HashMap<>();
+        badges(refs, region).forEach(b -> byId.put(b.id(), b));
+        return titles.stream().map(t -> t.withBadge(byId.get(t.id()))).toList();
     }
 
     /** Applique {@code task} en parallèle, dans l'ordre ; un échec donne une valeur absente. */
