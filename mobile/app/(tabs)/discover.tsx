@@ -1,5 +1,5 @@
-import { PlaceholderScreen } from '@/features/placeholder/PlaceholderScreen';
+import { DiscoverScreen } from '@/features/discover/DiscoverScreen';
 
 export default function Discover() {
-  return <PlaceholderScreen name="(tabs)/discover" />;
+  return <DiscoverScreen />;
 }

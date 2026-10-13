@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import type { LibrarySeries } from '@/domain/seriesList';
 import type { MediaType } from '@/domain/types';
@@ -53,9 +53,8 @@ export function toLibrarySeries(item: WatchlistItem, type: 'tv' | 'anime'): Libr
 const fetchWatchlist = (type: MediaType) =>
   api<WatchlistItem[]>('/me/watchlist', { query: { type } });
 
-/** Films de Ma liste (`GET /me/watchlist?type=movie`), triés par date d'ajout. */
-export function useMovieWatchlist() {
-  return useQuery({
+export function movieWatchlistQuery() {
+  return queryOptions({
     queryKey: watchlistKey('movie'),
     queryFn: async () =>
       (await fetchWatchlist('movie'))
@@ -65,9 +64,8 @@ export function useMovieWatchlist() {
   });
 }
 
-/** Séries ou animés de Ma liste, avec tous leurs épisodes et ceux que j'ai vus. */
-export function useSeriesWatchlist(type: 'tv' | 'anime') {
-  return useQuery({
+export function seriesWatchlistQuery(type: 'tv' | 'anime') {
+  return queryOptions({
     queryKey: watchlistKey(type),
     queryFn: async () =>
       (await fetchWatchlist(type))
@@ -75,4 +73,14 @@ export function useSeriesWatchlist(type: 'tv' | 'anime') {
         .filter((series): series is LibrarySeries => series !== null),
     staleTime: FIVE_MINUTES,
   });
+}
+
+/** Films de Ma liste (`GET /me/watchlist?type=movie`), triés par date d'ajout. */
+export function useMovieWatchlist() {
+  return useQuery(movieWatchlistQuery());
+}
+
+/** Séries ou animés de Ma liste, avec tous leurs épisodes et ceux que j'ai vus. */
+export function useSeriesWatchlist(type: 'tv' | 'anime') {
+  return useQuery(seriesWatchlistQuery(type));
 }

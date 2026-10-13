@@ -1,5 +1,5 @@
-import { PlaceholderScreen } from '@/features/placeholder/PlaceholderScreen';
+import { SearchScreen } from '@/features/search/SearchScreen';
 
 export default function Search() {
-  return <PlaceholderScreen name="search" />;
+  return <SearchScreen />;
 }

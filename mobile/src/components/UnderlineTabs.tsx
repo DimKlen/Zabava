@@ -68,6 +68,8 @@ export function UnderlineTabs<K extends string>({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        // Recherche : changer d'onglet clavier ouvert, sans un premier tap qui le ferme.
+        keyboardShouldPersistTaps="handled"
         accessibilityRole="tablist"
         contentContainerStyle={[styles.row, { gap }]}
         style={style}
