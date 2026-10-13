@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import { CaretRightIcon, CheckIcon, PlusIcon } from 'phosphor-react-native';
+import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { PersonResult, TitleResult } from '@/api/search';
@@ -10,17 +11,21 @@ import { colors, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
 import { PersonAvatar } from '../catalog/PersonAvatar';
-import { useInList } from '../catalog/useLibraryMembership';
 
 type TitleRowProps = {
   title: TitleResult;
+  inList: boolean;
   onPress: () => void;
   onToggle: () => void;
 };
 
 /** Ligne de titre : mini-affiche, titre, « année · type », « + » d'ajout rapide. */
-export function TitleRow({ title, onPress, onToggle }: TitleRowProps) {
-  const inList = useInList(title);
+export const TitleRow = memo(function TitleRow({
+  title,
+  inList,
+  onPress,
+  onToggle,
+}: TitleRowProps) {
   const poster = tmdbImage(title.posterPath, 'w92');
   return (
     <Pressable
@@ -65,7 +70,7 @@ export function TitleRow({ title, onPress, onToggle }: TitleRowProps) {
       </Pressable>
     </Pressable>
   );
-}
+});
 
 type PersonRowProps = { person: PersonResult; onPress: () => void };
 

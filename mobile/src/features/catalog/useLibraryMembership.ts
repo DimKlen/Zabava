@@ -1,29 +1,39 @@
 import { useQuery } from '@tanstack/react-query';
 
 import type { PosterTitle } from '@/api/catalog';
+import { useProfile } from '@/api/profile';
 import { movieWatchlistQuery, seriesWatchlistQuery } from '@/api/watchlist';
 
+/** « Dans ma liste ? » d'un titre du catalogue. */
+export type Membership = (title: PosterTitle) => boolean;
+
 /**
- * « Dans ma liste ? » pour une affiche ou une ligne du catalogue. Chaque élément ne lit
- * que sa réponse (`select`) : un ajout ne redessine que l'élément concerné, pas les
- * centaines d'affiches de Découvrir ou de la recherche.
- *
- * Les trois listes sont chargées : l'ajout rapide lit aussi leur cache pour savoir s'il
- * faut ajouter ou retirer. Une série est reconnue par son id TMDB, qu'elle soit classée
- * série ou animé.
+ * Ma liste réduite à deux ensembles d'identifiants, lus une seule fois par écran : les
+ * affiches reçoivent un simple booléen. Une série est reconnue par son id TMDB, qu'elle
+ * soit classée série ou animé. Les trois listes sont chargées : l'ajout rapide lit aussi
+ * leur cache pour savoir s'il faut ajouter ou retirer.
  */
-export function useInList(title: PosterTitle): boolean {
-  const movie = useQuery({
+export function useLibraryMembership(): Membership {
+  const movies = useQuery({
     ...movieWatchlistQuery(),
-    select: (movies) => title.type === 'movie' && movies.some((m) => m.id === title.id),
+    select: (list) => new Set(list.map((m) => m.id)),
   }).data;
   const tv = useQuery({
     ...seriesWatchlistQuery('tv'),
-    select: (series) => title.type !== 'movie' && series.some((s) => s.tmdbId === title.tmdbId),
+    select: (list) => list.map((s) => s.tmdbId),
   }).data;
   const anime = useQuery({
     ...seriesWatchlistQuery('anime'),
-    select: (series) => title.type !== 'movie' && series.some((s) => s.tmdbId === title.tmdbId),
+    select: (list) => list.map((s) => s.tmdbId),
   }).data;
-  return Boolean(movie || tv || anime);
+  const series = new Set([...(tv ?? []), ...(anime ?? [])]);
+  return (title) =>
+    title.type === 'movie' ? Boolean(movies?.has(title.id)) : series.has(title.tmdbId);
+}
+
+const NO_PROVIDERS: readonly number[] = [];
+
+/** Mes plateformes (badges), lues une fois par écran ; référence stable sans profil. */
+export function useMyProviderIds(): readonly number[] {
+  return useProfile().data?.providerIds ?? NO_PROVIDERS;
 }

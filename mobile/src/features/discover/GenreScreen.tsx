@@ -14,6 +14,7 @@ import { fonts } from '@/theme/typography';
 
 import { CatalogPoster } from '../catalog/CatalogPoster';
 import { GridSkeleton, GridFooter } from '../catalog/GridSkeleton';
+import { useLibraryMembership, useMyProviderIds } from '../catalog/useLibraryMembership';
 
 type Props = { type: MediaType; genre: GenreKey };
 
@@ -21,6 +22,8 @@ type Props = { type: MediaType; genre: GenreKey };
 export function GenreScreen({ type, genre }: Props) {
   const insets = useSafeAreaInsets();
   const query = useGenreTitles(type, genre);
+  const isInList = useLibraryMembership();
+  const myProviderIds = useMyProviderIds();
   const titles = flattenPages(query.data?.pages);
   const total = query.data?.pages[0]?.total;
 
@@ -55,7 +58,15 @@ export function GenreScreen({ type, genre }: Props) {
           keyExtractor={(item) => item.id}
           paddingTop={8}
           paddingBottom={40}
-          renderPoster={(item, width) => <CatalogPoster title={item} style={{ width }} />}
+          extraData={isInList}
+          renderPoster={(item, width) => (
+            <CatalogPoster
+              title={item}
+              inList={isInList(item)}
+              myProviderIds={myProviderIds}
+              width={width}
+            />
+          )}
           onEndReached={() => {
             if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
           }}

@@ -8,18 +8,20 @@ import { useRecentSearches } from '@/store/recentSearches';
 import { colors } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
 
+import type { Membership } from '../catalog/useLibraryMembership';
 import { TitleRow } from './ResultRows';
 
 type Props = {
   onPickRecent: (query: string) => void;
   onOpenTitle: (title: TitleResult) => void;
   onToggleTitle: (title: TitleResult) => void;
+  isInList: Membership;
 };
 
 const TRENDING_SKELETONS = 5;
 
 /** Recherche sans saisie : recherches récentes, puis « Tendances du moment ». */
-export function SearchIdle({ onPickRecent, onOpenTitle, onToggleTitle }: Props) {
+export function SearchIdle({ onPickRecent, onOpenTitle, onToggleTitle, isInList }: Props) {
   const recents = useRecentSearches((s) => s.recents);
   const removeRecent = useRecentSearches((s) => s.remove);
   const clearRecents = useRecentSearches((s) => s.clear);
@@ -77,6 +79,7 @@ export function SearchIdle({ onPickRecent, onOpenTitle, onToggleTitle }: Props) 
             <TitleRow
               key={title.id}
               title={title}
+              inList={isInList(title)}
               onPress={() => onOpenTitle(title)}
               onToggle={() => onToggleTitle(title)}
             />

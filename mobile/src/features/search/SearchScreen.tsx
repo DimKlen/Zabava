@@ -14,6 +14,7 @@ import { useRecentSearches } from '@/store/recentSearches';
 import { colors } from '@/theme/tokens';
 
 import { toListTitle } from '../catalog/CatalogPoster';
+import { useLibraryMembership } from '../catalog/useLibraryMembership';
 import { AdvancedResults } from './AdvancedResults';
 import { AdvancedSearchSheet } from './AdvancedSearchSheet';
 import { SearchIdle } from './SearchIdle';
@@ -32,6 +33,7 @@ export function SearchScreen() {
   const [appliedFilters, setAppliedFilters] = useState<AdvancedFilters | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const addRecent = useRecentSearches((s) => s.add);
+  const isInList = useLibraryMembership();
   const debounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const field = useRef<TextInput>(null);
 
@@ -83,7 +85,12 @@ export function SearchScreen() {
     );
   } else if (!text.trim()) {
     body = (
-      <SearchIdle onPickRecent={searchNow} onOpenTitle={openTitle} onToggleTitle={toggleTitle} />
+      <SearchIdle
+        onPickRecent={searchNow}
+        onOpenTitle={openTitle}
+        onToggleTitle={toggleTitle}
+        isInList={isInList}
+      />
     );
   } else {
     body = (
@@ -94,6 +101,7 @@ export function SearchScreen() {
         onChangeTab={setTab}
         onOpenTitle={openTitle}
         onToggleTitle={toggleTitle}
+        isInList={isInList}
         onOpenPerson={openPerson}
         onAdvanced={openSheet}
       />

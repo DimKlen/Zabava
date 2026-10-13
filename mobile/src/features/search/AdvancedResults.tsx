@@ -11,6 +11,7 @@ import { fonts } from '@/theme/typography';
 
 import { CatalogPoster } from '../catalog/CatalogPoster';
 import { GridFooter, GridSkeleton } from '../catalog/GridSkeleton';
+import { useLibraryMembership, useMyProviderIds } from '../catalog/useLibraryMembership';
 
 type Props = {
   filters: AdvancedFilters;
@@ -21,6 +22,8 @@ type Props = {
 /** Mode « recherche avancée appliquée » : en-tête, grille d'affiches, chargement infini. */
 export function AdvancedResults({ filters, onEdit, onExit }: Props) {
   const results = useAdvancedResults(filters, true);
+  const isInList = useLibraryMembership();
+  const myProviderIds = useMyProviderIds();
   const titles = flattenPages(results.data?.pages);
   const total = results.data?.pages[0]?.total;
 
@@ -38,7 +41,15 @@ export function AdvancedResults({ filters, onEdit, onExit }: Props) {
         keyboardDismissMode="on-drag"
         paddingTop={4}
         paddingBottom={40}
-        renderPoster={(item, width) => <CatalogPoster title={item} style={{ width }} />}
+        extraData={isInList}
+        renderPoster={(item, width) => (
+          <CatalogPoster
+            title={item}
+            inList={isInList(item)}
+            myProviderIds={myProviderIds}
+            width={width}
+          />
+        )}
         onEndReached={() => {
           if (results.hasNextPage && !results.isFetchingNextPage) void results.fetchNextPage();
         }}

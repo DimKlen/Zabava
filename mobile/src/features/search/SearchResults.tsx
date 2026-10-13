@@ -10,6 +10,7 @@ import { SEARCH_TABS, type SearchTab } from '@/domain/search';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
+import type { Membership } from '../catalog/useLibraryMembership';
 import { PersonRow, TitleRow } from './ResultRows';
 
 const SKELETON_ROWS = 3;
@@ -25,6 +26,7 @@ type Props = {
   onToggleTitle: (title: TitleResult) => void;
   onOpenPerson: (person: PersonResult) => void;
   onAdvanced: () => void;
+  isInList: Membership;
 };
 
 /** Recherche avec saisie : onglets, résultats paginés, squelettes, état sans résultat. */
@@ -37,6 +39,7 @@ export function SearchResults({
   onToggleTitle,
   onOpenPerson,
   onAdvanced,
+  isInList,
 }: Props) {
   const search = useSearch(query, tab);
   const rows = searchRows(search.data?.pages);
@@ -71,6 +74,8 @@ export function SearchResults({
       <FlatList
         data={rows}
         keyExtractor={(row) => row.key}
+        // Les lignes dépendent aussi de Ma liste (coche du « + »).
+        extraData={isInList}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         contentContainerStyle={styles.list}
@@ -91,6 +96,7 @@ export function SearchResults({
           ) : (
             <TitleRow
               title={item.title}
+              inList={isInList(item.title)}
               onPress={() => onOpenTitle(item.title)}
               onToggle={() => onToggleTitle(item.title)}
             />
