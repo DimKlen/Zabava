@@ -95,7 +95,10 @@ function CarouselSection({ section, result }: SectionProps) {
       <HorizontalCarousel
         data={titles}
         keyExtractor={(item) => item.id}
+        // Affiches proches de l'écran seulement : 6 carrousels de 20 affiches sinon.
         initialNumToRender={4}
+        maxToRenderPerBatch={4}
+        windowSize={3}
         renderItem={(item) => <CatalogPoster title={item} style={styles.poster} />}
       />
     </View>
