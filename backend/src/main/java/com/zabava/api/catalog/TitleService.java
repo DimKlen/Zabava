@@ -193,7 +193,8 @@ public class TitleService {
         Optional<TitleRow> existing = store.find(tmdbType, ref.tmdbId());
         boolean fresh = existing.map(r -> r.updatedAt().isAfter(clock.instant().minus(TITLE_TTL))).orElse(false);
         boolean needsEpisodes = withEpisodes && "tv".equals(tmdbType)
-                && existing.map(r -> store.missingEpisodes(r.id())).orElse(true);
+                && existing.map(r -> store.episodesOutdated(r.id(), clock.instant().minus(TITLE_TTL)))
+                        .orElse(true);
         if (fresh && !needsEpisodes) return existing.get();
 
         JsonNode d = details(tmdbType, ref.tmdbId(), prefs.language());
@@ -216,6 +217,7 @@ public class TitleService {
                 store.upsertEpisodes(row.id(), episodes(body.path("season/" + number), number, airstamps));
             }
         }
+        store.markEpisodesLoaded(row.id(), clock.instant());
     }
 
     // ─── TMDB → base ──────────────────────────────────────────────────────────

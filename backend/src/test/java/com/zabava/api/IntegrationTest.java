@@ -21,6 +21,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -216,7 +217,9 @@ public abstract class IntegrationTest {
         try (Connection c = DriverManager.getConnection(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 Statement statement = c.createStatement()) {
             statement.execute(new ClassPathResource("db/auth-stub.sql").getContentAsString(StandardCharsets.UTF_8));
-            statement.execute(Files.readString(migration(), StandardCharsets.UTF_8));
+            for (Path migration : migrations()) {
+                statement.execute(Files.readString(migration, StandardCharsets.UTF_8));
+            }
             // Droits de lecture des clients directs : la RLS doit filtrer leurs lignes.
             statement.execute("grant select, insert, update, delete on all tables in schema public to authenticated");
         } catch (SQLException | IOException e) {
@@ -224,8 +227,12 @@ public abstract class IntegrationTest {
         }
     }
 
-    private static Path migration() {
-        Path fromBackend = Path.of("..", "supabase", "migrations", "0001_init.sql");
-        return Files.exists(fromBackend) ? fromBackend : Path.of("supabase", "migrations", "0001_init.sql");
+    /** Toutes les migrations du dépôt, dans l'ordre de leur numéro. */
+    private static List<Path> migrations() throws IOException {
+        Path fromBackend = Path.of("..", "supabase", "migrations");
+        Path dir = Files.isDirectory(fromBackend) ? fromBackend : Path.of("supabase", "migrations");
+        try (var files = Files.list(dir)) {
+            return files.filter(p -> p.toString().endsWith(".sql")).sorted().toList();
+        }
     }
 }

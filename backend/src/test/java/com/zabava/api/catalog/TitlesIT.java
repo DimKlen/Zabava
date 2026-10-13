@@ -196,6 +196,28 @@ class TitlesIT extends IntegrationTest {
     }
 
     @Test
+    void episodesRechargesApres24Heures() throws Exception {
+        mvc.perform(as(user, get("/api/v1/titles/tv/1399/episodes"))).andExpect(status().isOk());
+        // Nom provisoire en base (« Épisode 1 »), chargé il y a deux jours.
+        db.sql("update episodes set name = 'Épisode 1' where season_number = 1 and episode_number = 1").update();
+        db.sql("update titles set episodes_updated_at = episodes_updated_at - interval '2 days' where tmdb_id = 1399")
+                .update();
+
+        mvc.perform(as(user, get("/api/v1/titles/tv/1399/episodes")))
+                .andExpect(jsonPath("$[1].name").value("Système"));
+    }
+
+    @Test
+    void episodesFraisPasRecharges() throws Exception {
+        mvc.perform(as(user, get("/api/v1/titles/tv/1399/episodes"))).andExpect(status().isOk());
+        db.sql("update episodes set name = 'Épisode 1' where season_number = 1 and episode_number = 1").update();
+
+        // Chargés il y a moins de 24 h : la base fait foi.
+        mvc.perform(as(user, get("/api/v1/titles/tv/1399/episodes")))
+                .andExpect(jsonPath("$[1].name").value("Épisode 1"));
+    }
+
+    @Test
     void episodesDUnFilmRenvoie400() throws Exception {
         mvc.perform(as(user, get("/api/v1/titles/movie/603/episodes"))).andExpect(status().isBadRequest());
     }
