@@ -90,8 +90,11 @@ public class CatalogController {
                     @Pattern(regexp = "trending|now_playing|upcoming|new_on_mine|top_rated|new_seasons|popular_on_mine|season_anime")
                     String list) {
         Prefs prefs = prefs(user);
-        if (list != null) return discover.list(list, MediaType.parse(type == null ? "movie" : type), page, prefs);
-        return discover.discover(query(type, genres, cast, yearFrom, yearTo, minRating, providers, lang, maxRuntime, sort, page), prefs);
+        DiscoverResult result = list != null
+                ? discover.list(list, MediaType.parse(type == null ? "movie" : type), page, prefs)
+                : discover.discover(query(type, genres, cast, yearFrom, yearTo, minRating, providers, lang, maxRuntime, sort, page), prefs);
+        // Badges joints : les affiches s'affichent complètes, sans second aller-retour.
+        return new DiscoverResult(facts.withBadges(result.results(), prefs.region()), result.total(), result.page());
     }
 
     /** Compteur en direct de la recherche avancée (« Voir les N résultats »). */

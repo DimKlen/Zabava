@@ -26,6 +26,15 @@ async function setup(props: Partial<Parameters<typeof Poster>[0]> = {}) {
 beforeEach(() => jest.clearAllMocks());
 
 describe('Poster', () => {
+  it('pop du « + » au passage à coché seulement, pas au premier affichage', async () => {
+    const { rerender } = await render(<Poster title={title} showAdd inList />);
+    expect(screen.queryByTestId('poster-add-pop')).toBeNull();
+    await rerender(<Poster title={title} showAdd inList={false} />);
+    expect(screen.queryByTestId('poster-add-pop')).toBeNull();
+    await rerender(<Poster title={title} showAdd inList />);
+    expect(screen.getByTestId('poster-add-pop')).toBeTruthy();
+  });
+
   it('ouvre la fiche au tap', async () => {
     const { onPress, onToggle, onLongPress } = await setup();
     await fireEvent.press(screen.getByTestId('poster'));

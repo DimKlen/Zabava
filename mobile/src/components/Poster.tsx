@@ -1,18 +1,12 @@
 import { Image } from 'expo-image';
 import { CheckIcon, PlusIcon } from 'phosphor-react-native';
-import { useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import type { PosterBadge } from '@/domain/badge';
 import { posterInitial } from '@/domain/initials';
 import type { Title } from '@/domain/types';
-import { easeTiming } from '@/lib/animation';
 import { hapticMedium } from '@/lib/haptics';
 import { tmdbImage } from '@/lib/tmdb';
 import { colors, durations, motion, radii } from '@/theme/tokens';
@@ -117,6 +111,19 @@ export function Poster({
   );
 }
 
+// Pop 300 ms (×1,25 à 40 %) au passage à l'état coché. Animation CSS de Reanimated 4 :
+// aucune valeur partagée à créer par affiche (une grille en monte des dizaines).
+const POP = {
+  '0%': { transform: [{ scale: 1 }] },
+  '40%': { transform: [{ scale: motion.popScale }] },
+  '100%': { transform: [{ scale: 1 }] },
+};
+const popStyle = {
+  animationName: POP,
+  animationDuration: durations.popPoster,
+  animationTimingFunction: 'ease',
+} as const;
+
 function AddButton({
   title,
   inList,
@@ -126,24 +133,13 @@ function AddButton({
   inList: boolean;
   onToggle?: () => void;
 }) {
-  const scale = useSharedValue(1);
-  const wasInList = useRef(inList);
-
-  // Animation pop (300 ms) au passage à l'état coché.
-  useEffect(() => {
-    if (inList && !wasInList.current) {
-      const t = durations.popPoster;
-      scale.set(
-        withSequence(
-          withTiming(motion.popScale, easeTiming(t * 0.4)),
-          withTiming(1, easeTiming(t * 0.6)),
-        ),
-      );
-    }
-    wasInList.current = inList;
-  }, [inList, scale]);
-
-  const popStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
+  // Pas de pop au premier affichage d'une affiche déjà cochée.
+  const [prevInList, setPrevInList] = useState(inList);
+  const [popping, setPopping] = useState(false);
+  if (inList !== prevInList) {
+    setPrevInList(inList);
+    setPopping(inList);
+  }
 
   return (
     <Pressable
@@ -154,7 +150,10 @@ function AddButton({
       style={styles.addZone}
       testID="poster-add"
     >
-      <Animated.View style={[styles.addVisual, inList ? styles.addOn : styles.addOff, popStyle]}>
+      <Animated.View
+        style={[styles.addVisual, inList ? styles.addOn : styles.addOff, popping && popStyle]}
+        testID={popping ? 'poster-add-pop' : undefined}
+      >
         {inList ? (
           <CheckIcon size={14} color={colors.bg} weight="bold" />
         ) : (

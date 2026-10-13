@@ -1,7 +1,7 @@
 import { useQueries, type UseQueryResult } from '@tanstack/react-query';
 import { useScrollToTop } from 'expo-router';
-import { useRef, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { memo, useRef, useState } from 'react';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { discoverListQuery, type CatalogTitle } from '@/api/discover';
 import { HorizontalCarousel } from '@/components/HorizontalCarousel';
@@ -13,19 +13,32 @@ import { colors, spacing } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
 import { CatalogPoster } from '../catalog/CatalogPoster';
+import {
+  useLibraryMembership,
+  useMyProviderIds,
+  type Membership,
+} from '../catalog/useLibraryMembership';
 import { GenreGrid } from './GenreGrid';
 
 const POSTER_WIDTH = 112;
 const SKELETON_COUNT = 4;
 
-/** Contenu d'un onglet de Découvrir : carrousels puis Par genre. */
+type Row = { section: DiscoverSection; result: UseQueryResult<CatalogTitle[]> };
+
+/**
+ * Contenu d'un onglet de Découvrir : carrousels puis Par genre. Les listes sont demandées
+ * toutes ensemble (requêtes légères), mais seules les sections proches de l'écran sont
+ * dessinées (liste verticale virtualisée).
+ */
 export function DiscoverTab({ type }: { type: MediaType }) {
   const sections = DISCOVER_SECTIONS[type];
   const results = useQueries({
     queries: sections.map((section) => discoverListQuery(section.list, type)),
   });
-  const scrollRef = useRef<ScrollView>(null);
-  useScrollToTop(scrollRef);
+  const isInList = useLibraryMembership();
+  const myProviderIds = useMyProviderIds();
+  const listRef = useRef<FlatList<Row>>(null);
+  useScrollToTop(listRef);
 
   const [refreshing, setRefreshing] = useState(false);
   const refresh = async () => {
@@ -35,10 +48,32 @@ export function DiscoverTab({ type }: { type: MediaType }) {
   };
 
   const allFailed = results.every((result) => result.isError);
+  const rows: Row[] = allFailed
+    ? []
+    : sections.flatMap((section, index) => {
+        const result = results[index];
+        return result ? [{ section, result }] : [];
+      });
 
   return (
-    <ScrollView
-      ref={scrollRef}
+    <FlatList
+      ref={listRef}
+      data={rows}
+      keyExtractor={(row) => row.section.list}
+      extraData={isInList}
+      renderItem={({ item }) => (
+        <CarouselSection
+          section={item.section}
+          result={item.result}
+          isInList={isInList}
+          myProviderIds={myProviderIds}
+        />
+      )}
+      initialNumToRender={2}
+      maxToRenderPerBatch={1}
+      windowSize={5}
+      ListHeaderComponent={allFailed ? <LoadError onRetry={() => void refresh()} /> : null}
+      ListFooterComponent={<GenreGrid type={type} />}
       contentContainerStyle={styles.content}
       refreshControl={
         <RefreshControl
@@ -49,29 +84,22 @@ export function DiscoverTab({ type }: { type: MediaType }) {
           progressBackgroundColor={colors.surface}
         />
       }
-    >
-      {allFailed ? (
-        <LoadError onRetry={() => void refresh()} />
-      ) : (
-        sections.map((section, index) => {
-          const result = results[index];
-          return result ? (
-            <CarouselSection key={section.list} section={section} result={result} />
-          ) : null;
-        })
-      )}
-      <GenreGrid type={type} />
-    </ScrollView>
+    />
   );
 }
 
-type SectionProps = {
-  section: DiscoverSection;
-  result: UseQueryResult<CatalogTitle[]>;
+type SectionProps = Row & {
+  isInList: Membership;
+  myProviderIds: readonly number[];
 };
 
 /** Section de 20 affiches ; masquée si vide ou en erreur. */
-function CarouselSection({ section, result }: SectionProps) {
+const CarouselSection = memo(function CarouselSection({
+  section,
+  result,
+  isInList,
+  myProviderIds,
+}: SectionProps) {
   if (result.isPending) {
     return (
       <View style={styles.section}>
@@ -94,16 +122,24 @@ function CarouselSection({ section, result }: SectionProps) {
       </Text>
       <HorizontalCarousel
         data={titles}
+        extraData={isInList}
         keyExtractor={(item) => item.id}
-        // Affiches proches de l'écran seulement : 6 carrousels de 20 affiches sinon.
+        // Affiches proches de l'écran seulement : 20 par carrousel sinon.
         initialNumToRender={4}
         maxToRenderPerBatch={4}
         windowSize={3}
-        renderItem={(item) => <CatalogPoster title={item} style={styles.poster} />}
+        renderItem={(item) => (
+          <CatalogPoster
+            title={item}
+            inList={isInList(item)}
+            myProviderIds={myProviderIds}
+            width={POSTER_WIDTH}
+          />
+        )}
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   content: {

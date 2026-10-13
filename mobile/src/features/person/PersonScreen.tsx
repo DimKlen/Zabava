@@ -21,9 +21,10 @@ import { goBack } from '@/lib/navigation';
 import { colors, radii } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
 
-import { CatalogPoster } from '../catalog/CatalogPoster';
+import { LazyBadgePoster } from '../catalog/CatalogPoster';
 import { GridSkeleton } from '../catalog/GridSkeleton';
 import { PersonAvatar } from '../catalog/PersonAvatar';
+import { useLibraryMembership, useMyProviderIds } from '../catalog/useLibraryMembership';
 import { PersonBio } from './PersonBio';
 
 const TABS = [
@@ -69,6 +70,8 @@ function PersonContent({ person }: { person: PersonDetail }) {
   const [tab, setTab] = useState<FilmographyTab>('movie');
   const [sort, setSort] = useState<FilmographySort>('pop');
   const titles = filmography(person.credits, tab, sort);
+  const isInList = useLibraryMembership();
+  const myProviderIds = useMyProviderIds();
   const biography =
     person.biography ?? generatedBiography(person.name, person.gender, person.roles);
 
@@ -113,7 +116,15 @@ function PersonContent({ person }: { person: PersonDetail }) {
       ListHeaderComponent={header}
       ListHeaderComponentStyle={styles.header}
       paddingBottom={40}
-      renderPoster={(item, width) => <CatalogPoster title={item} style={{ width }} />}
+      extraData={isInList}
+      renderPoster={(item, width) => (
+        <LazyBadgePoster
+          title={item}
+          inList={isInList(item)}
+          myProviderIds={myProviderIds}
+          width={width}
+        />
+      )}
       ListEmptyComponent={<Text style={styles.empty}>Aucun titre dans cette catégorie.</Text>}
     />
   );

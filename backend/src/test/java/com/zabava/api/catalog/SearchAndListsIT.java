@@ -143,6 +143,31 @@ class SearchAndListsIT extends IntegrationTest {
     }
 
     @Test
+    void discoverJointLesBadges() throws Exception {
+        WIREMOCK.stubFor(get(urlPathEqualTo("/tmdb/movie/now_playing")).willReturn(okJson("""
+                {"total_results": 2, "results": [{"id": 603, "title": "L'Odyssée"}, {"id": 404, "title": "Inconnu"}]}
+                """)));
+        WIREMOCK.stubFor(get(urlPathEqualTo("/tmdb/movie/603"))
+                .withQueryParam("append_to_response", equalTo("release_dates,watch/providers"))
+                .willReturn(okJson(fixture("tmdb-movie-603.json"))));
+
+        mvc.perform(as(user, MockMvcRequestBuilders.get("/api/v1/discover?list=now_playing&type=movie")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.results[0].badge.releaseTheatrical").value("2026-10-20"))
+                .andExpect(jsonPath("$.results[0].badge.availability.sub[0].name").value("Netflix"))
+                // Fiche introuvable : titre gardé, sans badge.
+                .andExpect(jsonPath("$.results[1].id").value("movie-404"))
+                .andExpect(jsonPath("$.results[1].badge").doesNotExist());
+        // Le compteur de la recherche avancée ne charge pas les fiches.
+        WIREMOCK.stubFor(get(urlPathEqualTo("/tmdb/discover/movie")).willReturn(okJson("""
+                {"total_results": 1, "results": [{"id": 777, "title": "X"}]}
+                """)));
+        mvc.perform(as(user, MockMvcRequestBuilders.get("/api/v1/discover/count?type=movie")))
+                .andExpect(jsonPath("$.total").value(1));
+        WIREMOCK.verify(0, getRequestedFor(urlPathEqualTo("/tmdb/movie/777")));
+    }
+
+    @Test
     void badgesLimitesEtIdentifiantsValides() throws Exception {
         String tooMany = String.join(",", java.util.stream.IntStream.rangeClosed(1, 61).mapToObj(i -> "movie-" + i).toList());
         mvc.perform(as(user, MockMvcRequestBuilders.get("/api/v1/titles/badges?ids=" + tooMany)))

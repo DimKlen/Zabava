@@ -390,6 +390,28 @@ export interface components {
       watchedAt?: string;
       notificationsEnabled?: boolean;
     };
+    Availability: {
+      sub?: components['schemas']['Provider'][];
+      rent?: components['schemas']['Provider'][];
+      buy?: components['schemas']['Provider'][];
+      link?: string;
+    };
+    Provider: {
+      /** Format: int32 */
+      id?: number;
+      name?: string;
+      shortName?: string;
+      logoPath?: string;
+      link?: string;
+    };
+    TitleBadge: {
+      id?: string;
+      /** Format: date */
+      releaseTheatrical?: string;
+      availability?: components['schemas']['Availability'];
+      network?: string;
+      ended?: boolean;
+    };
     TitleLite: {
       id?: string;
       /** Format: int32 */
@@ -408,12 +430,7 @@ export interface components {
       popularity?: number;
       /** Format: double */
       voteAverage?: number;
-    };
-    Availability: {
-      sub?: components['schemas']['Provider'][];
-      rent?: components['schemas']['Provider'][];
-      buy?: components['schemas']['Provider'][];
-      link?: string;
+      badge?: components['schemas']['TitleBadge'];
     };
     CastMember: {
       /** Format: int32 */
@@ -433,14 +450,6 @@ export interface components {
       writers?: string[];
       creators?: string[];
       networks?: string[];
-    };
-    Provider: {
-      /** Format: int32 */
-      id?: number;
-      name?: string;
-      shortName?: string;
-      logoPath?: string;
-      link?: string;
     };
     SeasonSummary: {
       /** Format: int32 */
@@ -524,14 +533,6 @@ export interface components {
       /** Format: date */
       airDate?: string;
       episodes?: components['schemas']['Episode'][];
-    };
-    TitleBadge: {
-      id?: string;
-      /** Format: date */
-      releaseTheatrical?: string;
-      availability?: components['schemas']['Availability'];
-      network?: string;
-      ended?: boolean;
     };
     PersonLite: {
       /** Format: int32 */

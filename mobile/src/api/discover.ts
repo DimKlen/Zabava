@@ -6,6 +6,7 @@ import type { DiscoverList } from '@/domain/discover';
 import type { PersonRole } from '@/domain/person';
 import type { MediaType } from '@/domain/types';
 
+import { toBadgeData, type BadgeData } from './badges';
 import { toPosterTitle, type PosterTitle } from './catalog';
 import { api } from './http';
 import { toMediaType } from './mappers';
@@ -26,12 +27,20 @@ export type CatalogTitle = PosterTitle & {
   year?: number;
   releaseDate?: string;
   popularity?: number;
+  /** Joint par GET /discover ; absent ailleurs (filmographie : chargé par lots). */
+  badge?: BadgeData;
 };
 
 export function toCatalogTitle(item: ApiTitleLite, fallbackType: MediaType): CatalogTitle | null {
   const title = toPosterTitle(item, fallbackType);
   if (!title) return null;
-  return { ...title, year: item.year, releaseDate: item.releaseDate, popularity: item.popularity };
+  return {
+    ...title,
+    year: item.year,
+    releaseDate: item.releaseDate,
+    popularity: item.popularity,
+    badge: item.badge ? toBadgeData(item.badge) : undefined,
+  };
 }
 
 function isDefined<T>(value: T | null): value is T {

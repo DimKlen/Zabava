@@ -1,19 +1,12 @@
 import { router } from 'expo-router';
-import type { StyleProp, ViewStyle } from 'react-native';
+import { memo } from 'react';
 
 import { useBadgeData, type BadgeData } from '@/api/badges';
 import type { PosterTitle } from '@/api/catalog';
+import type { CatalogTitle } from '@/api/discover';
 import { toggleInList, withLibraryType, type ListTitle } from '@/api/libraryActions';
-import { useProfile } from '@/api/profile';
 import { Poster } from '@/components/Poster';
 import { posterBadge } from '@/domain/badge';
-
-import { useInList } from './useLibraryMembership';
-
-type Props = {
-  title: PosterTitle;
-  style?: StyleProp<ViewStyle>;
-};
 
 /** Ce qu'il faut pour ajouter le titre à Ma liste avec son badge. */
 export function toListTitle(title: PosterTitle, badge?: BadgeData | null): ListTitle {
@@ -30,27 +23,45 @@ export function toListTitle(title: PosterTitle, badge?: BadgeData | null): ListT
   });
 }
 
+type Props = {
+  title: CatalogTitle;
+  /** Données de badge chargées à part (filmographie) ; sinon celles jointes au titre. */
+  badge?: BadgeData | null;
+  inList: boolean;
+  myProviderIds: readonly number[];
+  width: number;
+};
+
 /**
  * Affiche du catalogue (Découvrir, genre, personne, recherche avancée) : badge de
- * disponibilité, « + » d'ajout rapide, tap → fiche.
+ * disponibilité, « + » d'ajout rapide, tap → fiche. Mémoïsée : une grille redessinée
+ * (ajout à Ma liste, page suivante) ne redessine que les affiches qui changent.
  */
-export function CatalogPoster({ title, style }: Props) {
-  const inList = useInList(title);
-  const badgeData = useBadgeData(title.id).data;
-  const myProviderIds = useProfile().data?.providerIds ?? [];
-  const badge = badgeData
-    ? posterBadge({ type: title.type, ...badgeData }, myProviderIds, new Date())
+export const CatalogPoster = memo(function CatalogPoster({
+  title,
+  badge = title.badge,
+  inList,
+  myProviderIds,
+  width,
+}: Props) {
+  const posterBadgeValue = badge
+    ? posterBadge({ type: title.type, ...badge }, myProviderIds, new Date())
     : null;
-
   return (
     <Poster
       title={title}
-      badge={badge}
+      badge={posterBadgeValue}
       showAdd
       inList={inList}
       onPress={() => router.push(`/title/${title.type}/${title.tmdbId}`)}
-      onToggle={() => toggleInList(toListTitle(title, badgeData))}
-      style={style}
+      onToggle={() => toggleInList(toListTitle(title, badge))}
+      style={{ width }}
     />
   );
-}
+});
+
+/** Affiche dont le badge est chargé par lots (`GET /titles/badges`) : filmographie. */
+export const LazyBadgePoster = memo(function LazyBadgePoster(props: Omit<Props, 'badge'>) {
+  const badge = useBadgeData(props.title.id).data;
+  return <CatalogPoster {...props} badge={badge} />;
+});
