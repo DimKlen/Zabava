@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { MagnifyingGlassIcon, SlidersHorizontalIcon } from 'phosphor-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { Keyboard, StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { toggleInList } from '@/api/libraryActions';
@@ -33,6 +33,7 @@ export function SearchScreen() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const addRecent = useRecentSearches((s) => s.add);
   const debounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const field = useRef<TextInput>(null);
 
   useEffect(() => () => clearTimeout(debounce.current), []);
 
@@ -62,7 +63,8 @@ export function SearchScreen() {
   const toggleTitle = (title: TitleResult) => toggleInList(toListTitle(title));
 
   const openSheet = () => {
-    Keyboard.dismiss();
+    // Sans focus : Android rouvrirait le clavier sur les résultats à la fermeture de la sheet.
+    field.current?.blur();
     setSheetOpen(true);
   };
   const apply = () => {
@@ -102,6 +104,7 @@ export function SearchScreen() {
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.bar}>
         <TextField
+          ref={field}
           height={42}
           icon={MagnifyingGlassIcon}
           value={text}

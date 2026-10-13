@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import { TextInput } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { api } from '@/api/http';
@@ -168,6 +169,14 @@ describe('SearchScreen', () => {
     await fireEvent.changeText(screen.getByLabelText('Rechercher'), 'dune');
     await fireEvent(screen.getByLabelText('Rechercher'), 'submitEditing');
     expect(useRecentSearches.getState().recents).toEqual(['dune']);
+  });
+
+  it('ouvrir les filtres retire le focus du champ (pas de clavier rouvert à la fermeture)', async () => {
+    const blur = jest.spyOn(TextInput.prototype, 'blur');
+    await renderSearch();
+    await fireEvent.press(screen.getByLabelText('Filtres'));
+    expect(blur).toHaveBeenCalled();
+    blur.mockRestore();
   });
 
   it('recherche avancée appliquée : taper ne la quitte pas, « Effacer » oui', async () => {
