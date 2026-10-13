@@ -90,6 +90,9 @@ public abstract class IntegrationTest {
         registry.add("zabava.supabase.jwt-secret", () -> JWT_SECRET);
         // Index des personnes populaires : chargé à la main par les tests qui en ont besoin.
         registry.add("zabava.popular-people-pages", () -> 0);
+        registry.add("zabava.expo.base-url", () -> base + "/expo");
+        // Tâches planifiées : appelées à la main par les tests.
+        registry.add("zabava.jobs.enabled", () -> false);
     }
 
     @TestConfiguration
@@ -108,7 +111,7 @@ public abstract class IntegrationTest {
     protected JdbcClient db;
 
     @Autowired
-    private CacheManager caches;
+    protected CacheManager caches;
 
     @BeforeEach
     void resetState() {

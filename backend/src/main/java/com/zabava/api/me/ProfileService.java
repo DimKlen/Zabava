@@ -163,6 +163,13 @@ public class ProfileService {
         }
     }
 
+    public void deletePushToken(UUID userId, String expoToken) {
+        db.sql("delete from push_tokens where user_id = :id and expo_token = :token")
+                .param("id", userId)
+                .param("token", expoToken)
+                .update();
+    }
+
     /** Supprime le compte Supabase et toutes les données (cascade). */
     @Transactional
     public void deleteAccount(UUID userId) {
