@@ -6,7 +6,7 @@ import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useProfile } from '@/api/profile';
 import { useSeriesWatchlist } from '@/api/watchlist';
 import { EmptyState } from '@/components/EmptyState';
-import { LoadError } from '@/components/LoadError';
+import { LoadError, showsLoadError } from '@/components/LoadError';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SkeletonCard } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
@@ -46,7 +46,7 @@ export function SeriesTab({ type }: { type: 'tv' | 'anime' }) {
   };
 
   if (!watchlist.data || !delayDone) {
-    return watchlist.isError ? (
+    return showsLoadError(watchlist) ? (
       <LoadError onRetry={() => void watchlist.refetch()} />
     ) : (
       <View style={styles.skeletons} testID="series-skeletons">

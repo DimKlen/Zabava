@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRegionProviders } from '@/api/catalog';
 import { useProfile, type Profile } from '@/api/profile';
 import { Button } from '@/components/Button';
-import { LoadError } from '@/components/LoadError';
+import { LoadError, showsLoadError } from '@/components/LoadError';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SkeletonBox } from '@/components/Skeleton';
@@ -60,7 +60,7 @@ export function ProfileScreen() {
         <ScreenHeader title="Profil" />
         {profile ? (
           <ProfileContent profile={profile} />
-        ) : query.isError ? (
+        ) : showsLoadError(query) ? (
           <LoadError onRetry={() => void query.refetch()} />
         ) : (
           <View style={styles.loading}>

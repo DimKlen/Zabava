@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useProfile } from '@/api/profile';
 import { useSessionStore } from '@/api/session';
-import { LoadError } from '@/components/LoadError';
+import { LoadError, showsLoadError } from '@/components/LoadError';
 import { rememberMosaicPosters } from '@/lib/mosaic';
 import { colors } from '@/theme/tokens';
 
@@ -32,7 +32,7 @@ export function AuthGate() {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
-      {profile.isError ? <LoadError onRetry={() => void profile.refetch()} /> : null}
+      {showsLoadError(profile) ? <LoadError onRetry={() => void profile.refetch()} /> : null}
     </View>
   );
 }

@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePerson, type PersonDetail } from '@/api/discover';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
-import { LoadError } from '@/components/LoadError';
+import { LoadError, showsLoadError } from '@/components/LoadError';
 import { PosterGrid } from '@/components/PosterGrid';
 import { SkeletonBox } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
@@ -58,7 +58,7 @@ export function PersonScreen({ id }: { id: number }) {
       </View>
       {query.data ? (
         <PersonContent person={query.data} />
-      ) : query.isError ? (
+      ) : showsLoadError(query) ? (
         <LoadError onRetry={() => void query.refetch()} />
       ) : (
         <PersonSkeleton />

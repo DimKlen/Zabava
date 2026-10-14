@@ -7,7 +7,7 @@ import { setTitleAlerts } from '@/api/libraryActions';
 import { useProfile } from '@/api/profile';
 import type { TitleDetail } from '@/api/titles';
 import { useSeriesWatchlist } from '@/api/watchlist';
-import { LoadError } from '@/components/LoadError';
+import { LoadError, showsLoadError } from '@/components/LoadError';
 import { RatingChips } from '@/components/RatingChips';
 import { RoundIconButton } from '@/components/RoundIconButton';
 import { SkeletonBox } from '@/components/Skeleton';
@@ -119,7 +119,7 @@ export function SeriesScreen({ series, initialSeason, initialEpisode }: Props) {
               spoilerProtection={spoilerProtection}
               onOpenEpisode={(episode) => setOpenEpisodeId(episode.id)}
             />
-          ) : episodesQuery.isError ? (
+          ) : showsLoadError(episodesQuery) ? (
             <LoadError onRetry={() => void episodesQuery.refetch()} />
           ) : episodes ? null : (
             <EpisodesSkeleton />

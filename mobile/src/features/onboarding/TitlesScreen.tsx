@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { usePopularTitles, type PosterTitle } from '@/api/catalog';
 import { useUpdateProfile } from '@/api/profile';
-import { LoadError } from '@/components/LoadError';
+import { LoadError, showsLoadError } from '@/components/LoadError';
 import { Poster } from '@/components/Poster';
 import { PosterGrid } from '@/components/PosterGrid';
 import { SkeletonPoster } from '@/components/Skeleton';
@@ -61,7 +61,7 @@ export function TitlesScreen() {
         variant="compact"
         style={styles.tabs}
       />
-      {popular.isError ? <LoadError onRetry={() => void popular.refetch()} /> : null}
+      {showsLoadError(popular) ? <LoadError onRetry={() => void popular.refetch()} /> : null}
     </View>
   );
 
@@ -88,7 +88,7 @@ export function TitlesScreen() {
         />
       ) : (
         <PosterGrid<number>
-          data={popular.isError ? [] : SKELETONS}
+          data={showsLoadError(popular) ? [] : SKELETONS}
           keyExtractor={(item) => String(item)}
           ListHeaderComponent={header}
           paddingTop={16}

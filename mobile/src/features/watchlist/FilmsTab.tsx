@@ -7,7 +7,7 @@ import { removeFromList } from '@/api/libraryActions';
 import { useProfile } from '@/api/profile';
 import { useMovieWatchlist } from '@/api/watchlist';
 import { EmptyState } from '@/components/EmptyState';
-import { LoadError } from '@/components/LoadError';
+import { LoadError, showsLoadError } from '@/components/LoadError';
 import { Poster } from '@/components/Poster';
 import { PosterGrid } from '@/components/PosterGrid';
 import { SkeletonPoster } from '@/components/Skeleton';
@@ -77,12 +77,14 @@ export function FilmsTab() {
   if (!watchlist.data || !delayDone) {
     return (
       <PosterGrid<number>
-        data={watchlist.isError ? [] : SKELETONS}
+        data={showsLoadError(watchlist) ? [] : SKELETONS}
         keyExtractor={String}
         ListHeaderComponent={
           <View style={styles.skeletonHeader}>
             {controls}
-            {watchlist.isError ? <LoadError onRetry={() => void watchlist.refetch()} /> : null}
+            {showsLoadError(watchlist) ? (
+              <LoadError onRetry={() => void watchlist.refetch()} />
+            ) : null}
           </View>
         }
         paddingBottom={24}

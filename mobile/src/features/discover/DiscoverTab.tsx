@@ -5,7 +5,7 @@ import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 
 import { discoverListQuery, type CatalogTitle } from '@/api/discover';
 import { HorizontalCarousel } from '@/components/HorizontalCarousel';
-import { LoadError } from '@/components/LoadError';
+import { LoadError, showsLoadError } from '@/components/LoadError';
 import { SkeletonPoster } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { DISCOVER_SECTIONS, type DiscoverSection } from '@/domain/discover';
@@ -48,7 +48,7 @@ export function DiscoverTab({ type }: { type: MediaType }) {
     setRefreshing(false);
   };
 
-  const allFailed = results.every((result) => result.isError);
+  const allFailed = results.every((result) => showsLoadError(result));
   const rows: Row[] = allFailed
     ? []
     : sections.flatMap((section, index) => {
@@ -101,7 +101,8 @@ const CarouselSection = memo(function CarouselSection({
   isInList,
   myProviderIds,
 }: SectionProps) {
-  if (result.isPending) {
+  // Premier chargement, ou nouvelle tentative après une erreur.
+  if (!result.data && (result.isPending || result.isFetching)) {
     return (
       <View style={styles.section}>
         <Text style={styles.title}>{section.title}</Text>

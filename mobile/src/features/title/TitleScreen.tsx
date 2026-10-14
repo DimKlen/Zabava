@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTitle, type TitleDetail } from '@/api/titles';
 import { GradientFill } from '@/components/GradientFill';
-import { LoadError } from '@/components/LoadError';
+import { LoadError, showsLoadError } from '@/components/LoadError';
 import { RoundIconButton } from '@/components/RoundIconButton';
 import type { MediaType } from '@/domain/types';
 import { goBack } from '@/lib/navigation';
@@ -32,7 +32,7 @@ export function TitleScreen({ type, tmdbId, season, episode }: Props) {
   return (
     <TitleLoading
       gradientKey={`${type}-${tmdbId}`}
-      error={title.isError}
+      error={showsLoadError(title)}
       onRetry={() => void title.refetch()}
     />
   );
