@@ -17,7 +17,13 @@ const PROFILE: Profile = {
   language: 'fr-CA',
   spoilerProtection: false,
   providerIds: [8],
-  notificationPrefs: { episodes: true, cinema: true, streaming: true, seasons: true, digestHour: 9 },
+  notificationPrefs: {
+    episodes: true,
+    cinema: true,
+    streaming: true,
+    seasons: true,
+    digestHour: 9,
+  },
 };
 
 const profile = () => queryClient.getQueryData<Profile>(profileKey);
