@@ -1,4 +1,4 @@
-import { api, ApiError, setUnauthorizedHandler } from '../http';
+import { api, ApiError, REQUEST_TIMEOUT_MS, setUnauthorizedHandler, TimeoutError } from '../http';
 
 const mockGetSession = jest.fn();
 const mockRefreshSession = jest.fn();
@@ -81,5 +81,35 @@ describe('api', () => {
     fetchMock.mockResolvedValue(response(502));
 
     await expect(api('/trending')).rejects.toMatchObject({ status: 502 });
+  });
+});
+
+describe('délai', () => {
+  // fetch qui ne répond jamais, mais s'interrompt quand son signal est annulé.
+  const hangingFetch = (_url: string, init: { signal: AbortSignal }) =>
+    new Promise((_resolve, reject) => {
+      // Comme fetch : un signal déjà annulé rejette tout de suite.
+      if (init.signal.aborted) reject(new Error('Aborted'));
+      init.signal.addEventListener('abort', () => reject(new Error('Aborted')));
+    });
+
+  afterEach(() => jest.useRealTimers());
+
+  it('échoue si le serveur ne répond pas à temps', async () => {
+    jest.useFakeTimers();
+    fetchMock.mockImplementation(hangingFetch);
+    const request = api('/genre');
+    const failed = expect(request).rejects.toBeInstanceOf(TimeoutError);
+    await jest.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
+    await failed;
+  });
+
+  it('garde l’annulation de l’appelant (changement de clé de requête)', async () => {
+    fetchMock.mockImplementation(hangingFetch);
+    const controller = new AbortController();
+    const request = api('/search', { signal: controller.signal });
+    await Promise.resolve();
+    controller.abort();
+    await expect(request).rejects.toThrow('Aborted');
   });
 });
