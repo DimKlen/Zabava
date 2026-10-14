@@ -204,6 +204,9 @@ async function drain(): Promise<void> {
 function kick(): void {
   clearTimeout(retryTimer);
   retryTimer = undefined;
+  // Tout de suite, pas au prochain tour de la boucle : un rechargement lancé au retour
+  // du réseau doit attendre les envois (whenSettled).
+  if (onlineManager.isOnline() && entries.length > 0) blocked = false;
   void drain();
 }
 

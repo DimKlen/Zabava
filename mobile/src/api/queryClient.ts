@@ -11,7 +11,10 @@ export const persistMaxAge = SEVEN_DAYS;
 export const queryClient = new QueryClient({
   defaultOptions: {
     // gcTime ≥ maxAge : sinon les requêtes persistées seraient purgées avant restauration.
-    queries: { gcTime: SEVEN_DAYS, retry: 1 },
+    // networkMode 'always' : hors ligne, une requête sans cache échoue (« Impossible de
+    // charger » + « Réessayer ») au lieu de rester en pause sur un écran vide ; avec du
+    // cache, l'écran garde ses données. Le retour du réseau relance les requêtes périmées.
+    queries: { gcTime: SEVEN_DAYS, retry: 1, networkMode: 'always' },
   },
 });
 

@@ -198,3 +198,24 @@ it('se vide à la déconnexion', async () => {
   expect(markEpisodes).not.toHaveBeenCalled();
   expect(mockStorage.has(STORAGE_KEY)).toBe(false);
 });
+
+it('au retour du réseau, un rechargement attend les envois en attente', async () => {
+  onlineManager.setOnline(false);
+  enqueue('tv', [mark(1)]);
+  await settle();
+
+  let settled = false;
+  let release: () => void = () => undefined;
+  jest
+    .mocked(markEpisodes)
+    .mockImplementationOnce(() => new Promise<void>((resolve) => (release = resolve)));
+  // Comme dans l'app : TanStack relance Ma liste juste avant que la file reparte.
+  void whenSettled().then(() => (settled = true));
+  onlineManager.setOnline(true);
+  await settle();
+  expect(settled).toBe(false);
+
+  release();
+  await settle();
+  expect(settled).toBe(true);
+});
