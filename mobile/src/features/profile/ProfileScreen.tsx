@@ -22,7 +22,6 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SkeletonBox } from '@/components/Skeleton';
 import { Switch } from '@/components/Switch';
-import { Tag } from '@/components/Tag';
 import { Text } from '@/components/Text';
 import { LANGUAGES, REGIONS } from '@/domain/onboarding';
 import {
@@ -46,6 +45,12 @@ import {
   updatePreference,
 } from './profileActions';
 import { SettingsGroup, SettingsRow } from './SettingsGroup';
+
+/** Logos officiels (themoviedb.org/about/logos-attribution, justwatch.com), hauteur 22. */
+const TMDB_LOGO = require('../../../assets/logos/tmdb.svg');
+const TMDB_LOGO_RATIO = 273.42 / 35.52;
+const JUSTWATCH_LOGO = require('../../../assets/logos/justwatch.png');
+const JUSTWATCH_LOGO_RATIO = 505 / 76;
 
 /** Profil (specs/docs/09 §9.2) : compte, préférences, notifications, à propos. */
 export function ProfileScreen() {
@@ -185,8 +190,18 @@ function ProfileContent({ profile }: { profile: Profile }) {
         <SettingsGroup label="À propos">
           <View style={styles.about}>
             <View style={styles.logos}>
-              <Tag label="TMDB" variant="outline" />
-              <Tag label="JustWatch" variant="outline" />
+              <Image
+                source={TMDB_LOGO}
+                style={styles.tmdbLogo}
+                contentFit="contain"
+                accessibilityLabel="TMDB"
+              />
+              <Image
+                source={JUSTWATCH_LOGO}
+                style={styles.justWatchLogo}
+                contentFit="contain"
+                accessibilityLabel="JustWatch"
+              />
             </View>
             <Text style={styles.aboutText}>
               Ce produit utilise l&apos;API TMDB sans être approuvé ni certifié par TMDB.
@@ -342,7 +357,16 @@ const styles = StyleSheet.create({
   },
   logos: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
+  },
+  tmdbLogo: {
+    height: 22,
+    aspectRatio: TMDB_LOGO_RATIO,
+  },
+  justWatchLogo: {
+    height: 22,
+    aspectRatio: JUSTWATCH_LOGO_RATIO,
   },
   aboutText: {
     fontFamily: fonts.regular,

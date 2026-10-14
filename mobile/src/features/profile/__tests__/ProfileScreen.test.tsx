@@ -100,6 +100,8 @@ describe('ProfileScreen', () => {
     expect(await screen.findByText('Netflix, Crave')).toBeTruthy();
     expect(screen.getByText('9 h')).toBeTruthy();
     expect(screen.getByText('Version 1.0.0')).toBeTruthy();
+    expect(screen.getByLabelText('TMDB')).toBeTruthy();
+    expect(screen.getByLabelText('JustWatch')).toBeTruthy();
   });
 
   it('activer une notification sans permission : rien n’est enregistré', async () => {
