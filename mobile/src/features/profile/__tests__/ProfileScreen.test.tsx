@@ -10,6 +10,16 @@ import { useUiStore } from '@/store/ui';
 import { ProfileScreen } from '../ProfileScreen';
 
 jest.mock('@/api/http', () => ({ api: jest.fn() }));
+// Le client de l'app garde ses requêtes 7 jours : ses minuteurs empêcheraient Jest de finir.
+jest.mock('@/api/queryClient', () => {
+  const { QueryClient } =
+    jest.requireActual<typeof import('@tanstack/react-query')>('@tanstack/react-query');
+  return {
+    queryClient: new QueryClient({
+      defaultOptions: { queries: { gcTime: Infinity, retry: false } },
+    }),
+  };
+});
 jest.mock('@/api/session', () => ({ signOut: jest.fn() }));
 jest.mock('@/lib/notifications', () => ({
   ensureNotificationPermission: jest.fn(),
