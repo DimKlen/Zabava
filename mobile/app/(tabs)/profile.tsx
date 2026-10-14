@@ -1,5 +1,5 @@
-import { PlaceholderScreen } from '@/features/placeholder/PlaceholderScreen';
+import { ProfileScreen } from '@/features/profile/ProfileScreen';
 
 export default function Profile() {
-  return <PlaceholderScreen name="(tabs)/profile" />;
+  return <ProfileScreen />;
 }

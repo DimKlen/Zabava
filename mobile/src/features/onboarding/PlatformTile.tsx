@@ -12,10 +12,12 @@ type Props = {
   selected: boolean;
   width: number;
   onToggle: () => void;
+  /** PlatformsSheet du Profil : pastille 36, textes plus petits, pas de coche. */
+  compact?: boolean;
 };
 
-/** Tuile de plateforme de l'onboarding (étape 2) : tap = bascule. */
-export function PlatformTile({ provider, selected, width, onToggle }: Props) {
+/** Tuile de plateforme (onboarding étape 2, Mes plateformes) : tap = bascule. */
+export function PlatformTile({ provider, selected, width, onToggle, compact = false }: Props) {
   const uri = tmdbImage(provider.logoPath, 'w92');
   return (
     <Pressable
@@ -23,17 +25,22 @@ export function PlatformTile({ provider, selected, width, onToggle }: Props) {
       accessibilityLabel={provider.name}
       accessibilityState={{ checked: selected }}
       onPress={onToggle}
-      style={[styles.tile, { width }, selected ? styles.selected : styles.idle]}
+      style={[
+        styles.tile,
+        compact && styles.compactTile,
+        { width },
+        selected ? styles.selected : styles.idle,
+      ]}
     >
-      <View style={styles.logo}>
+      <View style={[styles.logo, compact && styles.compactLogo]}>
         {uri ? (
           <Image source={{ uri }} contentFit="cover" style={styles.logoImage} />
         ) : (
-          <Text style={styles.short}>{provider.short}</Text>
+          <Text style={[styles.short, compact && styles.compactShort]}>{provider.short}</Text>
         )}
       </View>
-      <Text style={styles.name}>{provider.name}</Text>
-      {selected ? (
+      <Text style={[styles.name, compact && styles.compactName]}>{provider.name}</Text>
+      {selected && !compact ? (
         <View style={styles.check}>
           <CheckIcon size={12} color={colors.bg} weight="bold" />
         </View>
@@ -43,6 +50,7 @@ export function PlatformTile({ provider, selected, width, onToggle }: Props) {
 }
 
 const LOGO = 44;
+const COMPACT_LOGO = 36;
 
 const styles = StyleSheet.create({
   tile: {
@@ -53,6 +61,25 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderRadius: radii.rLg,
     borderWidth: 1,
+  },
+  compactTile: {
+    gap: 6,
+    paddingTop: 12,
+    paddingHorizontal: 4,
+    paddingBottom: 10,
+  },
+  compactLogo: {
+    width: COMPACT_LOGO,
+    height: COMPACT_LOGO,
+    borderRadius: COMPACT_LOGO / 2,
+  },
+  compactShort: {
+    fontSize: 12,
+    lineHeight: 12 * 1.3,
+  },
+  compactName: {
+    fontSize: 11,
+    lineHeight: 11 * 1.3,
   },
   idle: {
     backgroundColor: colors.surface,

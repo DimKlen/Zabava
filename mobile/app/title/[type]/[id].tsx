@@ -9,14 +9,24 @@ function toMediaType(type: string): MediaType {
   return type === 'tv' || type === 'anime' ? type : 'movie';
 }
 
+function toInteger(value: string | undefined): number | undefined {
+  const number = value === undefined ? undefined : Number(value);
+  return Number.isInteger(number) ? number : undefined;
+}
+
 export default function TitleDetail() {
-  const { type, id, season } = useLocalSearchParams<Params>();
-  const seasonNumber = season === undefined ? undefined : Number(season);
+  const { type, id, season, episode } = useLocalSearchParams<Params>();
+  const seasonNumber = toInteger(season);
+  // Un épisode n'a de sens qu'avec sa saison.
+  const episodeNumber = seasonNumber === undefined ? undefined : toInteger(episode);
   return (
     <TitleScreen
+      // Nouveau lien vers la même fiche (notification) : saison et épisode repris à zéro.
+      key={`${season ?? ''}-${episode ?? ''}`}
       type={toMediaType(type)}
       tmdbId={Number(id)}
-      season={Number.isInteger(seasonNumber) ? seasonNumber : undefined}
+      season={seasonNumber}
+      episode={episodeNumber}
     />
   );
 }

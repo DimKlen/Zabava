@@ -1,5 +1,5 @@
-import { PlaceholderScreen } from '@/features/placeholder/PlaceholderScreen';
+import { UpcomingScreen } from '@/features/upcoming/UpcomingScreen';
 
 export default function Upcoming() {
-  return <PlaceholderScreen name="(tabs)/upcoming" />;
+  return <UpcomingScreen />;
 }

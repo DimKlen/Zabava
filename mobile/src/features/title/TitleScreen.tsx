@@ -13,18 +13,18 @@ import { colors } from '@/theme/tokens';
 import { MovieScreen } from './MovieScreen';
 import { SeriesScreen } from './SeriesScreen';
 
-type Props = { type: MediaType; tmdbId: number; season?: number };
+type Props = { type: MediaType; tmdbId: number; season?: number; episode?: number };
 
 const isSeries = (detail: TitleDetail): detail is TitleDetail & { type: 'tv' | 'anime' } =>
   detail.type !== 'movie';
 
 /** Fiche titre : film, série ou animé. */
-export function TitleScreen({ type, tmdbId, season }: Props) {
+export function TitleScreen({ type, tmdbId, season, episode }: Props) {
   const title = useTitle(type, tmdbId);
   const detail = title.data;
   if (detail) {
     return isSeries(detail) ? (
-      <SeriesScreen series={detail} initialSeason={season} />
+      <SeriesScreen series={detail} initialSeason={season} initialEpisode={episode} />
     ) : (
       <MovieScreen movie={detail} />
     );

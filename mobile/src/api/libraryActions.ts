@@ -239,7 +239,11 @@ function enqueue(title: ListTitle, request: () => Promise<void>): Promise<void> 
     if (queues.get(title.id) === next) queues.delete(title.id);
     const left = (pending.get(title.type) ?? 1) - 1;
     pending.set(title.type, left);
-    if (left === 0) void queryClient.invalidateQueries({ predicate: isTypeQuery(title.type) });
+    if (left === 0) {
+      void queryClient.invalidateQueries({ predicate: isTypeQuery(title.type) });
+      // À venir dépend de la liste (titres suivis, films À voir, épisodes vus).
+      void queryClient.invalidateQueries({ queryKey: ['upcoming'] });
+    }
   };
   next.then(settle, settle);
   return next;
