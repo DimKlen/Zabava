@@ -60,12 +60,15 @@ export function UpcomingScreen() {
 
   const jump = (day: WeekDay) => {
     const target = jumpTarget(groups, day.date);
-    const y = target ? offsets.get(target.key) : undefined;
-    if (!target || y === undefined) {
+    if (!target) {
       showToast('Rien de prévu à partir de ce jour');
       return;
     }
-    scrollRef.current?.scrollTo({ y: Math.max(0, y - JUMP_OFFSET), animated: true });
+    // Position pas encore mesurée (premier rendu) : rien à faire.
+    const y = offsets.get(target.key);
+    if (y !== undefined) {
+      scrollRef.current?.scrollTo({ y: Math.max(0, y - JUMP_OFFSET), animated: true });
+    }
   };
 
   // Enfants directs du ScrollView : la bande (index 2) reste collée en haut.
@@ -128,6 +131,7 @@ function content(
   const blocks: ReactElement[] = groups.map((group) => (
     <View
       key={group.key}
+      testID={`group-${group.key}`}
       onLayout={(e) => onGroupLayout(group.key, e.nativeEvent.layout.y)}
       style={styles.group}
     >

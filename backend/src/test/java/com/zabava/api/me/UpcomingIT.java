@@ -48,7 +48,8 @@ class UpcomingIT extends IntegrationTest {
                 .andExpect(jsonPath("$.events[0].season").value(1))
                 .andExpect(jsonPath("$.events[0].episode").value(3))
                 .andExpect(jsonPath("$.events[0].airstamp").value("2026-10-14T01:00:00Z"))
-                .andExpect(jsonPath("$.events[0].provider").value("FX"))
+                // Plateforme d'abonnement de la région avant la chaîne d'origine (FX).
+                .andExpect(jsonPath("$.events[0].provider").value("Disney Plus"))
                 .andExpect(jsonPath("$.events[1].date").value("2026-10-20"))
                 .andExpect(jsonPath("$.events[1].kind").value("theatrical"))
                 .andExpect(jsonPath("$.events[2].date").value("2026-12-18"))
@@ -57,6 +58,13 @@ class UpcomingIT extends IntegrationTest {
                 .andExpect(jsonPath("$.noDate", hasSize(1)))
                 .andExpect(jsonPath("$.noDate[0].title.id").value("anime-209867"))
                 .andExpect(jsonPath("$.noDate[0].nextSeason").value(2));
+    }
+
+    @Test
+    void sansAbonnementLaChaine() throws Exception {
+        db.sql("delete from title_availability where title_id = (select id from titles where tmdb_id = 1399)").update();
+        mvc.perform(as(user, get(RANGE + "&type=tv")))
+                .andExpect(jsonPath("$.events[0].provider").value("FX"));
     }
 
     @Test

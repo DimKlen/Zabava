@@ -239,10 +239,11 @@ function enqueue(title: ListTitle, request: () => Promise<void>): Promise<void> 
     if (queues.get(title.id) === next) queues.delete(title.id);
     const left = (pending.get(title.type) ?? 1) - 1;
     pending.set(title.type, left);
+    // À venir dépend aussi de la liste (titres suivis, films À voir, épisodes vus).
     if (left === 0) {
-      void queryClient.invalidateQueries({ predicate: isTypeQuery(title.type) });
-      // À venir dépend de la liste (titres suivis, films À voir, épisodes vus).
-      void queryClient.invalidateQueries({ queryKey: ['upcoming'] });
+      void queryClient.invalidateQueries({
+        predicate: (query) => isTypeQuery(title.type)(query) || query.queryKey[0] === 'upcoming',
+      });
     }
   };
   next.then(settle, settle);

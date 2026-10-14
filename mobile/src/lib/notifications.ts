@@ -7,6 +7,8 @@ import { Linking, PermissionsAndroid, Platform } from 'react-native';
 import { easProjectId } from '@/api/config';
 import { api } from '@/api/http';
 
+import { loadNotifications } from './expoNotifications';
+
 /** Jeton Expo enregistré par cet appareil : retiré du compte à la déconnexion. */
 const TOKEN_KEY = 'zabava.push-token';
 
@@ -47,7 +49,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
     return result === PermissionsAndroid.RESULTS.GRANTED;
   }
 
-  const Notifications = await import('expo-notifications');
+  const Notifications = await loadNotifications();
   await ensureChannel(Notifications);
   const { granted } = await Notifications.requestPermissionsAsync();
   return granted;
@@ -65,7 +67,7 @@ export async function notificationPermission(): Promise<PermissionState> {
     // Android ne dit pas si la demande est encore possible : elle le dira à la demande.
     return granted ? 'granted' : 'undetermined';
   }
-  const Notifications = await import('expo-notifications');
+  const Notifications = await loadNotifications();
   const { granted, canAskAgain } = await Notifications.getPermissionsAsync();
   if (granted) return 'granted';
   return canAskAgain ? 'undetermined' : 'blocked';
@@ -104,7 +106,7 @@ export async function ensureNotificationPermission(): Promise<boolean> {
 export async function registerPushToken(): Promise<void> {
   const projectId = easProjectId();
   if (!projectId || isExpoGoAndroid()) return;
-  const Notifications = await import('expo-notifications');
+  const Notifications = await loadNotifications();
   const { data } = await Notifications.getExpoPushTokenAsync({ projectId });
   await api('/me/push-token', {
     method: 'POST',
@@ -152,7 +154,7 @@ export function listenToNotificationTaps(): () => void {
   if (isExpoGoAndroid()) return () => undefined;
   let subscription: { remove: () => void } | undefined;
   let cancelled = false;
-  void import('expo-notifications').then(async (Notifications) => {
+  void loadNotifications().then(async (Notifications) => {
     if (cancelled) return;
     const handle = (response: import('expo-notifications').NotificationResponse) => {
       const url = response.notification.request.content.data?.url;
