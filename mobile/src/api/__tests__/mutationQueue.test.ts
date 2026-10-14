@@ -219,3 +219,15 @@ it('au retour du réseau, un rechargement attend les envois en attente', async (
   await settle();
   expect(settled).toBe(true);
 });
+
+it('ne signale rien pour un envoi refusé après la déconnexion (401)', async () => {
+  jest.mocked(markEpisodes).mockImplementationOnce(async () => {
+    // Comme api() : le 401 déconnecte (file vidée), puis l'erreur remonte.
+    await clearMutationQueue();
+    throw new ApiError(401, 'Session expirée');
+  });
+  enqueue('tv', [mark(1)]);
+  await settle();
+  expect(useUiStore.getState().toast).toBeNull();
+  expect(pendingCount()).toBe(0);
+});

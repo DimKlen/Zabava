@@ -59,6 +59,8 @@ let failures = 0;
 let serverAttempts = 0;
 let retryTimer: ReturnType<typeof setTimeout> | undefined;
 let sequence = 0;
+/** Change à chaque vidage (déconnexion) : un envoi en cours à ce moment est ignoré. */
+let generation = 0;
 /** Types dont Ma liste est à recharger une fois la file vide. */
 const touched = new Set<MediaType>();
 const waiters = new Map<string, { resolve: () => void; reject: (error: unknown) => void }>();
@@ -167,9 +169,12 @@ async function drain(): Promise<void> {
       blocked = false;
       // Une requête interrompue a pu arriver au serveur : l'action n'est plus retirable.
       startedGroups.add(entry.group);
+      const sentIn = generation;
       try {
         await execute(entry.op);
       } catch (error) {
+        // File vidée pendant l'envoi (un 401 déconnecte) : plus rien à signaler.
+        if (sentIn !== generation) continue;
         if (isTransient(error)) {
           if (error instanceof ApiError) serverAttempts += 1;
           failures += 1;
@@ -271,6 +276,7 @@ export async function clearMutationQueue(): Promise<void> {
   clearTimeout(retryTimer);
   retryTimer = undefined;
   await load();
+  generation += 1;
   entries = [];
   touched.clear();
   for (const group of [...waiters.keys()]) finishGroup(group);
