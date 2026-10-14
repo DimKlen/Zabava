@@ -1,0 +1,42 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "base": {
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://yavjdvphnsnpgchfjpah.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_dvNp121nMs8hbde9Bulv9A_SEoLFeUo",
+        "EXPO_PUBLIC_DEEPLINK_SCHEME": "zabava"
+      }
+    },
+    "development": {
+      "extends": "base",
+      "developmentClient": true,
+      "distribution": "internal",
+      "environment": "development"
+    },
+    "preview": {
+      "extends": "base",
+      "distribution": "internal",
+      "environment": "preview",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "extends": "base",
+      "environment": "production",
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "track": "internal"
+      },
+      "ios": {}
+    }
+  }
+}
