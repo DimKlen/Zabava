@@ -28,6 +28,7 @@ import com.zabava.api.me.dto.MeDtos.PatchTitleRequest;
 import com.zabava.api.me.dto.MeDtos.Profile;
 import com.zabava.api.me.dto.MeDtos.ProfileUpdate;
 import com.zabava.api.me.dto.MeDtos.ProvidersUpdate;
+import com.zabava.api.me.dto.MeDtos.PushTokenDeletion;
 import com.zabava.api.me.dto.MeDtos.PushTokenRequest;
 import com.zabava.api.me.dto.MeDtos.Upcoming;
 import com.zabava.api.me.dto.MeDtos.WatchlistItem;
@@ -118,6 +119,13 @@ public class MeController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void pushToken(CurrentUser user, @Valid @RequestBody PushTokenRequest request) {
         profiles.savePushToken(user.id(), request);
+    }
+
+    /** Déconnexion : l'appareil ne reçoit plus les notifications de ce compte. */
+    @DeleteMapping("/push-token")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePushToken(CurrentUser user, @Valid @RequestBody PushTokenDeletion request) {
+        profiles.deletePushToken(user.id(), request.expoToken());
     }
 
     /** Suppression du compte et de toutes ses données (obligatoire pour l'App Store). */

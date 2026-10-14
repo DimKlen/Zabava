@@ -181,6 +181,13 @@ describe('rechargement de Ma liste', () => {
     expect(invalidate).toHaveBeenCalledTimes(1);
     invalidate.mockRestore();
   });
+
+  it('À venir est rechargé avec Ma liste', async () => {
+    queryClient.setQueryData(['upcoming', 'all'], { events: [], noDate: [] });
+    toggleInList(dune);
+    await flush();
+    expect(queryClient.getQueryState(['upcoming', 'all'])?.isInvalidated).toBe(true);
+  });
 });
 
 describe('setMovieWatched', () => {

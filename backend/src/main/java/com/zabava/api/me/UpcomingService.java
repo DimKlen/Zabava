@@ -18,6 +18,8 @@ import com.zabava.api.catalog.TitleStore;
 import com.zabava.api.catalog.TitleStore.Arrival;
 import com.zabava.api.catalog.TitleStore.EpisodeRow;
 import com.zabava.api.catalog.TitleStore.TitleRow;
+import com.zabava.api.catalog.dto.CatalogDtos.Availability;
+import com.zabava.api.catalog.dto.CatalogDtos.Provider;
 import com.zabava.api.catalog.dto.CatalogDtos.TitleLite;
 import com.zabava.api.common.ApiException;
 import com.zabava.api.common.MediaType;
@@ -91,6 +93,7 @@ public class UpcomingService {
                 .filter(t -> t.type().isSeries() && "following".equals(userTitles.get(t.id()).status()))
                 .toList();
         Map<Long, Instant> watched = library.watched(prefs.userId(), series.stream().map(TitleRow::id).toList());
+        Map<Long, Availability> offers = store.offers(series.stream().map(TitleRow::id).toList(), prefs.region());
         LocalDate today = LocalDate.now(clock.withZone(zone));
         for (TitleRow title : series) {
             List<EpisodeRow> episodes = store.episodes(title.id()).stream().filter(e -> e.season() > 0).toList();
@@ -102,7 +105,8 @@ public class UpcomingService {
                 if (watched.containsKey(e.id()) || !inRange(date, from, to)) continue;
                 if (e.airstamp() != null && e.airstamp().isBefore(clock.instant())) continue;
                 events.add(new UpcomingEvent(
-                        date, "episode", lite(title), e.season(), e.number(), e.airstamp(), title.network()));
+                        date, "episode", lite(title), e.season(), e.number(), e.airstamp(),
+                        platform(offers.get(title.id()), prefs.providerIds(), title.network())));
             }
             // Série en production sans épisode daté : « Saison {n+1} annoncée, date à venir ».
             if (!hasFutureDate && !Boolean.TRUE.equals(title.ended())) {
@@ -116,6 +120,18 @@ public class UpcomingService {
                 .thenComparing(UpcomingEvent::airstamp, Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(e -> e.title().title(), Comparator.nullsLast(Comparator.naturalOrder())));
         return new Upcoming(events, noDate);
+    }
+
+    /**
+     * Tag d'un épisode : l'abonnement chez une de mes plateformes, sinon le premier abonnement,
+     * sinon la chaîne d'origine (même règle que le badge des séries, specs/docs/01 §5).
+     */
+    static String platform(Availability availability, List<Integer> mine, String network) {
+        List<Provider> sub = availability == null ? List.of() : availability.sub();
+        return sub.stream().filter(p -> mine.contains(p.id())).findFirst()
+                .or(() -> sub.stream().findFirst())
+                .map(Provider::name)
+                .orElse(network);
     }
 
     /** Date locale de diffusion : l'heure exacte TVmaze si connue, sinon la date TMDB. */

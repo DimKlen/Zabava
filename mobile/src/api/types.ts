@@ -62,7 +62,7 @@ export interface paths {
     get?: never;
     put?: never;
     post: operations['pushToken'];
-    delete?: never;
+    delete: operations['deletePushToken'];
     options?: never;
     head?: never;
     patch?: never;
@@ -648,6 +648,9 @@ export interface components {
       /** Format: int32 */
       total?: number;
     };
+    PushTokenDeletion: {
+      expoToken: string;
+    };
   };
   responses: never;
   parameters: never;
@@ -757,6 +760,28 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': components['schemas']['PushTokenRequest'];
+      };
+    };
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  deletePushToken: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PushTokenDeletion'];
       };
     };
     responses: {

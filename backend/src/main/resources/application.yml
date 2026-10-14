@@ -28,6 +28,11 @@ zabava:
     api-key: ${OMDB_API_KEY:}
   tvmaze:
     base-url: ${TVMAZE_BASE_URL:https://api.tvmaze.com}
+  expo:
+    base-url: ${EXPO_PUSH_BASE_URL:https://exp.host}
+    access-token: ${EXPO_ACCESS_TOKEN:}
+  jobs:
+    enabled: ${ZABAVA_JOBS_ENABLED:true}
 
 springdoc:
   api-docs:

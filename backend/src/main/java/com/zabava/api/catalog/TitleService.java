@@ -189,11 +189,19 @@ public class TitleService {
      * épisodes si {@code withEpisodes}. Renvoie la ligne {@code titles}.
      */
     public TitleRow ensure(TitleRef ref, Prefs prefs, boolean withEpisodes) {
+        return ensure(ref, prefs, withEpisodes, TITLE_TTL);
+    }
+
+    /**
+     * Comme {@link #ensure(TitleRef, Prefs, boolean)}, avec une ancienneté maximale choisie :
+     * les tâches de nuit rechargent ce qui a plus de 20 h, pour ne pas sauter un jour.
+     */
+    public TitleRow ensure(TitleRef ref, Prefs prefs, boolean withEpisodes, Duration maxAge) {
         String tmdbType = ref.type().tmdbType();
         Optional<TitleRow> existing = store.find(tmdbType, ref.tmdbId());
-        boolean fresh = existing.map(r -> r.updatedAt().isAfter(clock.instant().minus(TITLE_TTL))).orElse(false);
+        boolean fresh = existing.map(r -> r.updatedAt().isAfter(clock.instant().minus(maxAge))).orElse(false);
         boolean needsEpisodes = withEpisodes && "tv".equals(tmdbType)
-                && existing.map(r -> store.episodesOutdated(r.id(), clock.instant().minus(TITLE_TTL)))
+                && existing.map(r -> store.episodesOutdated(r.id(), clock.instant().minus(maxAge)))
                         .orElse(true);
         if (fresh && !needsEpisodes) return existing.get();
 
@@ -306,7 +314,7 @@ public class TitleService {
             "buy", "achat");
 
     /** Notes OMDb, rafraîchies si elles ont plus de 7 jours. Une panne d'OMDb n'empêche pas la fiche. */
-    private TitleRow refreshRatings(TitleRow row) {
+    public TitleRow refreshRatings(TitleRow row) {
         boolean stale = row.ratingsUpdatedAt() == null
                 || row.ratingsUpdatedAt().isBefore(clock.instant().minus(RATINGS_TTL));
         if (!stale || row.imdbId() == null || !omdb.enabled()) return row;

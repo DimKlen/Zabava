@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /** Configuration externe (variables d'environnement de specs/docs/11 §6). */
 @ConfigurationProperties(prefix = "zabava")
-public record AppProperties(Supabase supabase, Tmdb tmdb, Omdb omdb, Tvmaze tvmaze) {
+public record AppProperties(Supabase supabase, Tmdb tmdb, Omdb omdb, Tvmaze tvmaze, Expo expo, Jobs jobs) {
 
     /**
      * @param url URL du projet Supabase (Admin API pour DELETE /me)
@@ -20,4 +20,10 @@ public record AppProperties(Supabase supabase, Tmdb tmdb, Omdb omdb, Tvmaze tvma
     public record Omdb(String baseUrl, String apiKey) {}
 
     public record Tvmaze(String baseUrl) {}
+
+    /** @param accessToken jeton EXPO_ACCESS_TOKEN (facultatif : sécurité renforcée des envois) */
+    public record Expo(String baseUrl, String accessToken) {}
+
+    /** @param enabled tâches planifiées actives (coupées dans les tests) */
+    public record Jobs(boolean enabled) {}
 }

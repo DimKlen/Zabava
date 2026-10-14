@@ -42,10 +42,12 @@ type Props = {
   series: TitleDetail & { type: 'tv' | 'anime' };
   /** Saison passée par la route (carte « prochain épisode », « Commencer »). */
   initialSeason?: number;
+  /** Lien profond d'une notification : ouvre la fiche de cet épisode de `initialSeason`. */
+  initialEpisode?: number;
 };
 
 /** Fiche série ou animé (specs/docs/07 §7.1) : en-tête, suivi, onglets Épisodes / Infos. */
-export function SeriesScreen({ series, initialSeason }: Props) {
+export function SeriesScreen({ series, initialSeason, initialEpisode }: Props) {
   const profile = useProfile().data;
   const myProviderIds = profile?.providerIds ?? [];
   const spoilerProtection = profile?.spoilerProtection ?? false;
@@ -61,6 +63,13 @@ export function SeriesScreen({ series, initialSeason }: Props) {
   const [season, setSeason] = useState<number | undefined>(initialSeason);
   if (season === undefined && episodes && episodes.length > 0) {
     setSeason(defaultSeason(episodes, new Date()));
+  }
+  // Fiche épisode demandée par le lien : ouverte une fois les épisodes chargés.
+  const [pendingEpisode, setPendingEpisode] = useState(initialEpisode);
+  if (pendingEpisode !== undefined && episodes) {
+    const target = episodes.find((e) => e.season === initialSeason && e.number === pendingEpisode);
+    setPendingEpisode(undefined);
+    if (target) setOpenEpisodeId(target.id);
   }
 
   const now = new Date();

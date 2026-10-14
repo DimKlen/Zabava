@@ -56,6 +56,8 @@ public final class MeDtos {
 
     public record ProvidersUpdate(@NotNull @Size(max = 50) List<Integer> providerIds) {}
 
+    public record PushTokenDeletion(@NotBlank String expoToken) {}
+
     public record PushTokenRequest(
             @NotBlank String expoToken, @NotBlank @Pattern(regexp = "ios|android") String platform, String timezone) {}
 
