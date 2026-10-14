@@ -1,9 +1,12 @@
+import { onlineManager } from '@tanstack/react-query';
+
 import type { SeriesEpisode } from '@/domain/series';
 import type { LibrarySeries } from '@/domain/seriesList';
 import type { LibraryMovie } from '@/domain/watchlist';
 import { useUiStore } from '@/store/ui';
 
 import { episodesKey } from '../episodes';
+import { ApiError } from '../http';
 import { addTitle, markEpisodes, patchTitle, removeTitle, unmarkEpisodes } from '../library';
 import {
   currentUserTitle,
@@ -15,6 +18,7 @@ import {
   toggleInList,
   type ListTitle,
 } from '../libraryActions';
+import { clearMutationQueue, pendingCount, startMutationQueue } from '../mutationQueue';
 import { queryClient } from '../queryClient';
 import { watchlistKey } from '../watchlist';
 
@@ -58,7 +62,9 @@ const ids = () => list().map((film) => film.id);
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 const undo = () => useUiStore.getState().undoToast();
 
-beforeEach(() => {
+beforeEach(async () => {
+  onlineManager.setOnline(true);
+  await clearMutationQueue();
   jest.clearAllMocks();
   queryClient.clear();
   queryClient.setQueryData(watchlistKey('movie'), [monteCristo, anatomie]);
@@ -66,8 +72,17 @@ beforeEach(() => {
   useUiStore.setState({ alertsOff: {} });
 });
 
+// Comme au démarrage de l'app : la file repart au retour du réseau.
+let stopQueue: () => void;
+beforeAll(() => {
+  stopQueue = startMutationQueue();
+});
+
 // Arrête le minuteur de 5 s du dernier toast.
-afterAll(() => useUiStore.getState().hideToast());
+afterAll(() => {
+  stopQueue();
+  useUiStore.getState().hideToast();
+});
 
 describe('toggleInList', () => {
   it('ajoute à Ma liste sans attendre le serveur, puis envoie la requête', async () => {
@@ -110,7 +125,7 @@ describe('toggleInList', () => {
   });
 
   it('restaure l’état d’avant si le serveur refuse', async () => {
-    jest.mocked(addTitle).mockRejectedValueOnce(new Error('500'));
+    jest.mocked(addTitle).mockRejectedValueOnce(new ApiError(422, 'POST /me/titles'));
 
     toggleInList(dune);
     await flush();
@@ -198,8 +213,10 @@ describe('setMovieWatched', () => {
     await flush();
     expect(currentUserTitle(film)?.status).toBe('watched');
     expect(useUiStore.getState().toast?.message).toBe('Marqué comme vu');
+    // Date du tap, et non de l'envoi (la requête peut partir plus tard, hors ligne).
     expect(patchTitle).toHaveBeenCalledWith('movie-1', {
       status: 'watched',
+      watchedAt: currentUserTitle(film)?.watchedAt,
       notificationsEnabled: undefined,
     });
 
@@ -217,6 +234,7 @@ describe('setMovieWatched', () => {
     await flush();
     expect(addTitle).toHaveBeenCalledWith(693134, 'movie', 'watched', {
       notificationsEnabled: true,
+      watchedAt: currentUserTitle(dune)?.watchedAt,
     });
   });
 });
@@ -273,7 +291,10 @@ describe('séries', () => {
     await flush();
     expect(watchedIds()).toEqual([11, 12, 13]);
     expect(ficheEpisodes().find((e) => e.id === 13)?.watchedAt).toBeDefined();
-    expect(markEpisodes).toHaveBeenCalledWith([13]);
+    expect(markEpisodes).toHaveBeenCalledWith(
+      [13],
+      ficheEpisodes().find((e) => e.id === 13)?.watchedAt,
+    );
 
     undo();
     await flush();
@@ -381,6 +402,68 @@ describe('séries', () => {
     });
     expect(markEpisodes).toHaveBeenCalledWith([11], T1);
     expect(markEpisodes).toHaveBeenCalledWith([12], T2);
+  });
+
+  describe('hors ligne', () => {
+    const settle = async () => {
+      for (let i = 0; i < 10; i += 1) await flush();
+    };
+
+    it('coche 3 épisodes en mode avion, puis tout part au retour du réseau, sans doublon', async () => {
+      onlineManager.setOnline(false);
+      const pilot = [episode(13, 3), episode(14, 4), episode(15, 5)];
+      queryClient.setQueryData(watchlistKey('tv'), [
+        { ...bear, episodes: [...bearEpisodes, ...pilot.slice(1)] },
+      ]);
+      for (const ep of pilot) setEpisodesWatched(bearTitle, [ep], true);
+      await settle();
+
+      // Résultat visible tout de suite, rien n'est parti.
+      expect(watchedIds()).toEqual([11, 12, 13, 14, 15]);
+      expect(markEpisodes).not.toHaveBeenCalled();
+      expect(pendingCount()).toBe(3);
+
+      onlineManager.setOnline(true);
+      await settle();
+
+      expect(jest.mocked(markEpisodes).mock.calls.map(([ids]) => ids)).toEqual([[13], [14], [15]]);
+      expect(pendingCount()).toBe(0);
+      expect(useUiStore.getState().toast?.message).not.toBe("Impossible d'enregistrer, réessaie");
+    });
+
+    it('« Annuler » une action pas encore envoyée la retire de la file, sans requête', async () => {
+      onlineManager.setOnline(false);
+      setEpisodesWatched(bearTitle, [episode(13, 3)], true);
+      await settle();
+      undo();
+      await settle();
+      onlineManager.setOnline(true);
+      await settle();
+
+      expect(series()).toEqual([bear]);
+      expect(markEpisodes).not.toHaveBeenCalled();
+      expect(unmarkEpisodes).not.toHaveBeenCalled();
+      expect(pendingCount()).toBe(0);
+    });
+
+    it('garde le cochage à l’écran et en file si le réseau coupe pendant l’envoi', async () => {
+      jest.useFakeTimers({ doNotFake: ['setImmediate'] });
+      jest.mocked(markEpisodes).mockRejectedValueOnce(new TypeError('Network request failed'));
+      setEpisodesWatched(bearTitle, [episode(13, 3)], true);
+      await settle();
+
+      expect(watchedIds()).toEqual([11, 12, 13]);
+      expect(pendingCount()).toBe(1);
+      expect(useUiStore.getState().toast?.message).toBe('Épisode marqué comme vu');
+
+      // Nouvel essai après le délai.
+      jest.advanceTimersByTime(2_000);
+      await settle();
+      expect(markEpisodes).toHaveBeenCalledTimes(2);
+      expect(pendingCount()).toBe(0);
+      expect(watchedIds()).toEqual([11, 12, 13]);
+      jest.useRealTimers();
+    });
   });
 });
 

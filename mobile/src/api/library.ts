@@ -19,11 +19,15 @@ export async function addTitle(
   await api('/me/titles', { method: 'POST', body: { tmdbId, type, status, ...extras } });
 }
 
+/** Champs modifiables d'un titre de la liste. `watchedAt` : moment du tap (file hors ligne). */
+export type TitlePatch = {
+  status?: UserTitle['status'];
+  watchedAt?: string;
+  notificationsEnabled?: boolean;
+};
+
 /** Change le statut ou les alertes d'un titre de la liste (`PATCH /me/titles/{id}`). */
-export async function patchTitle(
-  titleId: string,
-  patch: { status?: UserTitle['status']; notificationsEnabled?: boolean },
-) {
+export async function patchTitle(titleId: string, patch: TitlePatch) {
   await api(`/me/titles/${encodeURIComponent(titleId)}`, { method: 'PATCH', body: patch });
 }
 
