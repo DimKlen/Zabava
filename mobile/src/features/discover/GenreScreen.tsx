@@ -1,11 +1,12 @@
 import { CaretLeftIcon, FilmStripIcon } from 'phosphor-react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { flattenPages, useGenreTitles } from '@/api/discover';
 import { Button } from '@/components/Button';
-import { LoadError } from '@/components/LoadError';
+import { LoadError, showsLoadError } from '@/components/LoadError';
 import { PosterGrid } from '@/components/PosterGrid';
+import { Text } from '@/components/Text';
 import { genreCountLabel, genreLabel, type GenreKey } from '@/domain/advancedSearch';
 import type { MediaType } from '@/domain/types';
 import { goBack } from '@/lib/navigation';
@@ -48,10 +49,10 @@ export function GenreScreen({ type, genre }: Props) {
           ) : null}
         </View>
       </View>
-      {query.isPending ? (
-        <GridSkeleton paddingTop={8} />
-      ) : query.isError ? (
+      {showsLoadError(query) ? (
         <LoadError onRetry={() => void query.refetch()} />
+      ) : !query.data ? (
+        <GridSkeleton paddingTop={8} />
       ) : (
         <PosterGrid
           data={titles}

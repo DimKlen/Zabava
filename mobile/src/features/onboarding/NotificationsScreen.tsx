@@ -7,11 +7,12 @@ import {
   type Icon,
 } from 'phosphor-react-native';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useProfile, updateProfile } from '@/api/profile';
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { NOTIFICATIONS_OFF } from '@/domain/onboarding';
 import { registerPushToken, requestNotificationPermission } from '@/lib/notifications';
 import { colors } from '@/theme/tokens';

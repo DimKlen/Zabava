@@ -1,10 +1,11 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { CastMember } from '@/api/titles';
 import { GradientFill } from '@/components/GradientFill';
 import { HorizontalCarousel } from '@/components/HorizontalCarousel';
+import { Text } from '@/components/Text';
 import { initials } from '@/domain/initials';
 import { tmdbImage } from '@/lib/tmdb';
 import { colors } from '@/theme/tokens';

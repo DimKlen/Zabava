@@ -20,6 +20,7 @@ import {
   setupOnlineManager,
   shouldPersistQuery,
 } from '@/api/queryClient';
+import { startMutationQueue } from '@/api/mutationQueue';
 import { initSession } from '@/api/session';
 import { ActionSheetHost } from '@/components/ActionSheet';
 import { DialogHost } from '@/components/Dialog';
@@ -46,6 +47,8 @@ export default function RootLayout() {
   const ready = fontsLoaded || fontError !== null;
 
   useEffect(() => initSession(), []);
+  // Écritures faites hors ligne ou avant la fermeture de l'app : envoyées dès que possible.
+  useEffect(() => startMutationQueue(), []);
 
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync();

@@ -11,6 +11,7 @@ import {
 
 import { api } from './http';
 import { toMediaType } from './mappers';
+import { whenSettled } from './mutationQueue';
 import type { components } from './types';
 
 type ApiUpcoming = components['schemas']['Upcoming'];
@@ -73,6 +74,8 @@ export function useUpcoming(filter: UpcomingFilter) {
   return useQuery({
     queryKey: upcomingKey(filter),
     queryFn: async () => {
+      // Après les écritures en file : sinon le rechargement les effacerait de l'écran.
+      await whenSettled();
       const today = new Date();
       const to = new Date(today.getFullYear(), today.getMonth(), today.getDate() + UPCOMING_DAYS);
       return toUpcomingData(

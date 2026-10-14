@@ -1,10 +1,11 @@
 import { MagnifyingGlassIcon } from 'phosphor-react-native';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 
 import { searchRows, useSearch, type PersonResult, type TitleResult } from '@/api/search';
 import { Button } from '@/components/Button';
-import { LoadError } from '@/components/LoadError';
+import { LoadError, showsLoadError } from '@/components/LoadError';
 import { SkeletonSearchRow } from '@/components/Skeleton';
+import { Text } from '@/components/Text';
 import { UnderlineTabs } from '@/components/UnderlineTabs';
 import { SEARCH_TABS, type SearchTab } from '@/domain/search';
 import { colors } from '@/theme/tokens';
@@ -45,7 +46,7 @@ export function SearchResults({
   const rows = searchRows(search.data?.pages);
 
   let body;
-  if (typing || search.isPending) {
+  if (typing || (!search.data && !showsLoadError(search))) {
     body = (
       <View style={styles.skeletons}>
         {Array.from({ length: SKELETON_ROWS }, (_, i) => (
@@ -53,7 +54,7 @@ export function SearchResults({
         ))}
       </View>
     );
-  } else if (search.isError) {
+  } else if (showsLoadError(search)) {
     body = <LoadError onRetry={() => void search.refetch()} />;
   } else if (rows.length === 0) {
     body = (

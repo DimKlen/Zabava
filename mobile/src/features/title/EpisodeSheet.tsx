@@ -1,12 +1,13 @@
 import { Image } from 'expo-image';
 import { CheckIcon, EyeIcon, XIcon } from 'phosphor-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { ListTitle } from '@/api/libraryActions';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Button } from '@/components/Button';
 import { GradientFill } from '@/components/GradientFill';
 import { ImdbBadge } from '@/components/RatingChips';
+import { Text } from '@/components/Text';
 import { ToastHost } from '@/components/Toast';
 import { episodeCode, formatRating } from '@/domain/format';
 import { isAired, type SeriesEpisode } from '@/domain/series';

@@ -1,10 +1,11 @@
 import type { Icon } from 'phosphor-react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
 import { Button } from './Button';
+import { Text } from './Text';
 
 type Props = {
   icon: Icon;

@@ -4,6 +4,7 @@ import type { SeriesEpisode } from '@/domain/series';
 
 import { api } from './http';
 import { toSeriesEpisodes } from './mappers';
+import { whenSettled } from './mutationQueue';
 import type { components } from './types';
 
 type ApiEpisode = components['schemas']['Episode'];
@@ -17,8 +18,11 @@ export const episodesKey = (type: 'tv' | 'anime', tmdbId: number) =>
 export function useEpisodes(type: 'tv' | 'anime', tmdbId: number) {
   return useQuery<SeriesEpisode[]>({
     queryKey: episodesKey(type, tmdbId),
-    queryFn: async () =>
-      toSeriesEpisodes(await api<ApiEpisode[]>(`/titles/${type}/${tmdbId}/episodes`)),
+    queryFn: async () => {
+      // Après les écritures en file : sinon le rechargement les effacerait de l'écran.
+      await whenSettled();
+      return toSeriesEpisodes(await api<ApiEpisode[]>(`/titles/${type}/${tmdbId}/episodes`));
+    },
     staleTime: FIVE_MINUTES,
   });
 }

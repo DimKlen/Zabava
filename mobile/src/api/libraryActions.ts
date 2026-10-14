@@ -12,7 +12,7 @@ import { hapticLight } from '@/lib/haptics';
 import { showToast, useUiStore } from '@/store/ui';
 
 import { episodesKey } from './episodes';
-import { addTitle, markEpisodes, patchTitle, removeTitle, unmarkEpisodes } from './library';
+import { cancelGroup, enqueue, SAVE_FAILED, type Op } from './mutationQueue';
 import { queryClient } from './queryClient';
 import { titleKey, type TitleDetail } from './titles';
 import { watchlistKey } from './watchlist';
@@ -34,7 +34,6 @@ export type ListTitle = {
 
 type ListEntry = LibraryMovie | LibrarySeries;
 
-const SAVE_FAILED = "Impossible d'enregistrer, réessaie";
 const EMPTY_AVAILABILITY: Availability = { sub: [], rent: [], buy: [] };
 
 // ─── Cache ─────────────────────────────────────────────────────────────────
@@ -184,71 +183,51 @@ function applyEpisodes(title: ListTitle, states: EpisodeStates): void {
 /**
  * Requêtes qui font passer le serveur de `from` à `to`. `restore` : « Annuler » d'un
  * retrait, qui renvoie les dates d'origine pour remettre le titre exactement comme avant.
+ * Les dates viennent du tap, pas de l'envoi : un film vu hors ligne garde sa vraie date.
  */
-async function sync(
+function sync(
   title: ListTitle,
   from: UserTitle | undefined,
   to: UserTitle | undefined,
   restore = false,
-) {
-  if (!to) {
-    if (from) await removeTitle(title.id);
-    return;
-  }
+): Op[] {
+  if (!to) return from ? [{ kind: 'remove', titleId: title.id }] : [];
   if (!from) {
-    await addTitle(title.tmdbId, title.type, to.status, {
-      notificationsEnabled: to.notificationsEnabled,
-      ...(restore ? { addedAt: to.addedAt, watchedAt: to.watchedAt } : {}),
-    });
-    return;
+    return [
+      {
+        kind: 'add',
+        tmdbId: title.tmdbId,
+        type: title.type,
+        status: to.status,
+        extras: {
+          notificationsEnabled: to.notificationsEnabled,
+          ...(restore ? { addedAt: to.addedAt } : {}),
+          ...(restore || to.status === 'watched' ? { watchedAt: to.watchedAt } : {}),
+        },
+      },
+    ];
   }
   const status = from.status !== to.status ? to.status : undefined;
   const notificationsEnabled =
     from.notificationsEnabled !== to.notificationsEnabled ? to.notificationsEnabled : undefined;
-  if (status !== undefined || notificationsEnabled !== undefined) {
-    await patchTitle(title.id, { status, notificationsEnabled });
-  }
+  if (status === undefined && notificationsEnabled === undefined) return [];
+  const watchedAt = status === 'watched' ? to.watchedAt : undefined;
+  return [{ kind: 'patch', titleId: title.id, patch: { status, watchedAt, notificationsEnabled } }];
 }
 
 /** Recoche des épisodes avec leur date d'origine (une requête par date). */
-async function remark(states: EpisodeStates): Promise<void> {
+function remark(states: EpisodeStates): Op[] {
   const byDate = new Map<string, number[]>();
   for (const [id, watchedAt] of states) {
     if (watchedAt) byDate.set(watchedAt, [...(byDate.get(watchedAt) ?? []), id]);
   }
-  for (const [watchedAt, ids] of byDate) await markEpisodes(ids, watchedAt);
+  return [...byDate].map(([watchedAt, episodeIds]) => ({ kind: 'mark', episodeIds, watchedAt }));
 }
 
-// Une file par titre : un ajout suivi d'un « Annuler » arrive au serveur dans l'ordre.
-const queues = new Map<string, Promise<void>>();
-// Requêtes en cours par type : Ma liste n'est rechargée qu'une fois toutes terminées,
-// pour qu'un rechargement n'écrase pas une action pas encore envoyée.
-const pending = new Map<MediaType, number>();
-
-/** Ma liste et les épisodes des fiches du type : rechargés ensemble. */
+/** Ma liste et les épisodes des fiches du type. */
 const isTypeQuery = (type: MediaType) => (query: { queryKey: readonly unknown[] }) =>
   (query.queryKey[0] === 'watchlist' || query.queryKey[0] === 'episodes') &&
   query.queryKey[1] === type;
-
-function enqueue(title: ListTitle, request: () => Promise<void>): Promise<void> {
-  const next = (queues.get(title.id) ?? Promise.resolve()).catch(() => undefined).then(request);
-  queues.set(title.id, next);
-  pending.set(title.type, (pending.get(title.type) ?? 0) + 1);
-
-  const settle = () => {
-    if (queues.get(title.id) === next) queues.delete(title.id);
-    const left = (pending.get(title.type) ?? 1) - 1;
-    pending.set(title.type, left);
-    // À venir dépend aussi de la liste (titres suivis, films À voir, épisodes vus).
-    if (left === 0) {
-      void queryClient.invalidateQueries({
-        predicate: (query) => isTypeQuery(title.type)(query) || query.queryKey[0] === 'upcoming',
-      });
-    }
-  };
-  next.then(settle, settle);
-  return next;
-}
 
 /**
  * Interrompt un rechargement en cours : à sa fin, il écraserait la mise à jour optimiste.
@@ -266,18 +245,22 @@ type Step<S> = {
   /** Remet le cache dans l'état d'avant. */
   restore: (saved: S) => void;
   /** Requêtes vers le nouvel état, puis (Annuler) de retour à l'état d'avant. */
-  send: (saved: S) => Promise<void>;
-  sendBack: (saved: S) => Promise<void>;
+  send: (saved: S) => Op[];
+  sendBack: (saved: S) => Op[];
   message: string;
   undoable: boolean;
 };
 
-/** Applique le changement tout de suite (deux taps rapides voient déjà le résultat du premier). */
+/**
+ * Applique le changement tout de suite (deux taps rapides voient déjà le résultat du
+ * premier) et met les requêtes en file : hors ligne, elles partent au retour du réseau.
+ */
 function run<S>({ title, apply, restore, send, sendBack, message, undoable }: Step<S>): void {
   cancelRefetch(title);
   const saved = apply();
 
-  enqueue(title, () => send(saved)).catch(() => {
+  const forward = enqueue(title.type, send(saved));
+  forward.done.catch(() => {
     restore(saved);
     showToast(SAVE_FAILED);
   });
@@ -285,7 +268,9 @@ function run<S>({ title, apply, restore, send, sendBack, message, undoable }: St
   const undo = () => {
     cancelRefetch(title);
     restore(saved);
-    enqueue(title, () => sendBack(saved)).catch(() => {
+    // Pas encore envoyée (hors ligne) : on la retire de la file, sans requête inverse.
+    if (cancelGroup(forward.group)) return;
+    enqueue(title.type, sendBack(saved)).done.catch(() => {
       void queryClient.invalidateQueries({ predicate: isTypeQuery(title.type) });
       showToast(SAVE_FAILED);
     });
@@ -332,10 +317,10 @@ function change({ title, next, message, undoable }: Change): void {
       applyEpisodes(title, episodes);
     },
     send: ({ snapshot }) => sync(title, snapshotUserTitle(snapshot), next),
-    sendBack: async ({ snapshot, episodes }) => {
-      await sync(title, next, snapshotUserTitle(snapshot), true);
-      await remark(episodes);
-    },
+    sendBack: ({ snapshot, episodes }) => [
+      ...sync(title, next, snapshotUserTitle(snapshot), true),
+      ...remark(episodes),
+    ],
   });
 }
 
@@ -423,6 +408,8 @@ type EpisodesSaved = {
   previous: EpisodeStates;
   /** Série ajoutée par ce cochage (elle était hors liste). */
   followed?: UserTitle;
+  /** Moment du cochage, envoyé au serveur (la requête peut partir plus tard). */
+  at: string;
 };
 
 function episodesMessage(count: number, watched: boolean): string {
@@ -463,34 +450,26 @@ export function setEpisodesWatched(
         title,
         new Map(ids.map((id) => [id, watched ? (previous.get(id) ?? now) : undefined])),
       );
-      return { snapshot, previous, followed };
+      return { snapshot, previous, followed, at: now };
     },
     restore: ({ snapshot, previous }) => {
       restoreTitle(title, snapshot);
       applyEpisodes(title, previous);
     },
-    send: async ({ followed }) => {
-      if (!watched) {
-        await unmarkEpisodes(ids);
-        return;
-      }
-      await markEpisodes(ids);
+    send: ({ followed, at }) => {
+      if (!watched) return [{ kind: 'unmark', episodeIds: ids }];
+      const ops: Op[] = [{ kind: 'mark', episodeIds: ids, watchedAt: at }];
       // Le serveur suit la série avec les alertes actives : on reprend le choix local.
       if (followed && !followed.notificationsEnabled) {
-        await patchTitle(title.id, { notificationsEnabled: false });
+        ops.push({ kind: 'patch', titleId: title.id, patch: { notificationsEnabled: false } });
       }
+      return ops;
     },
-    sendBack: async ({ previous, followed }) => {
-      if (followed) {
-        await removeTitle(title.id);
-        return;
-      }
-      if (watched) {
-        const unseen = ids.filter((id) => !previous.get(id));
-        if (unseen.length > 0) await unmarkEpisodes(unseen);
-        return;
-      }
-      await remark(previous);
+    sendBack: ({ previous, followed }) => {
+      if (followed) return [{ kind: 'remove', titleId: title.id }];
+      if (!watched) return remark(previous);
+      const unseen = ids.filter((id) => !previous.get(id));
+      return unseen.length > 0 ? [{ kind: 'unmark', episodeIds: unseen }] : [];
     },
   });
 }

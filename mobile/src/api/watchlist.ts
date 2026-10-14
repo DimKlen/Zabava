@@ -6,6 +6,7 @@ import type { LibraryMovie } from '@/domain/watchlist';
 
 import { api } from './http';
 import { toAvailability, toSeriesEpisodes, toUserTitle } from './mappers';
+import { whenSettled } from './mutationQueue';
 import type { components } from './types';
 
 type WatchlistItem = components['schemas']['WatchlistItem'];
@@ -50,8 +51,11 @@ export function toLibrarySeries(item: WatchlistItem, type: 'tv' | 'anime'): Libr
   };
 }
 
-const fetchWatchlist = (type: MediaType) =>
-  api<WatchlistItem[]>('/me/watchlist', { query: { type } });
+// Après les écritures en file : sinon le rechargement les effacerait de l'écran.
+async function fetchWatchlist(type: MediaType) {
+  await whenSettled();
+  return api<WatchlistItem[]>('/me/watchlist', { query: { type } });
+}
 
 export function movieWatchlistQuery() {
   return queryOptions({

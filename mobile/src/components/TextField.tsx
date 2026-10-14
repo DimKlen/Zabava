@@ -12,6 +12,8 @@ import {
 import { colors, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
+import { MAX_FONT_SCALE } from './Text';
+
 type Props = Omit<TextInputProps, 'style' | 'placeholderTextColor'> & {
   /** 42 dans la recherche et la recherche avancée. */
   height: number;
@@ -36,6 +38,7 @@ export function TextField({
     <View style={[styles.wrapper, { height }, style]}>
       <TextInput
         ref={ref}
+        maxFontSizeMultiplier={MAX_FONT_SCALE}
         onFocus={(event) => {
           setFocused(true);
           onFocus?.(event);

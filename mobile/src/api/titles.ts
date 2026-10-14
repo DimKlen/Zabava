@@ -5,6 +5,7 @@ import type { Availability, MediaType, UserTitle } from '@/domain/types';
 import { toPosterTitle, type PosterTitle } from './catalog';
 import { api } from './http';
 import { toAvailability, toMediaType, toUserTitle } from './mappers';
+import { whenSettled } from './mutationQueue';
 import type { components } from './types';
 
 type ApiTitleDetail = components['schemas']['TitleDetail'];
@@ -132,8 +133,11 @@ export function toTitleDetail(
 export function useTitle(type: MediaType, tmdbId: number) {
   return useQuery({
     queryKey: titleKey(type, tmdbId),
-    queryFn: async () =>
-      toTitleDetail(await api<ApiTitleDetail>(`/titles/${type}/${tmdbId}`), type, tmdbId),
+    queryFn: async () => {
+      // Le statut de la fiche suit les écritures en file.
+      await whenSettled();
+      return toTitleDetail(await api<ApiTitleDetail>(`/titles/${type}/${tmdbId}`), type, tmdbId);
+    },
     staleTime: DAY,
   });
 }

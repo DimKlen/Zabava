@@ -1,9 +1,10 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { flattenPages, useAdvancedResults } from '@/api/discover';
 import { Button } from '@/components/Button';
-import { LoadError } from '@/components/LoadError';
+import { LoadError, showsLoadError } from '@/components/LoadError';
 import { PosterGrid } from '@/components/PosterGrid';
+import { Text } from '@/components/Text';
 import type { AdvancedFilters } from '@/domain/advancedSearch';
 import { resultsCountLabel } from '@/domain/search';
 import { colors } from '@/theme/tokens';
@@ -28,10 +29,10 @@ export function AdvancedResults({ filters, onEdit, onExit }: Props) {
   const total = results.data?.pages[0]?.total;
 
   let body;
-  if (results.isPending) {
-    body = <GridSkeleton paddingTop={4} />;
-  } else if (results.isError) {
+  if (showsLoadError(results)) {
     body = <LoadError onRetry={() => void results.refetch()} />;
+  } else if (!results.data) {
+    body = <GridSkeleton paddingTop={4} />;
   } else {
     body = (
       <PosterGrid

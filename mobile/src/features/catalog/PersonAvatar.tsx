@@ -1,7 +1,8 @@
 import { Image } from 'expo-image';
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { GradientFill } from '@/components/GradientFill';
+import { Text } from '@/components/Text';
 import { initials } from '@/domain/initials';
 import { tmdbImage } from '@/lib/tmdb';
 import { colors } from '@/theme/tokens';

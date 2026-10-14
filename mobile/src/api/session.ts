@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { create } from 'zustand';
 
 import { setUnauthorizedHandler } from './http';
+import { clearMutationQueue } from './mutationQueue';
 import { clearQueryCache } from './queryClient';
 import { isSupabaseConfigured, supabase } from './supabase';
 
@@ -54,6 +55,7 @@ export async function signOut(): Promise<void> {
     .auth.signOut({ scope: 'local' })
     .catch(() => undefined);
   useSessionStore.getState().setSession(null);
+  await clearMutationQueue();
   await clearQueryCache();
   router.replace('/login');
 }

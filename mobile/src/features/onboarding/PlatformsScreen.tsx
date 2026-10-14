@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native'
 
 import { useRegionProviders } from '@/api/catalog';
 import { useProfile, useSetProviders } from '@/api/profile';
-import { LoadError } from '@/components/LoadError';
+import { LoadError, showsLoadError } from '@/components/LoadError';
 import { SkeletonBox } from '@/components/Skeleton';
 import { radii } from '@/theme/tokens';
 
@@ -51,7 +51,7 @@ export function PlatformsScreen() {
           text="On les met en avant et on te prévient quand un film de ta liste y arrive."
           textMarginBottom={24}
         />
-        {providers.isError ? (
+        {showsLoadError(providers) ? (
           <LoadError onRetry={() => void providers.refetch()} />
         ) : (
           <View style={styles.grid}>

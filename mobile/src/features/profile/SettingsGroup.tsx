@@ -1,7 +1,8 @@
 import type { Icon } from 'phosphor-react-native';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { colors, radii } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
 

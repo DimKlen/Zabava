@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { CheckIcon, PlusIcon } from 'phosphor-react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import type { PosterBadge } from '@/domain/badge';
@@ -14,6 +14,7 @@ import { fonts, typography } from '@/theme/typography';
 
 import { GradientFill } from './GradientFill';
 import { PressableScale } from './PressableScale';
+import { Text } from './Text';
 
 type Props = {
   title: Pick<Title, 'id' | 'title' | 'posterPath'>;

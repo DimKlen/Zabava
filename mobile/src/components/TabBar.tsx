@@ -6,11 +6,13 @@ import {
   CompassIcon,
   UserCircleIcon,
 } from 'phosphor-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
+
+import { Text } from './Text';
 
 /** Ordre, libellés et icônes — specs/docs/03 › TabBar. */
 export const TAB_ITEMS: Record<string, { label: string; icon: Icon }> = {

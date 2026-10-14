@@ -1,8 +1,9 @@
 import { ChecksIcon } from 'phosphor-react-native';
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { Text } from '@/components/Text';
 import type { SeasonProgress } from '@/domain/series';
 import { easeTiming } from '@/lib/animation';
 import { colors, durations, radii } from '@/theme/tokens';

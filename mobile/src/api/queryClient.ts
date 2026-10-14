@@ -11,7 +11,10 @@ export const persistMaxAge = SEVEN_DAYS;
 export const queryClient = new QueryClient({
   defaultOptions: {
     // gcTime ≥ maxAge : sinon les requêtes persistées seraient purgées avant restauration.
-    queries: { gcTime: SEVEN_DAYS, retry: 1 },
+    // networkMode 'always' : hors ligne, une requête sans cache échoue (« Impossible de
+    // charger » + « Réessayer ») au lieu de rester en pause sur un écran vide ; avec du
+    // cache, l'écran garde ses données. Le retour du réseau relance les requêtes périmées.
+    queries: { gcTime: SEVEN_DAYS, retry: 1, networkMode: 'always' },
   },
 });
 
@@ -20,11 +23,26 @@ export const queryPersister = createAsyncStoragePersister({
   key: 'zabava.query-cache',
 });
 
-// Requêtes gardées hors ligne (specs/docs/10 §3) ; les fiches suivront à l'étape 5.
+// Requêtes gardées hors ligne (specs/docs/10 §3).
 const PERSISTED_ROOTS = new Set(['profile', 'watchlist', 'upcoming']);
+// Fiche et épisodes : seulement pour les titres de Ma liste.
+const LIST_TITLE_ROOTS = new Set(['title', 'episodes']);
+
+/** Le titre est-il dans Ma liste (cache) ? Un animé peut être ouvert sous « tv ». */
+function isInList(type: unknown, tmdbId: unknown): boolean {
+  const types = type === 'movie' ? ['movie'] : ['tv', 'anime'];
+  return types.some((listType) =>
+    queryClient
+      .getQueryData<{ tmdbId: number }[]>(['watchlist', listType])
+      ?.some((item) => item.tmdbId === tmdbId),
+  );
+}
 
 export function shouldPersistQuery(query: Query): boolean {
-  return query.state.status === 'success' && PERSISTED_ROOTS.has(String(query.queryKey[0]));
+  if (query.state.status !== 'success') return false;
+  const [root, type, tmdbId] = query.queryKey;
+  if (PERSISTED_ROOTS.has(String(root))) return true;
+  return LIST_TITLE_ROOTS.has(String(root)) && isInList(type, tmdbId);
 }
 
 /** Branche onlineManager sur NetInfo (appelé une fois au démarrage). */

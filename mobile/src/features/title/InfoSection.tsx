@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import type { InfoRow } from '@/domain/movieDetail';
 import { colors } from '@/theme/tokens';
 import { typography } from '@/theme/typography';

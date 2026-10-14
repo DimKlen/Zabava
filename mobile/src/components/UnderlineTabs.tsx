@@ -2,7 +2,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
   type StyleProp,
   type ViewStyle,
@@ -10,6 +9,8 @@ import {
 
 import { colors, spacing } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
+
+import { Text } from './Text';
 
 export type TabOption<K extends string> = { key: K; label: string };
 

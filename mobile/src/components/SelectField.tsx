@@ -1,10 +1,12 @@
 import type { Icon } from 'phosphor-react-native';
 import { CaretDownIcon, CheckIcon } from 'phosphor-react-native';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { openActionSheet } from '@/store/ui';
 import { colors, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
+
+import { Text } from './Text';
 
 export type SelectOption<V extends string> = { value: V; label: string };
 

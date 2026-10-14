@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
 import { useUiStore } from '@/store/ui';
 import { colors, durations, radii } from '@/theme/tokens';
@@ -6,6 +6,7 @@ import { fonts } from '@/theme/typography';
 
 import { BottomSheet, SheetHandle } from './BottomSheet';
 import { Button } from './Button';
+import { Text } from './Text';
 
 /**
  * Hôte global de l'ActionSheet, monté une fois dans app/_layout.tsx.

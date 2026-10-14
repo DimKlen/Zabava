@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import type { WeekDay } from '@/domain/upcoming';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';

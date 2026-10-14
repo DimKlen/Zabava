@@ -1,10 +1,12 @@
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { Provider } from '@/domain/types';
 import { tmdbImage } from '@/lib/tmdb';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
+
+import { Text } from './Text';
 
 type Props = {
   provider: Provider;

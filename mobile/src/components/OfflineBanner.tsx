@@ -1,9 +1,11 @@
 import { useNetInfo } from '@react-native-community/netinfo';
 import { CloudSlashIcon } from 'phosphor-react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
+
+import { Text } from './Text';
 
 /** Bandeau hors ligne, affiché dans les onglets quand `isConnected === false`. */
 export function OfflineBanner() {

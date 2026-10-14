@@ -1,16 +1,17 @@
 import { useScrollToTop } from 'expo-router';
 import { CalendarBlankIcon, CaretDownIcon, CaretUpIcon } from 'phosphor-react-native';
 import { useRef, useState, type ReactElement } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useUpcoming, type UpcomingData, type UpcomingFilter } from '@/api/upcoming';
 import { Chip } from '@/components/Chip';
 import { EmptyState } from '@/components/EmptyState';
-import { LoadError } from '@/components/LoadError';
+import { LoadError, showsLoadError } from '@/components/LoadError';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SkeletonBox } from '@/components/Skeleton';
+import { Text } from '@/components/Text';
 import {
   groupUpcoming,
   jumpTarget,
@@ -90,7 +91,7 @@ export function UpcomingScreen() {
 
   if (query.data) {
     children.push(...content(query.data, groups, recordOffset));
-  } else if (query.isError) {
+  } else if (showsLoadError(query)) {
     children.push(<LoadError key="error" onRetry={() => void query.refetch()} />);
   } else {
     children.push(

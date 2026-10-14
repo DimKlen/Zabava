@@ -1,9 +1,11 @@
 import { SmileyIcon, SmileySadIcon } from 'phosphor-react-native';
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { formatPercent, formatRating, formatVotes } from '@/domain/format';
 import { colors, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
+
+import { Text } from './Text';
 
 type Props = {
   imdbRating?: number;

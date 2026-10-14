@@ -2,12 +2,13 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BellRingingIcon, BellSlashIcon, CaretLeftIcon } from 'phosphor-react-native';
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GradientFill } from '@/components/GradientFill';
 import { Poster } from '@/components/Poster';
 import { RoundIconButton } from '@/components/RoundIconButton';
+import { Text } from '@/components/Text';
 import { tmdbImage } from '@/lib/tmdb';
 import { goBack } from '@/lib/navigation';
 import { colors, durations } from '@/theme/tokens';

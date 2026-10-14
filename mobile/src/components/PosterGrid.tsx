@@ -1,4 +1,4 @@
-import type { ReactElement, Ref } from 'react';
+import { createElement, isValidElement, useState, type ReactElement, type Ref } from 'react';
 import {
   FlatList,
   StyleSheet,
@@ -14,11 +14,22 @@ import { spacing } from '@/theme/tokens';
 const COLUMNS = 3;
 const GAP = spacing.gridGap;
 const SIDE = spacing.screenX;
+/** Affiches en 2:3, titre superposé : la hauteur d'une rangée est connue d'avance. */
+const POSTER_RATIO = 3 / 2;
 
 /** Largeur d'une affiche de grille : (largeur − 32 − 16) / 3 ≈ 114,7 à 390 pt. */
 export function useGridPosterWidth(): number {
   const { width } = useWindowDimensions();
   return (width - SIDE * 2 - GAP * (COLUMNS - 1)) / COLUMNS;
+}
+
+/**
+ * Place d'une rangée sans la mesurer (`getItemLayout`) : `index` est celui de la rangée
+ * (numColumns), `top` le padding haut plus la hauteur de l'en-tête.
+ */
+export function gridRowLayout(index: number, posterWidth: number, top: number) {
+  const length = posterWidth * POSTER_RATIO + GAP;
+  return { index, length, offset: top + length * index };
 }
 
 type Props<T> = Omit<
@@ -40,12 +51,23 @@ export function PosterGrid<T>({
   paddingTop = 0,
   paddingBottom = 0,
   contentContainerStyle,
+  ListHeaderComponent,
   ...rest
 }: Props<T>) {
   const posterWidth = useGridPosterWidth();
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const header = ListHeaderComponent ? (
+    <View onLayout={(event) => setHeaderHeight(event.nativeEvent.layout.height)}>
+      {isValidElement(ListHeaderComponent)
+        ? ListHeaderComponent
+        : createElement(ListHeaderComponent)}
+    </View>
+  ) : null;
   return (
     <FlatList
       {...rest}
+      ListHeaderComponent={header}
+      getItemLayout={(_data, index) => gridRowLayout(index, posterWidth, paddingTop + headerHeight)}
       numColumns={COLUMNS}
       columnWrapperStyle={styles.row}
       ItemSeparatorComponent={RowGap}

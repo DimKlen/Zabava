@@ -1,8 +1,10 @@
 import { CaretDownIcon, CaretUpIcon } from 'phosphor-react-native';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
 import { colors, spacing } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
+
+import { Text } from './Text';
 
 type Props = {
   title: string;

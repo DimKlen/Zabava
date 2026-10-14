@@ -1,9 +1,10 @@
 import { ClockCounterClockwiseIcon, XIcon } from 'phosphor-react-native';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useTrendingToday, type TitleResult } from '@/api/search';
 import { Button } from '@/components/Button';
 import { SkeletonSearchRow } from '@/components/Skeleton';
+import { Text } from '@/components/Text';
 import { useRecentSearches } from '@/store/recentSearches';
 import { colors } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
