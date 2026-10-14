@@ -1,7 +1,8 @@
 import { Image } from 'expo-image';
 import { CheckIcon } from 'phosphor-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import type { Provider } from '@/domain/types';
 import { tmdbImage } from '@/lib/tmdb';
 import { colors, radii } from '@/theme/tokens';

@@ -1,6 +1,6 @@
 import { DotsThreeIcon } from 'phosphor-react-native';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { useEpisodes } from '@/api/episodes';
 import { setTitleAlerts } from '@/api/libraryActions';
@@ -11,6 +11,7 @@ import { LoadError } from '@/components/LoadError';
 import { RatingChips } from '@/components/RatingChips';
 import { RoundIconButton } from '@/components/RoundIconButton';
 import { SkeletonBox } from '@/components/Skeleton';
+import { Text } from '@/components/Text';
 import { UnderlineTabs } from '@/components/UnderlineTabs';
 import { seriesPlatform } from '@/domain/badge';
 import { defaultSeason, seriesInfo } from '@/domain/series';

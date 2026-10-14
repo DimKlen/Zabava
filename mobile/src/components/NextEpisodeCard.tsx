@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { CheckIcon, PauseCircleIcon, TrashIcon } from 'phosphor-react-native';
 import { useEffect, useRef } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { BackHandler, Pressable, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -14,6 +14,7 @@ import { colors, durations, motion, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
 import { GradientFill } from './GradientFill';
+import { Text } from './Text';
 
 // Seuils du swipe — specs/docs/03 › NextEpisodeCard.
 export const SWIPE_OPEN = -150;
@@ -80,6 +81,16 @@ export function NextEpisodeCard({
   useEffect(() => {
     if (!isOpen) translateX.set(withTiming(0, easeTiming(durations.swipeReturn)));
   }, [isOpen, translateX]);
+
+  // Retour Android : referme la carte avant de quitter l'écran (docs/04 §3).
+  useEffect(() => {
+    if (!isOpen) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      setSwipedCard(null);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [isOpen, setSwipedCard]);
 
   const open = () => setSwipedCard(id);
   const close = () => {

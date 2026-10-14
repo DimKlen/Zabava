@@ -5,8 +5,9 @@ import {
   TelevisionSimpleIcon,
   type Icon,
 } from 'phosphor-react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import type { MovieState } from '@/domain/availability';
 import type { MovieStatus } from '@/domain/movieDetail';
 import { colors, radii } from '@/theme/tokens';

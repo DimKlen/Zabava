@@ -1,6 +1,7 @@
-import { Linking, StyleSheet, Text, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 
 import { ProviderLogo } from '@/components/ProviderLogo';
+import { Text } from '@/components/Text';
 import { mineFirst } from '@/domain/availability';
 import type { Availability, Provider } from '@/domain/types';
 import { showToast } from '@/store/ui';

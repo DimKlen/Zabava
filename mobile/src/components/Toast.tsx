@@ -1,6 +1,6 @@
 import { useSegments } from 'expo-router';
 import { useEffect } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,6 +10,7 @@ import { colors, durations, motion, radii, shadows } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
 import { Button } from './Button';
+import { Text } from './Text';
 
 /** Barre d'onglets (58 + zone sûre ≥ 26) + 12 d'écart = 96 à 390 pt. */
 const TAB_BAR_CONTENT = 58;

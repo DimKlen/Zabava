@@ -1,10 +1,11 @@
 import { Image } from 'expo-image';
 import { CaretRightIcon, CheckIcon, PlusIcon } from 'phosphor-react-native';
 import { memo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { PersonResult, TitleResult } from '@/api/search';
 import { GradientFill } from '@/components/GradientFill';
+import { Text } from '@/components/Text';
 import { personRowSubtitle, titleRowSubtitle } from '@/domain/search';
 import { tmdbImage } from '@/lib/tmdb';
 import { colors, radii } from '@/theme/tokens';

@@ -1,8 +1,9 @@
 import { XIcon } from 'phosphor-react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { usePersonSuggestions } from '@/api/search';
+import { Text } from '@/components/Text';
 import { TextField } from '@/components/TextField';
 import { ACTOR_QUERY_MIN, MAX_ACTOR_SUGGESTIONS, type Actor } from '@/domain/advancedSearch';
 import { SEARCH_DEBOUNCE_MS } from '@/domain/search';

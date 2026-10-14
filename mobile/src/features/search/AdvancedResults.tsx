@@ -1,9 +1,10 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { flattenPages, useAdvancedResults } from '@/api/discover';
 import { Button } from '@/components/Button';
 import { LoadError } from '@/components/LoadError';
 import { PosterGrid } from '@/components/PosterGrid';
+import { Text } from '@/components/Text';
 import type { AdvancedFilters } from '@/domain/advancedSearch';
 import { resultsCountLabel } from '@/domain/search';
 import { colors } from '@/theme/tokens';

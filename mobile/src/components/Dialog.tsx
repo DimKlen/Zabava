@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Modal, StyleSheet, Text, View } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -9,6 +9,7 @@ import { colors, durations, radii, shadows, spacing } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
 
 import { Button } from './Button';
+import { Text } from './Text';
 
 /**
  * Hôte global du dialogue, au-dessus de tout (y compris des sheets).

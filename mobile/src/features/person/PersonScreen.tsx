@@ -1,6 +1,6 @@
 import { CaretLeftIcon } from 'phosphor-react-native';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { usePerson, type PersonDetail } from '@/api/discover';
@@ -9,6 +9,7 @@ import { Chip } from '@/components/Chip';
 import { LoadError } from '@/components/LoadError';
 import { PosterGrid } from '@/components/PosterGrid';
 import { SkeletonBox } from '@/components/Skeleton';
+import { Text } from '@/components/Text';
 import { UnderlineTabs } from '@/components/UnderlineTabs';
 import {
   birthLine,

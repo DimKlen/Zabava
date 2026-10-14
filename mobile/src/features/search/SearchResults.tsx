@@ -1,10 +1,11 @@
 import { MagnifyingGlassIcon } from 'phosphor-react-native';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 
 import { searchRows, useSearch, type PersonResult, type TitleResult } from '@/api/search';
 import { Button } from '@/components/Button';
 import { LoadError } from '@/components/LoadError';
 import { SkeletonSearchRow } from '@/components/Skeleton';
+import { Text } from '@/components/Text';
 import { UnderlineTabs } from '@/components/UnderlineTabs';
 import { SEARCH_TABS, type SearchTab } from '@/domain/search';
 import { colors } from '@/theme/tokens';

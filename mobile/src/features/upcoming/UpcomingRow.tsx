@@ -1,10 +1,11 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { GradientFill } from '@/components/GradientFill';
 import { PressableScale } from '@/components/PressableScale';
 import { Tag } from '@/components/Tag';
+import { Text } from '@/components/Text';
 import type { UpcomingTitle } from '@/domain/upcoming';
 import { tmdbImage } from '@/lib/tmdb';
 import { colors, motion, radii } from '@/theme/tokens';

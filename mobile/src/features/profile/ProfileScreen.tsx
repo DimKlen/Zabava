@@ -11,7 +11,7 @@ import {
   TranslateIcon,
 } from 'phosphor-react-native';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRegionProviders } from '@/api/catalog';
@@ -23,6 +23,7 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { SkeletonBox } from '@/components/Skeleton';
 import { Switch } from '@/components/Switch';
 import { Tag } from '@/components/Tag';
+import { Text } from '@/components/Text';
 import { LANGUAGES, REGIONS } from '@/domain/onboarding';
 import {
   DIGEST_HOURS,

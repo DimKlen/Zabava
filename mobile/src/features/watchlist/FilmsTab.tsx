@@ -1,7 +1,7 @@
 import { router, useScrollToTop } from 'expo-router';
 import { FilmStripIcon } from 'phosphor-react-native';
 import { useRef, useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 
 import { removeFromList } from '@/api/libraryActions';
 import { useProfile } from '@/api/profile';
@@ -11,6 +11,7 @@ import { LoadError } from '@/components/LoadError';
 import { Poster } from '@/components/Poster';
 import { PosterGrid } from '@/components/PosterGrid';
 import { SkeletonPoster } from '@/components/Skeleton';
+import { Text } from '@/components/Text';
 import { posterBadge } from '@/domain/badge';
 import {
   filmCountLabel,

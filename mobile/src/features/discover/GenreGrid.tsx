@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { GradientFill } from '@/components/GradientFill';
 import { PressableScale } from '@/components/PressableScale';
+import { Text } from '@/components/Text';
 import { GENRES } from '@/domain/advancedSearch';
 import type { MediaType } from '@/domain/types';
 import { colors, motion, radii, spacing } from '@/theme/tokens';

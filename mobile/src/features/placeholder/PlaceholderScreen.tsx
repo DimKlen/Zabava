@@ -1,7 +1,8 @@
 import { Link, type Href } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Text } from '@/components/Text';
 import { colors, spacing } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 

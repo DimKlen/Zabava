@@ -1,7 +1,9 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { colors, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
+
+import { Text } from './Text';
 
 type Option<K extends string> = { key: K; label: string };
 

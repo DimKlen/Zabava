@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { useRegionProviders } from '@/api/catalog';
 import { useProfile } from '@/api/profile';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Button } from '@/components/Button';
 import { SkeletonBox } from '@/components/Skeleton';
+import { Text } from '@/components/Text';
 import { colors, durations, radii } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 

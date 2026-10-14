@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { PlayIcon } from 'phosphor-react-native';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import { GradientFill } from '@/components/GradientFill';
+import { Text } from '@/components/Text';
 import { tmdbImage } from '@/lib/tmdb';
 import { showToast } from '@/store/ui';
 import { colors, radii } from '@/theme/tokens';

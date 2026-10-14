@@ -2,7 +2,6 @@ import type { Icon } from 'phosphor-react-native';
 import {
   Pressable,
   StyleSheet,
-  Text,
   type StyleProp,
   type TextStyle,
   type ViewStyle,
@@ -10,6 +9,8 @@ import {
 
 import { colors, opacity, radii, spacing } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
+
+import { Text } from './Text';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'icon';
 

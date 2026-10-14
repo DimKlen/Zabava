@@ -1,7 +1,7 @@
 import { useScrollToTop } from 'expo-router';
 import { TelevisionSimpleIcon } from 'phosphor-react-native';
 import { useRef, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useProfile } from '@/api/profile';
 import { useSeriesWatchlist } from '@/api/watchlist';
@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { LoadError } from '@/components/LoadError';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SkeletonCard } from '@/components/Skeleton';
+import { Text } from '@/components/Text';
 import { groupSeries, type SeriesGroup } from '@/domain/seriesList';
 import { openDiscover } from '@/lib/discover';
 import { useUiStore } from '@/store/ui';

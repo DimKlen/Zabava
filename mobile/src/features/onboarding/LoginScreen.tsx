@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import { AppleLogoIcon, GoogleLogoIcon, PopcornIcon } from 'phosphor-react-native';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { signInWithApple, signInWithGoogle, type SignInResult } from '@/api/auth';
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { openWebPage, PRIVACY_URL, TERMS_URL } from '@/lib/links';
 import { colors, radii } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';

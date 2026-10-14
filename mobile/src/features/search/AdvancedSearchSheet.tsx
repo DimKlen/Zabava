@@ -1,13 +1,14 @@
 import Slider from '@react-native-community/slider';
 import { XIcon } from 'phosphor-react-native';
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { useAdvancedCount } from '@/api/discover';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { SelectField } from '@/components/SelectField';
+import { Text } from '@/components/Text';
 import {
   ADVANCED_SORTS,
   COUNT_DEBOUNCE_MS,

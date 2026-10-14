@@ -1,12 +1,13 @@
 import { useQueries, type UseQueryResult } from '@tanstack/react-query';
 import { useScrollToTop } from 'expo-router';
 import { memo, useRef, useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 
 import { discoverListQuery, type CatalogTitle } from '@/api/discover';
 import { HorizontalCarousel } from '@/components/HorizontalCarousel';
 import { LoadError } from '@/components/LoadError';
 import { SkeletonPoster } from '@/components/Skeleton';
+import { Text } from '@/components/Text';
 import { DISCOVER_SECTIONS, type DiscoverSection } from '@/domain/discover';
 import type { MediaType } from '@/domain/types';
 import { colors, spacing } from '@/theme/tokens';

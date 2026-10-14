@@ -15,7 +15,7 @@ import {
   TrashIcon,
 } from 'phosphor-react-native';
 import { useState, type ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
@@ -37,6 +37,7 @@ import { Segmented } from '@/components/Segmented';
 import { SelectField } from '@/components/SelectField';
 import { SkeletonCard, SkeletonPoster, SkeletonSearchRow } from '@/components/Skeleton';
 import { Switch } from '@/components/Switch';
+import { Text } from '@/components/Text';
 import { UnderlineTabs } from '@/components/UnderlineTabs';
 import { episodeCode } from '@/domain/format';
 import { openActionSheet, openDialog, showToast } from '@/store/ui';

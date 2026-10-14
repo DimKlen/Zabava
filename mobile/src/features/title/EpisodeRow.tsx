@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { CheckButton } from '@/components/CheckButton';
 import { GradientFill } from '@/components/GradientFill';
+import { Text } from '@/components/Text';
 import { isAired, type SeriesEpisode } from '@/domain/series';
 import { episodeRowMeta } from '@/domain/seriesDetail';
 import { episodeTitle } from '@/domain/seriesList';

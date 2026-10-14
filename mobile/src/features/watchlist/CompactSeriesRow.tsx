@@ -1,7 +1,8 @@
 import { CaretRightIcon } from 'phosphor-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Poster } from '@/components/Poster';
+import { Text } from '@/components/Text';
 import type { SeriesSection } from '@/domain/series';
 import { compactRowLabel, type SeriesEntry } from '@/domain/seriesList';
 import { colors, radii } from '@/theme/tokens';

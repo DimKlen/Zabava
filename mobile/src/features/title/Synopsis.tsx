@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import {
   StyleSheet,
-  Text,
   View,
   type NativeSyntheticEvent,
   type TextLayoutEventData,
 } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { colors } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 

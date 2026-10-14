@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { usePopularTitles, type PosterTitle } from '@/api/catalog';
 import { useUpdateProfile } from '@/api/profile';
@@ -9,6 +9,7 @@ import { LoadError } from '@/components/LoadError';
 import { Poster } from '@/components/Poster';
 import { PosterGrid } from '@/components/PosterGrid';
 import { SkeletonPoster } from '@/components/Skeleton';
+import { Text } from '@/components/Text';
 import { UnderlineTabs } from '@/components/UnderlineTabs';
 import { addedCountLabel } from '@/domain/onboarding';
 import type { MediaType } from '@/domain/types';
