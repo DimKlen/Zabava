@@ -15,6 +15,9 @@ jest.mock('@/lib/notifications', () => ({
   ensureNotificationPermission: jest.fn(),
   unregisterPushToken: jest.fn(),
 }));
+jest.mock('@react-native-community/netinfo', () => ({
+  useNetInfo: () => ({ isConnected: true }),
+}));
 jest.mock('expo-constants', () => ({
   __esModule: true,
   default: { expoConfig: { version: '1.0.0' } },

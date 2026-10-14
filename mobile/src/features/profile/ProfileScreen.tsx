@@ -18,6 +18,7 @@ import { useRegionProviders } from '@/api/catalog';
 import { useProfile, type Profile } from '@/api/profile';
 import { Button } from '@/components/Button';
 import { LoadError } from '@/components/LoadError';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SkeletonBox } from '@/components/Skeleton';
 import { Switch } from '@/components/Switch';
@@ -53,6 +54,7 @@ export function ProfileScreen() {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
+      <OfflineBanner />
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenHeader title="Profil" />
         {profile ? (
