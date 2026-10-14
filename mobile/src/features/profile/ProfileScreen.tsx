@@ -74,7 +74,8 @@ export function ProfileScreen() {
 
 function ProfileContent({ profile }: { profile: Profile }) {
   const [platformsOpen, setPlatformsOpen] = useState(false);
-  const providers = useRegionProviders(profile.region).data ?? [];
+  // Pendant le chargement : rien plutôt qu'un « Aucune » trompeur.
+  const providers = useRegionProviders(profile.region).data;
   const prefs = profile.notificationPrefs;
 
   const pick = <V extends string>(
@@ -141,7 +142,7 @@ function ProfileContent({ profile }: { profile: Profile }) {
             onPress={() => setPlatformsOpen(true)}
           >
             <Text numberOfLines={1} style={styles.platforms}>
-              {platformsSummary(providers, profile.providerIds ?? [])}
+              {providers ? platformsSummary(providers, profile.providerIds ?? []) : ''}
             </Text>
             <CaretRightIcon size={16} color={colors.neutral600} />
           </SettingsRow>

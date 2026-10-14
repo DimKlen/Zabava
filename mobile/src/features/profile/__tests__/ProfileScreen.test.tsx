@@ -141,6 +141,19 @@ describe('ProfileScreen', () => {
     });
   });
 
+  it('pas de « Aucune » pendant le chargement des plateformes', async () => {
+    let resolveProviders: (value: unknown) => void = () => undefined;
+    mockApi.mockImplementation((path) =>
+      path === '/providers'
+        ? new Promise((resolve) => (resolveProviders = resolve))
+        : Promise.resolve(route(path)),
+    );
+    await renderProfile();
+    expect(screen.queryByText('Aucune')).toBeNull();
+    await act(async () => resolveProviders(PROVIDERS));
+    expect(await screen.findByText('Netflix, Crave')).toBeTruthy();
+  });
+
   it('Mes plateformes ouvre la sheet', async () => {
     await renderProfile();
     await fireEvent.press(screen.getByLabelText('Mes plateformes'));
