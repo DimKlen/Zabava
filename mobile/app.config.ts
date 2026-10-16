@@ -7,6 +7,7 @@ const BG = '#161826';
 const config: ExpoConfig = {
   name: 'Zabava',
   slug: 'zabava',
+  owner: 'dimklen',
   scheme: 'zabava',
   version: '1.0.0',
   orientation: 'portrait',
@@ -58,6 +59,7 @@ const config: ExpoConfig = {
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     deeplinkScheme: process.env.EXPO_PUBLIC_DEEPLINK_SCHEME ?? 'zabava',
+    eas: { projectId: 'b7db8a7c-ea84-4aa5-8f42-5c1218ac33f7' },
   },
 };
 
