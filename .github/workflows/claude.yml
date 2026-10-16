@@ -30,6 +30,24 @@ jobs:
         with:
           fetch-depth: 1
 
+      # Outils du projet, pour que Claude vérifie ses corrections (mêmes versions que ci.yml).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Installer les dépendances mobiles
+        working-directory: mobile
+        run: npm ci
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
@@ -40,11 +58,7 @@ jobs:
           additional_permissions: |
             actions: read
 
-          # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
-          # prompt: 'Update the pull request description to include a summary of changes.'
-
-          # Optional: Add claude_args to customize behavior and configuration
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
-          # claude_args: '--allowed-tools Bash(gh pr *)'
+          # Typecheck, lint et tests (mobile et backend), comme dans CLAUDE.md.
+          claude_args: >-
+            --allowedTools "Bash(cd:*),Bash(npm test:*),Bash(npm run:*),Bash(npx tsc:*),Bash(npx eslint:*),Bash(npx jest:*),Bash(./gradlew:*),Bash(git diff:*),Bash(git log:*),Bash(git status:*)"
 
