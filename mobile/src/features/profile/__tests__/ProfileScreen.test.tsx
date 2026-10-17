@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { api } from '@/api/http';
 import { queryClient } from '@/api/queryClient';
+import { signOut } from '@/api/session';
 import { ensureNotificationPermission } from '@/lib/notifications';
 import { useUiStore } from '@/store/ui';
 
@@ -34,6 +35,7 @@ jest.mock('expo-constants', () => ({
 }));
 
 const mockApi = api as jest.MockedFunction<typeof api>;
+const mockSignOut = signOut as jest.MockedFunction<typeof signOut>;
 const mockPermission = ensureNotificationPermission as jest.MockedFunction<
   typeof ensureNotificationPermission
 >;
@@ -83,6 +85,13 @@ async function renderProfile() {
     </SafeAreaProvider>,
   );
   await screen.findByText('Dim');
+}
+
+function pressDialogAction(label: string) {
+  useUiStore
+    .getState()
+    .dialog?.actions.find((a) => a.label === label)
+    ?.onPress?.();
 }
 
 beforeEach(async () => {
@@ -151,6 +160,30 @@ describe('ProfileScreen', () => {
       title: 'Supprimer ton compte ?',
       body: "Ta liste, ton suivi d'épisodes et tes réglages seront effacés définitivement.",
     });
+  });
+
+  it('« Supprimer » efface le compte puis la session', async () => {
+    await renderProfile();
+    await fireEvent.press(screen.getByText('Supprimer mon compte'));
+    await act(() => pressDialogAction('Supprimer'));
+    await waitFor(() => expect(mockSignOut).toHaveBeenCalled());
+    expect(mockApi).toHaveBeenCalledWith('/me', { method: 'DELETE' });
+    expect(useUiStore.getState().toast).toBeNull();
+  });
+
+  it('« Supprimer » en échec : toast, la session reste ouverte', async () => {
+    mockApi.mockImplementation(async (path, init) => {
+      if (path === '/me' && init?.method === 'DELETE') throw new Error('réseau');
+      return route(path);
+    });
+    await renderProfile();
+    await fireEvent.press(screen.getByText('Supprimer mon compte'));
+    await act(() => pressDialogAction('Supprimer'));
+    await waitFor(() =>
+      expect(useUiStore.getState().toast?.message).toBe("Impossible d'enregistrer, réessaie"),
+    );
+    expect(mockSignOut).not.toHaveBeenCalled();
+    await act(() => useUiStore.getState().hideToast());
   });
 
   it('pas de « Aucune » pendant le chargement des plateformes', async () => {
