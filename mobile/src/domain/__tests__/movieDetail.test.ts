@@ -70,6 +70,14 @@ describe('Équipe et Infos', () => {
     ]);
   });
 
+  it('rend les réalisateurs cliquables quand les identifiants sont connus', () => {
+    expect(movieCrew(['A', 'B'], [], [1, 2])[0]?.people).toEqual([
+      { id: 1, name: 'A' },
+      { id: 2, name: 'B' },
+    ]);
+    expect(movieCrew(['A', 'B'], [], [1])[0]?.people).toBeUndefined();
+  });
+
   it('affiche la sortie avec la région', () => {
     expect(
       movieInfos(

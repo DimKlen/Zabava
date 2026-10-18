@@ -447,6 +447,7 @@ export interface components {
     };
     Crew: {
       directors?: string[];
+      directorIds?: number[];
       writers?: string[];
       creators?: string[];
       networks?: string[];

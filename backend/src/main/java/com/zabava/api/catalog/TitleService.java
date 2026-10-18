@@ -442,11 +442,13 @@ public class TitleService {
             List<JsonNode> crew = Json.array(d.path("credits"), "crew");
             return new Crew(
                     names(crew, Set.of("Director")),
+                    ids(crew, Set.of("Director")),
                     names(crew, Set.of("Screenplay", "Writer", "Story", "Novel")),
                     List.of(),
                     List.of());
         }
         return new Crew(
+                List.of(),
                 List.of(),
                 List.of(),
                 Json.map(d, "created_by", c -> Json.text(c, "name")).stream().filter(Objects::nonNull).toList(),
@@ -460,6 +462,16 @@ public class TitleService {
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
+    }
+
+    /** Identifiants TMDB, dans le même ordre que {@link #names} (une entrée par nom). */
+    private static List<Integer> ids(List<JsonNode> crew, Set<String> jobs) {
+        java.util.Map<String, Integer> byName = new java.util.LinkedHashMap<>();
+        for (JsonNode c : crew) {
+            String name = Json.text(c, "name");
+            if (name != null && jobs.contains(Json.text(c, "job"))) byName.putIfAbsent(name, c.path("id").asInt());
+        }
+        return List.copyOf(byName.values());
     }
 
     /** Autres volets de la saga, triés par date. */

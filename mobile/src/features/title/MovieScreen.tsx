@@ -30,7 +30,7 @@ export function MovieScreen({ movie }: { movie: TitleDetail }) {
   const localAlertsOff = useUiStore((s) => s.alertsOff[movie.id] ?? false);
   const alertsOn = movie.userTitle ? movie.userTitle.notificationsEnabled : !localAlertsOff;
 
-  const crew = movieCrew(movie.directors, movie.writers);
+  const crew = movieCrew(movie.directors, movie.writers, movie.directorIds);
   const infos = movieInfos(movie, regionName);
   const hasRating = movie.imdbRating !== undefined || movie.rtScore !== undefined;
 

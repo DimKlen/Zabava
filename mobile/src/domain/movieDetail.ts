@@ -42,17 +42,31 @@ export function movieStatus(
   }
 }
 
-export type InfoRow = { key: string; value: string };
+export type InfoRow = {
+  key: string;
+  value: string;
+  /** Personnes cliquables (fiche personne) ; `value` reste le texte de repli. */
+  people?: { id: number; name: string }[];
+};
 
 function rows(entries: [string, string | undefined][]): InfoRow[] {
   return entries.flatMap(([key, value]) => (value ? [{ key, value }] : []));
 }
 
-export function movieCrew(directors: string[], writers: string[]): InfoRow[] {
-  return rows([
-    ['Réalisation', directors.join(', ')],
-    ['Scénario', writers.join(', ')],
-  ]);
+export function movieCrew(
+  directors: string[],
+  writers: string[],
+  directorIds: number[] = [],
+): InfoRow[] {
+  const people = directors.flatMap((name, index) =>
+    directorIds[index] === undefined ? [] : [{ id: directorIds[index], name }],
+  );
+  const clickable = people.length === directors.length ? people : undefined;
+  const director: InfoRow[] =
+    directors.length > 0
+      ? [{ key: 'Réalisation', value: directors.join(', '), people: clickable }]
+      : [];
+  return [...director, ...rows([['Scénario', writers.join(', ')]])];
 }
 
 export type MovieInfoInput = {

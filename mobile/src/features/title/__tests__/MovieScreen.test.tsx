@@ -35,6 +35,7 @@ const base: TitleDetail = {
   availability: { sub: [], rent: [], buy: [] },
   cast: [],
   directors: ['Denis Villeneuve'],
+  directorIds: [137427],
   writers: [],
   creators: [],
   networks: [],

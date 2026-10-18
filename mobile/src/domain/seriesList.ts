@@ -1,5 +1,6 @@
 /** Ma liste › Séries / Animés : sections, ordre et libellés — specs/docs/06 (`vals()` › series). */
 import type { Availability, UserTitle } from './types';
+import { isOnMyPlatforms } from './availability';
 import { episodeCode, formatShortDate } from './format';
 import {
   episodeAirDate,
@@ -49,6 +50,31 @@ export type SeriesGroup<T extends LibrarySeries = LibrarySeries> = {
   kind: SectionKind;
   entries: SeriesEntry<T>[];
 };
+
+export type SeriesFilter = 'all' | 'mine' | 'upcoming';
+
+export const SERIES_FILTERS: readonly { value: SeriesFilter; label: string }[] = [
+  { value: 'all', label: 'Tout' },
+  { value: 'mine', label: 'Sur mes plateformes' },
+  { value: 'upcoming', label: 'Pas encore sorti' },
+];
+
+/** « Pas encore sorti » : aucun épisode n'a encore été diffusé. */
+export function filterSeries<T extends LibrarySeries>(
+  list: readonly T[],
+  filter: SeriesFilter,
+  myProviderIds: readonly number[],
+  now: Date,
+): T[] {
+  switch (filter) {
+    case 'all':
+      return [...list];
+    case 'mine':
+      return list.filter((series) => isOnMyPlatforms(series.availability, myProviderIds));
+    case 'upcoming':
+      return list.filter((series) => seriesInfo(series.episodes, now).aired.length === 0);
+  }
+}
 
 const time = (iso: string) => new Date(iso).getTime();
 

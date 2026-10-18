@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Text';
 import type { InfoRow } from '@/domain/movieDetail';
@@ -45,7 +46,23 @@ export function InfoRows({ rows }: { rows: InfoRow[] }) {
       {rows.map((row) => (
         <View key={row.key} style={styles.row}>
           <Text style={styles.key}>{row.key}</Text>
-          <Text style={styles.value}>{row.value}</Text>
+          {row.people ? (
+            <View style={styles.people}>
+              {row.people.map((person) => (
+                <Pressable
+                  key={person.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={person.name}
+                  onPress={() => router.push(`/person/${person.id}`)}
+                  style={styles.person}
+                >
+                  <Text style={styles.link}>{person.name}</Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.value}>{row.value}</Text>
+          )}
         </View>
       ))}
     </>
@@ -74,5 +91,17 @@ const styles = StyleSheet.create({
     ...typography.label,
     flex: 1,
     color: colors.text,
+  },
+  people: {
+    flex: 1,
+  },
+  person: {
+    minHeight: 44,
+    justifyContent: 'center',
+    marginVertical: -6,
+  },
+  link: {
+    ...typography.label,
+    color: colors.accent,
   },
 });
