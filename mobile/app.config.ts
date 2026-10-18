@@ -21,6 +21,8 @@ const config: ExpoConfig = {
   },
   android: {
     package: 'com.zabava.app',
+    // Sur EAS, variable de fichier ; en local, copie non versionnée.
+    googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
     adaptiveIcon: {
       backgroundColor: BG,
       foregroundImage: './assets/android-icon-foreground.png',
