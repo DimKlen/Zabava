@@ -71,11 +71,15 @@ describe('Équipe et Infos', () => {
   });
 
   it('rend les réalisateurs cliquables quand les identifiants sont connus', () => {
-    expect(movieCrew({ directors: ['A', 'B'], directorIds: [1, 2], writers: [] })[0]?.people).toEqual([
+    expect(
+      movieCrew({ directors: ['A', 'B'], directorIds: [1, 2], writers: [] })[0]?.people,
+    ).toEqual([
       { id: 1, name: 'A' },
       { id: 2, name: 'B' },
     ]);
-    expect(movieCrew({ directors: ['A', 'B'], directorIds: [1], writers: [] })[0]?.people).toBeUndefined();
+    expect(
+      movieCrew({ directors: ['A', 'B'], directorIds: [1], writers: [] })[0]?.people,
+    ).toBeUndefined();
   });
 
   it('affiche la sortie avec la région', () => {

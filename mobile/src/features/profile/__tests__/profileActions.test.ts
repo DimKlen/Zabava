@@ -85,18 +85,20 @@ describe('changeRegionOrLanguage', () => {
 describe('toggleProvider', () => {
   it('coche tout de suite et envoie la nouvelle liste', async () => {
     mockApi.mockResolvedValueOnce(undefined);
-    const done = toggleProvider(230);
-    expect(profile()?.providerIds).toEqual([8, 230]);
+    const done = toggleProvider({ id: 230, name: 'Crave', short: 'C', ids: [230, 231] });
+    expect(profile()?.providerIds).toEqual([8, 230, 231]);
     await done;
     expect(mockApi).toHaveBeenCalledWith('/me/providers', {
       method: 'PUT',
-      body: { providerIds: [8, 230] },
+      body: { providerIds: [8, 230, 231] },
     });
   });
 
   it('échec : revient à la liste d’avant', async () => {
     mockApi.mockRejectedValueOnce(new Error('réseau'));
-    await expect(toggleProvider(8)).resolves.toBe(false);
+    await expect(toggleProvider({ id: 8, name: 'Netflix', short: 'N', ids: [8] })).resolves.toBe(
+      false,
+    );
     expect(profile()?.providerIds).toEqual([8]);
     expect(showToast).toHaveBeenCalled();
   });

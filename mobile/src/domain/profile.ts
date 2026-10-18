@@ -1,5 +1,5 @@
 /** Profil — specs/docs/09 §9.2. */
-import type { Provider } from './types';
+import { isGroupSelected, type ProviderGroup } from './providers';
 
 export type NotificationSwitch = {
   key: 'episodes' | 'cinema' | 'streaming' | 'seasons';
@@ -33,9 +33,9 @@ export function accountLine(email: string | undefined, authProvider: string | un
 
 /** « Netflix, Crave » dans l'ordre des plateformes de la région ; « Aucune » si vide. */
 export function platformsSummary(
-  providers: readonly Provider[],
+  providers: readonly ProviderGroup[],
   selectedIds: readonly number[],
 ): string {
-  const names = providers.filter((p) => selectedIds.includes(p.id)).map((p) => p.name);
+  const names = providers.filter((p) => isGroupSelected(p, selectedIds)).map((p) => p.name);
   return names.length > 0 ? names.join(', ') : 'Aucune';
 }
