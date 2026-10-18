@@ -449,6 +449,7 @@ export interface components {
       directors?: string[];
       directorIds?: number[];
       writers?: string[];
+      writerIds?: number[];
       creators?: string[];
       networks?: string[];
     };

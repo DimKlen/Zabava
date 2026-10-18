@@ -53,20 +53,26 @@ function rows(entries: [string, string | undefined][]): InfoRow[] {
   return entries.flatMap(([key, value]) => (value ? [{ key, value }] : []));
 }
 
-export function movieCrew(
-  directors: string[],
-  writers: string[],
-  directorIds: number[] = [],
-): InfoRow[] {
-  const people = directors.flatMap((name, index) =>
-    directorIds[index] === undefined ? [] : [{ id: directorIds[index], name }],
+function personRow(key: string, names: string[], ids: number[]): InfoRow[] {
+  if (names.length === 0) return [];
+  const people = names.flatMap((name, index) =>
+    ids[index] === undefined ? [] : [{ id: ids[index], name }],
   );
-  const clickable = people.length === directors.length ? people : undefined;
-  const director: InfoRow[] =
-    directors.length > 0
-      ? [{ key: 'Réalisation', value: directors.join(', '), people: clickable }]
-      : [];
-  return [...director, ...rows([['Scénario', writers.join(', ')]])];
+  return [
+    { key, value: names.join(', '), people: people.length === names.length ? people : undefined },
+  ];
+}
+
+export function movieCrew(movie: {
+  directors: string[];
+  directorIds?: number[];
+  writers: string[];
+  writerIds?: number[];
+}): InfoRow[] {
+  return [
+    ...personRow('Réalisation', movie.directors, movie.directorIds ?? []),
+    ...personRow('Scénario', movie.writers, movie.writerIds ?? []),
+  ];
 }
 
 export type MovieInfoInput = {

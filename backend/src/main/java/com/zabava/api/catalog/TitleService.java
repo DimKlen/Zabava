@@ -437,17 +437,21 @@ public class TitleService {
                 .toList();
     }
 
+    private static final Set<String> WRITER_JOBS = Set.of("Screenplay", "Writer", "Story", "Novel");
+
     private static Crew crew(JsonNode d, boolean movie) {
         if (movie) {
             List<JsonNode> crew = Json.array(d.path("credits"), "crew");
             return new Crew(
                     names(crew, Set.of("Director")),
                     ids(crew, Set.of("Director")),
-                    names(crew, Set.of("Screenplay", "Writer", "Story", "Novel")),
+                    names(crew, WRITER_JOBS),
+                    ids(crew, WRITER_JOBS),
                     List.of(),
                     List.of());
         }
         return new Crew(
+                List.of(),
                 List.of(),
                 List.of(),
                 List.of(),

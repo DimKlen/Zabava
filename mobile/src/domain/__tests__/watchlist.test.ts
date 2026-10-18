@@ -40,7 +40,8 @@ describe('Ma liste › Films : mêmes résultats que le prototype', () => {
       'all',
       ['dune3', 'odyssey', 'wicked2', 'obaa', 'sinners', 'avengers', 'f1', 'hailmary', 'monte'],
     ],
-    ['mine', ['sinners', 'hailmary', 'monte']],
+    // Abonnement ou location : le prototype ne comptait que l'abonnement (retour d'usage, issue 26).
+    ['mine', ['wicked2', 'obaa', 'sinners', 'hailmary', 'monte']],
     ['cinema', ['odyssey']],
     ['upcoming', ['dune3', 'avengers']],
   ])('filtre « %s »', (filter, expected) => {

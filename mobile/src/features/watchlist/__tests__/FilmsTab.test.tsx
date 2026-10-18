@@ -75,10 +75,12 @@ describe('FilmsTab', () => {
     expect(screen.getByText('Netflix')).toBeTruthy();
   });
 
-  it('le filtre « Sur mes plateformes » garde les mêmes films que le prototype', async () => {
+  it('le filtre « Sur mes plateformes » garde les films en abonnement ou en location chez moi', async () => {
     await renderTab();
     await fireEvent.press(screen.getByText('Sur mes plateformes'));
     expect(posterTitles()).toEqual([
+      'Wicked : Pour de bon',
+      "Une bataille après l'autre",
       'Pécheurs',
       'Projet Dernière chance',
       'Le Comte de Monte-Cristo',

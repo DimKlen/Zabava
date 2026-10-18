@@ -26,9 +26,11 @@ export function movieState(movie: MovieAvailability, now: Date): MovieState {
   return 'unknown';
 }
 
-/** Au moins un abonnement chez une de mes plateformes (`A.mine`). */
+/** Abonnement ou location chez une de mes plateformes (l'achat n'est plus affiché). */
 export function isOnMyPlatforms(availability: Availability, myProviderIds: readonly number[]) {
-  return availability.sub.some((provider) => myProviderIds.includes(provider.id));
+  return [...availability.sub, ...availability.rent].some((provider) =>
+    myProviderIds.includes(provider.id),
+  );
 }
 
 /**

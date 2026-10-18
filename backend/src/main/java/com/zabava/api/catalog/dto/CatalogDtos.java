@@ -55,6 +55,7 @@ public final class CatalogDtos {
             List<String> directors,
             List<Integer> directorIds,
             List<String> writers,
+            List<Integer> writerIds,
             List<String> creators,
             List<String> networks) {}
 

@@ -48,6 +48,7 @@ export type TitleDetail = {
   directors: string[];
   /** Identifiants TMDB, dans l'ordre de `directors`. */
   directorIds: number[];
+  writerIds: number[];
   writers: string[];
   creators: string[];
   networks: string[];
@@ -124,6 +125,7 @@ export function toTitleDetail(
     cast: toCast(detail.cast),
     directors: detail.crew?.directors ?? [],
     directorIds: detail.crew?.directorIds ?? [],
+    writerIds: detail.crew?.writerIds ?? [],
     writers: detail.crew?.writers ?? [],
     creators: detail.crew?.creators ?? [],
     networks: detail.crew?.networks ?? [],
