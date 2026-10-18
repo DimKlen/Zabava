@@ -15,7 +15,6 @@ type Props = { availability: Availability; myProviderIds: readonly number[] };
 const GROUPS = [
   { key: 'sub', label: 'Abonnement' },
   { key: 'rent', label: 'Location' },
-  { key: 'buy', label: 'Achat' },
 ] as const;
 
 function open(provider: Provider, fallbackLink: string | undefined) {
@@ -24,7 +23,7 @@ function open(provider: Provider, fallbackLink: string | undefined) {
   showToast(`Ouverture de ${provider.name}…`);
 }
 
-/** « Où regarder » : abonnement, location, achat ; mes plateformes en premier et cerclées. */
+/** « Où regarder » : abonnement et location ; mes plateformes en premier et cerclées. */
 export function WhereToWatch({ availability, myProviderIds }: Props) {
   const groups = GROUPS.filter((group) => availability[group.key].length > 0);
 

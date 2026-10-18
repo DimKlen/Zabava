@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { initials } from '@/domain/initials';
+import { simplifyProviders } from '@/domain/providers';
 import type { MediaType, Provider } from '@/domain/types';
 
 import { api } from './http';
@@ -52,7 +53,8 @@ function isDefined<T>(value: T | null): value is T {
 export function useRegionProviders(region: string | undefined) {
   return useQuery({
     queryKey: ['providers', region],
-    queryFn: async () => (await api<ApiProvider[]>('/providers')).map(toProvider).filter(isDefined),
+    queryFn: async () =>
+      simplifyProviders((await api<ApiProvider[]>('/providers')).map(toProvider).filter(isDefined)),
     staleTime: DAY,
     enabled: region !== undefined,
   });

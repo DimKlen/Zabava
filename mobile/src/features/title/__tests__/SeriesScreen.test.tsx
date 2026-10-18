@@ -64,6 +64,7 @@ const bear: TitleDetail & { type: 'tv' } = {
   availability: { sub: [{ id: 337, name: 'Disney+', short: 'D+' }], rent: [], buy: [] },
   cast: [],
   directors: [],
+  directorIds: [],
   writers: [],
   creators: ['Christopher Storer'],
   networks: ['FX'],

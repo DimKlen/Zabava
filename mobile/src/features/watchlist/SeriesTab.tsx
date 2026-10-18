@@ -5,12 +5,19 @@ import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useProfile } from '@/api/profile';
 import { useSeriesWatchlist } from '@/api/watchlist';
+import { Chip } from '@/components/Chip';
 import { EmptyState } from '@/components/EmptyState';
 import { LoadError, showsLoadError } from '@/components/LoadError';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SkeletonCard } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
-import { groupSeries, type SeriesGroup } from '@/domain/seriesList';
+import {
+  SERIES_FILTERS,
+  filterSeries,
+  groupSeries,
+  type SeriesFilter,
+  type SeriesGroup,
+} from '@/domain/seriesList';
 import { openDiscover } from '@/lib/discover';
 import { useUiStore } from '@/store/ui';
 import { colors } from '@/theme/tokens';
@@ -38,6 +45,8 @@ export function SeriesTab({ type }: { type: 'tv' | 'anime' }) {
   const delayDone = useMinimumDelay(MIN_SKELETON_MS);
   const collapsed = useUiStore((s) => s.collapsedSections);
   const toggleSection = useUiStore((s) => s.toggleSection);
+  const [filter, setFilter] = useState<SeriesFilter>('all');
+  const myProviderIds = useProfile().data?.providerIds ?? [];
   const [refreshing, setRefreshing] = useState(false);
   const refresh = async () => {
     setRefreshing(true);
@@ -57,7 +66,8 @@ export function SeriesTab({ type }: { type: 'tv' | 'anime' }) {
     );
   }
 
-  const groups = groupSeries(watchlist.data, new Date());
+  const now = new Date();
+  const groups = groupSeries(filterSeries(watchlist.data, filter, myProviderIds, now), now);
   const hasCards = groups.some((group) => group.key === 'watch');
 
   return (
@@ -74,6 +84,21 @@ export function SeriesTab({ type }: { type: 'tv' | 'anime' }) {
       }
       testID="series-list"
     >
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.chipsScroll}
+        contentContainerStyle={styles.chips}
+      >
+        {SERIES_FILTERS.map((option) => (
+          <Chip
+            key={option.value}
+            label={option.label}
+            active={option.value === filter}
+            onPress={() => setFilter(option.value)}
+          />
+        ))}
+      </ScrollView>
       {hasCards ? (
         <Text style={styles.hint}>
           Coche pour avancer · glisse une carte vers la gauche pour plus d&apos;actions
@@ -140,6 +165,14 @@ const styles = StyleSheet.create({
   skeletons: {
     gap: 8,
     paddingTop: 20,
+    paddingHorizontal: 16,
+  },
+  chipsScroll: {
+    flexGrow: 0,
+  },
+  chips: {
+    gap: 8,
+    paddingTop: 12,
     paddingHorizontal: 16,
   },
   hint: {

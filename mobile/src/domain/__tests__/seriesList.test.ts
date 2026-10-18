@@ -5,9 +5,30 @@ import {
   cardEpisodeLabel,
   compactRowLabel,
   episodeTitle,
+  filterSeries,
   groupSeries,
   remainingLabel,
 } from '../seriesList';
+
+describe('filterSeries', () => {
+  it('Tout garde tout ; les autres filtres ne gardent qu’un sous-ensemble', () => {
+    expect(filterSeries(PROTOTYPE_TV, 'all', [], TODAY)).toHaveLength(PROTOTYPE_TV.length);
+    const [first, ...rest] = PROTOTYPE_TV;
+    const onNetflix = {
+      ...first!,
+      availability: { sub: [{ id: 8, name: 'Netflix', short: 'N' }], rent: [], buy: [] },
+    };
+    const list = [
+      onNetflix,
+      ...rest.map((s) => ({ ...s, availability: { sub: [], rent: [], buy: [] } })),
+    ];
+    expect(filterSeries(list, 'mine', [8], TODAY)).toEqual([onNetflix]);
+    expect(filterSeries(list, 'mine', [], TODAY)).toEqual([]);
+    for (const s of filterSeries(PROTOTYPE_TV, 'upcoming', [], TODAY)) {
+      expect(seriesInfo(s.episodes, TODAY).aired).toHaveLength(0);
+    }
+  });
+});
 
 describe('groupSeries', () => {
   it('Séries du prototype : sections dans l’ordre, vides absentes', () => {

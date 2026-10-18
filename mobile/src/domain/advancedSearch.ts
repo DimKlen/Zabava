@@ -113,13 +113,14 @@ export function removeActor(filters: AdvancedFilters, id: number): AdvancedFilte
   return { ...filters, actors: filters.actors.filter((a) => a.id !== id) };
 }
 
-/** De ≤ À : chaque curseur est borné par l'autre. */
-export function setYearFrom(filters: AdvancedFilters, year: number): AdvancedFilters {
-  return { ...filters, yearFrom: Math.min(Math.round(year), filters.yearTo) };
-}
-
-export function setYearTo(filters: AdvancedFilters, year: number): AdvancedFilters {
-  return { ...filters, yearTo: Math.max(Math.round(year), filters.yearFrom) };
+/** Plage d'années de la piste à deux poignées ; De ≤ À. */
+export function setYears(
+  filters: AdvancedFilters,
+  [from, to]: readonly [number, number],
+): AdvancedFilters {
+  const a = Math.round(from);
+  const b = Math.round(to);
+  return { ...filters, yearFrom: Math.min(a, b), yearTo: Math.max(a, b) };
 }
 
 /** Note arrondie au pas de 0,5. */

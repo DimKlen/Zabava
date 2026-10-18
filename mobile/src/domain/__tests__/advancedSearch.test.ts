@@ -7,8 +7,7 @@ import {
   minRatingLabel,
   removeActor,
   setMinRating,
-  setYearFrom,
-  setYearTo,
+  setYears,
   toggleValue,
   yearsLabel,
 } from '../advancedSearch';
@@ -35,11 +34,11 @@ describe('filtres par défaut', () => {
 });
 
 describe('années', () => {
-  it('De ne dépasse jamais À, et inversement', () => {
+  it('une seule plage : De ≤ À, valeurs arrondies', () => {
     const filters = defaultFilters(NOW);
-    expect(setYearFrom(filters, 2030).yearFrom).toBe(2026);
-    expect(setYearTo({ ...filters, yearFrom: 2000 }, 1980).yearTo).toBe(2000);
-    expect(setYearFrom(filters, 1969.6).yearFrom).toBe(1970);
+    expect(setYears(filters, [2000, 2010])).toMatchObject({ yearFrom: 2000, yearTo: 2010 });
+    expect(setYears(filters, [2030, 2026])).toMatchObject({ yearFrom: 2026, yearTo: 2030 });
+    expect(setYears(filters, [1969.6, 2000]).yearFrom).toBe(1970);
   });
 });
 

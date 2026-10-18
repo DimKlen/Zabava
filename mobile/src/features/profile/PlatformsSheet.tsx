@@ -1,3 +1,4 @@
+import { MagnifyingGlassIcon } from 'phosphor-react-native';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 
@@ -7,6 +8,8 @@ import { BottomSheet } from '@/components/BottomSheet';
 import { Button } from '@/components/Button';
 import { SkeletonBox } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
+import { TextField } from '@/components/TextField';
+import { searchProviders } from '@/domain/providers';
 import { colors, durations, radii } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
@@ -34,6 +37,8 @@ export function PlatformsSheet({ visible, onClose }: Props) {
   // la 4e tuile à la ligne.
   const [gridWidth, setGridWidth] = useState(width - SIDE * 2);
   const tileWidth = Math.floor((gridWidth - GAP * (COLUMNS - 1)) / COLUMNS) - 1;
+  const [query, setQuery] = useState('');
+  const shown = searchProviders(providers.data ?? [], query);
 
   return (
     <BottomSheet
@@ -48,13 +53,25 @@ export function PlatformsSheet({ visible, onClose }: Props) {
         </Text>
         <Button variant="primary" height={36} label="OK" onPress={onClose} />
       </View>
+      <TextField
+        height={42}
+        icon={MagnifyingGlassIcon}
+        value={query}
+        onChangeText={setQuery}
+        placeholder="Rechercher une plateforme"
+        accessibilityLabel="Rechercher une plateforme"
+        autoCorrect={false}
+        returnKeyType="search"
+        style={styles.search}
+      />
       <ScrollView
         style={styles.scroll}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.grid}
         onLayout={(e) => setGridWidth(e.nativeEvent.layout.width)}
       >
         {providers.data
-          ? providers.data.map((provider) => (
+          ? shown.map((provider) => (
               <PlatformTile
                 key={provider.id}
                 provider={provider}
@@ -87,6 +104,9 @@ const styles = StyleSheet.create({
   title: {
     ...typography.section,
     color: colors.text,
+  },
+  search: {
+    marginBottom: 12,
   },
   scroll: {
     flexShrink: 1,

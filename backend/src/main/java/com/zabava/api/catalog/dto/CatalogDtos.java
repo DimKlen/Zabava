@@ -51,7 +51,12 @@ public final class CatalogDtos {
     public record CastMember(int id, String name, String character, String profilePath) {}
 
     /** Équipe (film : réalisation, scénario) ou créateurs (série : création, diffusion). */
-    public record Crew(List<String> directors, List<String> writers, List<String> creators, List<String> networks) {}
+    public record Crew(
+            List<String> directors,
+            List<Integer> directorIds,
+            List<String> writers,
+            List<String> creators,
+            List<String> networks) {}
 
     public record Collection(int id, String name, List<TitleLite> parts) {}
 

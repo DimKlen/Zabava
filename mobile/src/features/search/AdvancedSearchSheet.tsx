@@ -7,6 +7,7 @@ import { useAdvancedCount } from '@/api/discover';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
+import { RangeSlider } from '@/components/RangeSlider';
 import { SelectField } from '@/components/SelectField';
 import { Text } from '@/components/Text';
 import {
@@ -22,8 +23,7 @@ import {
   minRatingLabel,
   removeActor,
   setMinRating,
-  setYearFrom,
-  setYearTo,
+  setYears,
   toggleValue,
   yearsLabel,
   type AdvancedFilters,
@@ -142,32 +142,13 @@ export function AdvancedSearchSheet({ visible, filters, onChange, onClose, onApp
         </Section>
 
         <Section label="Années" value={yearsLabel(filters)}>
-          <View style={styles.sliders}>
-            <Slider
-              accessibilityLabel="De"
-              style={styles.slider}
-              minimumValue={FIRST_YEAR}
-              maximumValue={currentYear}
-              step={1}
-              value={filters.yearFrom}
-              onValueChange={(year) => onChange(setYearFrom(filters, year))}
-              minimumTrackTintColor={colors.accent}
-              maximumTrackTintColor={colors.neutral800}
-              thumbTintColor={colors.accent}
-            />
-            <Slider
-              accessibilityLabel="À"
-              style={styles.slider}
-              minimumValue={FIRST_YEAR}
-              maximumValue={currentYear}
-              step={1}
-              value={filters.yearTo}
-              onValueChange={(year) => onChange(setYearTo(filters, year))}
-              minimumTrackTintColor={colors.accent}
-              maximumTrackTintColor={colors.neutral800}
-              thumbTintColor={colors.accent}
-            />
-          </View>
+          <RangeSlider
+            accessibilityLabel="Années"
+            min={FIRST_YEAR}
+            max={currentYear}
+            value={[filters.yearFrom, filters.yearTo]}
+            onChange={(years) => onChange(setYears(filters, years))}
+          />
         </Section>
 
         <Section label="Note IMDb minimale" value={minRatingLabel(filters.minRating)}>
@@ -313,13 +294,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-  },
-  sliders: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  slider: {
-    flex: 1,
   },
   fields: {
     flexDirection: 'row',
