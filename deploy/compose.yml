@@ -2,9 +2,13 @@
 # Les variables viennent de deploy/.env sur le serveur (jamais commité).
 services:
   api:
+    image: zabava-api:latest
     build: ../backend
     restart: unless-stopped
     env_file: .env
+    environment:
+      # Mémoire bornée pour tenir dans 1 Go avec Caddy et l'OS.
+      JAVA_TOOL_OPTIONS: -Xmx320m -Xss512k -XX:MaxMetaspaceSize=160m -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError
     expose:
       - "8080"
 

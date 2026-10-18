@@ -21,6 +21,9 @@
       "extends": "base",
       "distribution": "internal",
       "environment": "preview",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://151-145-50-138.sslip.io"
+      },
       "android": {
         "buildType": "apk"
       }
@@ -28,6 +31,9 @@
     "production": {
       "extends": "base",
       "environment": "production",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://151-145-50-138.sslip.io"
+      },
       "autoIncrement": true
     }
   },
