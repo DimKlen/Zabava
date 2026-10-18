@@ -12,3 +12,9 @@ jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(() => Promise.resolve()),
   ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
 }));
+
+// Lecteur de bande-annonce : module natif absent de Jest, une simple vue garde ses props.
+jest.mock('react-native-webview', () => {
+  const { View } = jest.requireActual<typeof import('react-native')>('react-native');
+  return { WebView: View };
+});
