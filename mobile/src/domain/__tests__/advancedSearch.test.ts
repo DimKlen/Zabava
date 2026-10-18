@@ -26,7 +26,6 @@ describe('filtres par défaut', () => {
       yearTo: 2026,
       minRating: undefined,
       providers: undefined,
-      lang: undefined,
       maxRuntime: undefined,
       sort: 'pop',
     });
@@ -75,7 +74,6 @@ describe('advancedQuery', () => {
       genres: toggleValue(['action' as const], 'thriller' as const),
       minRating: 7.5,
       availability: 'mine' as const,
-      language: 'ja' as const,
       maxRuntime: '120' as const,
       sort: 'recent' as const,
     };
@@ -87,7 +85,6 @@ describe('advancedQuery', () => {
       yearTo: 2026,
       minRating: 7.5,
       providers: 'mine',
-      lang: 'ja',
       maxRuntime: 120,
       sort: 'recent',
     });

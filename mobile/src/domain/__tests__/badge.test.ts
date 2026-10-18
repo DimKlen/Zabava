@@ -30,6 +30,13 @@ describe('movieState', () => {
     );
   });
 
+  it('sorti en salle avec un simple achat en ligne → toujours au cinéma', () => {
+    const buyOnly = { sub: [], rent: [], buy: [{ id: 7, name: 'Fandango At Home', short: 'FA' }] };
+    expect(
+      movieState({ releaseTheatrical: '2026-10-08', availability: buyOnly }, TODAY),
+    ).toBe('cinema');
+  });
+
   it('sorti aujourd’hui : plus « à venir », mais au cinéma', () => {
     expect(movieState({ ...film('odyssey'), releaseTheatrical: '2026-10-10' }, TODAY)).toBe(
       'cinema',

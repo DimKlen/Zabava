@@ -31,16 +31,6 @@ export function genreLabel(key: string): string | undefined {
   return GENRES.find((genre) => genre.key === key)?.label;
 }
 
-export type LanguageKey = 'all' | 'en' | 'fr' | 'ja' | 'ko' | 'es';
-export const LANGUAGES: readonly { value: LanguageKey; label: string }[] = [
-  { value: 'all', label: 'Toutes' },
-  { value: 'en', label: 'Anglais' },
-  { value: 'fr', label: 'Français' },
-  { value: 'ja', label: 'Japonais' },
-  { value: 'ko', label: 'Coréen' },
-  { value: 'es', label: 'Espagnol' },
-];
-
 /** Durée maximale en minutes (films, ou épisode moyen des séries). */
 export type RuntimeKey = 'all' | '90' | '120' | '150';
 export const RUNTIMES: readonly { value: RuntimeKey; label: string }[] = [
@@ -71,7 +61,6 @@ export type AdvancedFilters = {
   /** 0 = toutes les notes ; pas de 0,5. */
   minRating: number;
   availability: 'all' | 'mine';
-  language: LanguageKey;
   maxRuntime: RuntimeKey;
   sort: AdvancedSort;
 };
@@ -93,7 +82,6 @@ export function defaultFilters(now: Date): AdvancedFilters {
     yearTo: now.getFullYear(),
     minRating: 0,
     availability: 'all',
-    language: 'all',
     maxRuntime: 'all',
     sort: 'pop',
   };
@@ -152,7 +140,6 @@ export type DiscoverQueryParams = {
   yearTo: number;
   minRating?: number;
   providers?: 'mine';
-  lang?: string;
   maxRuntime?: number;
   sort: AdvancedSort;
 };
@@ -169,7 +156,6 @@ export function advancedQuery(filters: AdvancedFilters): DiscoverQueryParams {
     yearTo: filters.yearTo,
     minRating: filters.minRating > 0 ? filters.minRating : undefined,
     providers: filters.availability === 'mine' ? 'mine' : undefined,
-    lang: filters.language === 'all' ? undefined : filters.language,
     maxRuntime: filters.maxRuntime === 'all' ? undefined : Number(filters.maxRuntime),
     sort: filters.sort,
   };
