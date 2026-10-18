@@ -19,9 +19,9 @@ jobs:
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      pull-requests: read
-      issues: read
+      contents: write
+      pull-requests: write
+      issues: write
       id-token: write
       actions: read # Required for Claude to read CI results on PRs
     steps:
@@ -58,7 +58,9 @@ jobs:
           additional_permissions: |
             actions: read
 
-          # Typecheck, lint et tests (mobile et backend), comme dans CLAUDE.md.
+          # Typecheck, lint et tests (mobile et backend), comme dans CLAUDE.md,
+          # puis branche, PR, attente de la CI et fusion si elle est verte.
           claude_args: >-
-            --allowedTools "Bash(cd:*),Bash(npm test:*),Bash(npm run:*),Bash(npx tsc:*),Bash(npx eslint:*),Bash(npx jest:*),Bash(./gradlew:*),Bash(git diff:*),Bash(git log:*),Bash(git status:*)"
+            --allowedTools "Bash(cd:*),Bash(npm test:*),Bash(npm run:*),Bash(npx tsc:*),Bash(npx eslint:*),Bash(npx jest:*),Bash(./gradlew:*),Bash(git diff:*),Bash(git log:*),Bash(git status:*),Bash(git checkout:*),Bash(git switch:*),Bash(git branch:*),Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git fetch:*),Bash(git pull:*),Bash(git rebase:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh pr checks:*),Bash(gh pr merge:*),Bash(gh pr comment:*),Bash(gh run list:*),Bash(gh run view:*),Bash(gh run watch:*),Bash(gh issue view:*),Bash(gh issue comment:*)"
+            --append-system-prompt "Autorisation explicite du propriétaire du dépôt, valable dans ce workflow : quand tu corriges une issue, travaille sur une branche dédiée (jamais sur main), vérifie (typecheck, lint, tests), committe (Conventional Commits), pousse la branche, puis ouvre une PR vers main avec gh pr create (corps avec « Closes #<numéro de l'issue> »). Attends la CI avec gh pr checks <n> --watch --interval 30. Si toutes les vérifications passent, fusionne avec gh pr merge <n> --merge --delete-branch sans demander de confirmation. Si une vérification échoue, analyse (gh run view --log-failed), corrige, pousse et attends de nouveau ; après trois échecs, ne fusionne pas et explique le blocage en commentaire. Jamais de push --force ni de push direct sur main, ne modifie pas .github/ ni specs/."
 
