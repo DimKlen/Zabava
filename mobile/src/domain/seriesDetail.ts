@@ -7,7 +7,7 @@ import {
   formatShortDate,
   formatTime,
 } from './format';
-import type { InfoRow } from './movieDetail';
+import { personRow, type InfoRow } from './movieDetail';
 import { episodeAirDate, isAired, type SeriesEpisode, type SeriesInfo } from './series';
 
 const rows = (entries: [string, string | undefined][]): InfoRow[] =>
@@ -18,11 +18,15 @@ export function seriesMeta(year?: number, platform?: string, status?: string): s
   return [year, platform, status].filter((part) => part !== undefined && part !== '').join(' · ');
 }
 
-export function seriesCrew(creators: string[], networks: string[]): InfoRow[] {
-  return rows([
-    ['Création', creators.join(', ')],
-    ['Diffusion', networks.join(', ')],
-  ]);
+export function seriesCrew(
+  creators: string[],
+  networks: string[],
+  creatorIds: number[] = [],
+): InfoRow[] {
+  return [
+    ...personRow('Création', creators, creatorIds),
+    ...rows([['Diffusion', networks.join(', ')]]),
+  ];
 }
 
 /** « 4 saisons · 38 épisodes » (Spéciaux exclus). */

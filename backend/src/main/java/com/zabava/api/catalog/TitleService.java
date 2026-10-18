@@ -448,14 +448,20 @@ public class TitleService {
                     names(crew, WRITER_JOBS),
                     ids(crew, WRITER_JOBS),
                     List.of(),
+                    List.of(),
                     List.of());
         }
+        // Créateurs avec nom et identifiant, dans le même ordre.
+        List<JsonNode> creators = Json.array(d, "created_by").stream()
+                .filter(c -> Json.text(c, "name") != null && c.path("id").isNumber())
+                .toList();
         return new Crew(
                 List.of(),
                 List.of(),
                 List.of(),
                 List.of(),
-                Json.map(d, "created_by", c -> Json.text(c, "name")).stream().filter(Objects::nonNull).toList(),
+                creators.stream().map(c -> Json.text(c, "name")).toList(),
+                creators.stream().map(c -> c.path("id").asInt()).toList(),
                 Json.map(d, "networks", n -> Json.text(n, "name")).stream().filter(Objects::nonNull).toList());
     }
 

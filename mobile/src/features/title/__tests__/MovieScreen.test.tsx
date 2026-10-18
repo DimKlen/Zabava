@@ -37,6 +37,7 @@ const base: TitleDetail = {
   directors: ['Denis Villeneuve'],
   directorIds: [137427],
   writerIds: [],
+  creatorIds: [],
   writers: [],
   creators: [],
   networks: [],

@@ -216,11 +216,15 @@ public class DiscoverService {
             case "recent" -> {
                 p.put("sort_by", dateField + ".desc");
                 p.putIfAbsent(dateField + ".lte", today.toString());
+                // Sans seuil, les plus récents sont des titres confidentiels sans aucun vote.
+                p.putIfAbsent("vote_count.gte", RECENT_MIN_VOTES);
             }
             default -> p.put("sort_by", "popularity.desc");
         }
         return p;
     }
+
+    private static final String RECENT_MIN_VOTES = "10";
 
     /** « mine » = mes plateformes (aucune choisie → aucun résultat), sinon un id de plateforme. */
     private static String providerFilter(String providers, Prefs prefs) {

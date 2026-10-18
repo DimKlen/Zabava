@@ -172,3 +172,28 @@ export function genreCountLabel(count: number, type: MediaType): string {
   const [singular, plural] = TYPE_NOUNS[type];
   return `${count.toLocaleString('fr-CA')} ${count > 1 ? plural : singular}`;
 }
+
+/** Liste par genre : tri et filtres rapides, le plus récent d'abord par défaut. */
+export type GenreFilters = { sort: AdvancedSort; mine: boolean; minRating: number };
+
+export const DEFAULT_GENRE_FILTERS: GenreFilters = { sort: 'recent', mine: false, minRating: 0 };
+
+export const GENRE_SORTS: readonly { key: AdvancedSort; label: string }[] = [
+  { key: 'recent', label: 'Plus récents' },
+  { key: 'rating', label: 'Mieux notés' },
+  { key: 'pop', label: 'Populaires' },
+];
+
+/** Chip « Note 7+ ». */
+export const GENRE_MIN_RATING = 7;
+
+/** Paramètres de `GET /discover` pour la liste d'un genre. */
+export function genreQuery(type: MediaType, genre: GenreKey, filters: GenreFilters) {
+  return {
+    type,
+    genres: genre,
+    sort: filters.sort,
+    providers: filters.mine ? ('mine' as const) : undefined,
+    minRating: filters.minRating > 0 ? filters.minRating : undefined,
+  };
+}

@@ -451,6 +451,7 @@ export interface components {
       writers?: string[];
       writerIds?: number[];
       creators?: string[];
+      creatorIds?: number[];
       networks?: string[];
     };
     SeasonSummary: {

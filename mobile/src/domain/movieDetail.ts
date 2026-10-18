@@ -53,7 +53,8 @@ function rows(entries: [string, string | undefined][]): InfoRow[] {
   return entries.flatMap(([key, value]) => (value ? [{ key, value }] : []));
 }
 
-function personRow(key: string, names: string[], ids: number[]): InfoRow[] {
+/** Ligne de noms cliquables (fiche personne) quand chaque nom a son identifiant. */
+export function personRow(key: string, names: string[], ids: number[]): InfoRow[] {
   if (names.length === 0) return [];
   const people = names.flatMap((name, index) =>
     ids[index] === undefined ? [] : [{ id: ids[index], name }],

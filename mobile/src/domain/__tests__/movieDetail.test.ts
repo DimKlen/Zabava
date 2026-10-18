@@ -1,4 +1,5 @@
 import { movieCrew, movieInfos, movieMeta, movieStatus } from '../movieDetail';
+import { seriesCrew } from '../seriesDetail';
 
 const TODAY = new Date(2026, 9, 10, 12, 0);
 const none = { sub: [], rent: [], buy: [] };
@@ -80,6 +81,22 @@ describe('Équipe et Infos', () => {
     expect(
       movieCrew({ directors: ['A', 'B'], directorIds: [1], writers: [] })[0]?.people,
     ).toBeUndefined();
+  });
+
+  it('rend les scénaristes et les créateurs de séries cliquables', () => {
+    expect(movieCrew({ directors: [], writers: ['Greta Gerwig'], writerIds: [45400] })[0]).toEqual({
+      key: 'Scénario',
+      value: 'Greta Gerwig',
+      people: [{ id: 45400, name: 'Greta Gerwig' }],
+    });
+    expect(seriesCrew(['Christopher Storer'], ['FX'], [9])).toEqual([
+      {
+        key: 'Création',
+        value: 'Christopher Storer',
+        people: [{ id: 9, name: 'Christopher Storer' }],
+      },
+      { key: 'Diffusion', value: 'FX' },
+    ]);
   });
 
   it('affiche la sortie avec la région', () => {

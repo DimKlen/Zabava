@@ -4,6 +4,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.absent;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.hamcrest.Matchers.contains;
@@ -122,6 +123,17 @@ class DiscoverIT extends IntegrationTest {
     }
 
     @Test
+    void plusRecentsSortisAvecUnMinimumDeVotes() throws Exception {
+        WIREMOCK.stubFor(get(urlPathEqualTo("/tmdb/discover/movie")).willReturn(okJson("{\"total_results\": 0, \"results\": []}")));
+        mvc.perform(as(user, MockMvcRequestBuilders.get("/api/v1/discover?type=movie&genres=animation&sort=recent")))
+                .andExpect(status().isOk());
+        WIREMOCK.verify(getRequestedFor(urlPathEqualTo("/tmdb/discover/movie"))
+                .withQueryParam("sort_by", equalTo("primary_release_date.desc"))
+                .withQueryParam("primary_release_date.lte", matching("\\d{4}-\\d{2}-\\d{2}"))
+                .withQueryParam("vote_count.gte", equalTo("10")));
+    }
+
+    @Test
     void mesPlateformesSansPlateformeChoisieNeDonneRien() throws Exception {
         mvc.perform(as(user, MockMvcRequestBuilders.get("/api/v1/discover?type=movie&providers=mine")))
                 .andExpect(jsonPath("$.total").value(0));
@@ -219,5 +231,22 @@ class DiscoverIT extends IntegrationTest {
                 .andExpect(jsonPath("$.biography").value("Zendaya is an American actress."))
                 // Sans doublon, par popularité.
                 .andExpect(jsonPath("$.credits[*].id", contains("movie-603", "tv-85552")));
+    }
+
+    @Test
+    void ficheRealisateurAvecSesFilmsSansLesPostesTechniques() throws Exception {
+        WIREMOCK.stubFor(get(urlPathEqualTo("/tmdb/person/137427"))
+                .willReturn(okJson("""
+                        {"id": 137427, "name": "Denis Villeneuve", "biography": "Réalisateur.",
+                         "combined_credits": {"cast": [], "crew": [
+                           {"id": 438631, "media_type": "movie", "title": "Dune", "job": "Director", "popularity": 300},
+                           {"id": 438631, "media_type": "movie", "title": "Dune", "job": "Screenplay", "popularity": 300},
+                           {"id": 27205, "media_type": "movie", "title": "Prisoners", "job": "Director", "popularity": 80},
+                           {"id": 1, "media_type": "movie", "title": "Autre", "job": "Sound Mixer", "popularity": 900}]}}
+                        """)));
+
+        mvc.perform(as(user, MockMvcRequestBuilders.get("/api/v1/people/137427")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.credits[*].id", contains("movie-438631", "movie-27205")));
     }
 }

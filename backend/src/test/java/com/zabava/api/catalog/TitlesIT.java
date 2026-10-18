@@ -96,6 +96,7 @@ class TitlesIT extends IntegrationTest {
                 .andExpect(jsonPath("$.runtime").value(32))
                 .andExpect(jsonPath("$.certification").value("16+"))
                 .andExpect(jsonPath("$.crew.creators", contains("Christopher Storer")))
+                .andExpect(jsonPath("$.crew.creatorIds", contains(9)))
                 .andExpect(jsonPath("$.seasons[*].number", contains(0, 1)))
                 .andExpect(jsonPath("$.availability.sub[0].shortName").value("D+"))
                 // Pas de bande-annonce YouTube : champ absent, la section est masquée.

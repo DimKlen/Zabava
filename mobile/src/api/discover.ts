@@ -1,7 +1,13 @@
 /** Découvrir, recherche avancée, liste par genre et fiche personne — specs/docs/08, 07 §7.3–7.4. */
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
-import { advancedQuery, type AdvancedFilters, type GenreKey } from '@/domain/advancedSearch';
+import {
+  advancedQuery,
+  genreQuery,
+  type AdvancedFilters,
+  type GenreFilters,
+  type GenreKey,
+} from '@/domain/advancedSearch';
 import type { DiscoverList } from '@/domain/discover';
 import type { PersonRole } from '@/domain/person';
 import type { MediaType } from '@/domain/types';
@@ -102,9 +108,9 @@ export function discoverListQuery(list: DiscoverList, type: MediaType) {
   });
 }
 
-/** Liste par genre : populaires d'abord, chargement infini. */
-export function useGenreTitles(type: MediaType, genre: GenreKey) {
-  return useDiscoverPages({ type, genres: genre, sort: 'pop' }, type);
+/** Liste par genre, triée et filtrée (le plus récent d'abord par défaut), chargement infini. */
+export function useGenreTitles(type: MediaType, genre: GenreKey, filters: GenreFilters) {
+  return useDiscoverPages(genreQuery(type, genre, filters), type);
 }
 
 /** Résultats de la recherche avancée appliquée. */
