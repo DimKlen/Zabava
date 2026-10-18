@@ -148,7 +148,7 @@ function SeriesInfos({
   myProviderIds: number[];
   libraryIds: Set<string>;
 }) {
-  const crew = seriesCrew(series.creators, series.networks);
+  const crew = seriesCrew(series.creators, series.networks, series.creatorIds);
   const infos = seriesInfos(series);
   return (
     <View>

@@ -216,11 +216,15 @@ public class DiscoverService {
             case "recent" -> {
                 p.put("sort_by", dateField + ".desc");
                 p.putIfAbsent(dateField + ".lte", today.toString());
+                // Sans seuil, les plus récents sont des titres confidentiels sans aucun vote.
+                p.putIfAbsent("vote_count.gte", RECENT_MIN_VOTES);
             }
             default -> p.put("sort_by", "popularity.desc");
         }
         return p;
     }
+
+    private static final String RECENT_MIN_VOTES = "10";
 
     /** « mine » = mes plateformes (aucune choisie → aucun résultat), sinon un id de plateforme. */
     private static String providerFilter(String providers, Prefs prefs) {
@@ -464,6 +468,14 @@ public class DiscoverService {
             String character = Json.text(work, "character");
             if (character != null) characters.putIfAbsent(lite.id(), character);
         }
+        // Réalisation et scénario : la filmographie d'un réalisateur n'a pas de rôle d'acteur.
+        for (JsonNode work : Json.array(body.path("combined_credits"), "crew")) {
+            String mediaType = Json.text(work, "media_type");
+            if (!"movie".equals(mediaType) && !"tv".equals(mediaType)) continue;
+            if (!AUTHOR_JOBS.contains(Json.text(work, "job"))) continue;
+            TitleLite lite = TmdbMapper.lite(work, mediaType);
+            credits.putIfAbsent(lite.id(), lite);
+        }
         List<TitleLite> sorted = credits.values().stream()
                 .sorted(comparator("pop"))
                 .collect(Collectors.toCollection(ArrayList::new));
@@ -483,6 +495,9 @@ public class DiscoverService {
                 sorted,
                 roles);
     }
+
+    private static final Set<String> AUTHOR_JOBS =
+            Set.of("Director", "Screenplay", "Writer", "Story", "Novel", "Creator");
 
     /** Filmographie : sans talk-shows, actualités, téléréalité ni apparitions en son propre nom. */
     private static boolean isActingRole(JsonNode work, String mediaType) {

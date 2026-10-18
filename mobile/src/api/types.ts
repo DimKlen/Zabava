@@ -449,7 +449,9 @@ export interface components {
       directors?: string[];
       directorIds?: number[];
       writers?: string[];
+      writerIds?: number[];
       creators?: string[];
+      creatorIds?: number[];
       networks?: string[];
     };
     SeasonSummary: {

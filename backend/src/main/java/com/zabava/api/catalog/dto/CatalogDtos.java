@@ -55,7 +55,9 @@ public final class CatalogDtos {
             List<String> directors,
             List<Integer> directorIds,
             List<String> writers,
+            List<Integer> writerIds,
             List<String> creators,
+            List<Integer> creatorIds,
             List<String> networks) {}
 
     public record Collection(int id, String name, List<TitleLite> parts) {}

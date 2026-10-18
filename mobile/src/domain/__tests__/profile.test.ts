@@ -1,9 +1,9 @@
 import { DIGEST_HOURS, accountLine, digestLabel, platformsSummary } from '../profile';
 
 const providers = [
-  { id: 8, name: 'Netflix', short: 'N' },
-  { id: 230, name: 'Crave', short: 'C' },
-  { id: 119, name: 'Prime Video', short: 'pv' },
+  { id: 8, name: 'Netflix', short: 'N', ids: [8] },
+  { id: 230, name: 'Crave', short: 'C', ids: [230] },
+  { id: 119, name: 'Prime Video', short: 'pv', ids: [119, 2100] },
 ];
 
 describe('profil', () => {
@@ -17,6 +17,8 @@ describe('profil', () => {
     expect(platformsSummary(providers, [119, 8])).toBe('Netflix, Prime Video');
     expect(platformsSummary(providers, [])).toBe('Aucune');
     expect(platformsSummary(providers, [999])).toBe('Aucune');
+    // Une seule formule cochée suffit (Prime Video avec pubs).
+    expect(platformsSummary(providers, [2100])).toBe('Prime Video');
   });
 
   it('heures du récapitulatif', () => {

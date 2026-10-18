@@ -13,8 +13,9 @@ export type MovieAvailability = {
 /** Au cinéma : sortie en salle depuis moins de 60 jours, sans offre en ligne. */
 const CINEMA_WINDOW_DAYS = 60;
 
-function hasOffer({ sub, rent, buy }: Availability): boolean {
-  return sub.length > 0 || rent.length > 0 || buy.length > 0;
+/** Abonnement ou location : l'achat seul n'est plus affiché, il ne rend pas un film disponible. */
+function hasOffer({ sub, rent }: Availability): boolean {
+  return sub.length > 0 || rent.length > 0;
 }
 
 export function movieState(movie: MovieAvailability, now: Date): MovieState {
@@ -26,9 +27,11 @@ export function movieState(movie: MovieAvailability, now: Date): MovieState {
   return 'unknown';
 }
 
-/** Au moins un abonnement chez une de mes plateformes (`A.mine`). */
+/** Abonnement ou location chez une de mes plateformes (l'achat n'est plus affiché). */
 export function isOnMyPlatforms(availability: Availability, myProviderIds: readonly number[]) {
-  return availability.sub.some((provider) => myProviderIds.includes(provider.id));
+  return [...availability.sub, ...availability.rent].some((provider) =>
+    myProviderIds.includes(provider.id),
+  );
 }
 
 /**

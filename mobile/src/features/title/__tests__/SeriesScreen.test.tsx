@@ -65,6 +65,8 @@ const bear: TitleDetail & { type: 'tv' } = {
   cast: [],
   directors: [],
   directorIds: [],
+  writerIds: [],
+  creatorIds: [],
   writers: [],
   creators: ['Christopher Storer'],
   networks: ['FX'],

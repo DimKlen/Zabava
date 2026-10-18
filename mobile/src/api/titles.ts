@@ -48,8 +48,10 @@ export type TitleDetail = {
   directors: string[];
   /** Identifiants TMDB, dans l'ordre de `directors`. */
   directorIds: number[];
+  writerIds: number[];
   writers: string[];
   creators: string[];
+  creatorIds: number[];
   networks: string[];
   /** Autres volets de la saga, triés par date. */
   collection: PosterTitle[];
@@ -124,8 +126,10 @@ export function toTitleDetail(
     cast: toCast(detail.cast),
     directors: detail.crew?.directors ?? [],
     directorIds: detail.crew?.directorIds ?? [],
+    writerIds: detail.crew?.writerIds ?? [],
     writers: detail.crew?.writers ?? [],
     creators: detail.crew?.creators ?? [],
+    creatorIds: detail.crew?.creatorIds ?? [],
     networks: detail.crew?.networks ?? [],
     collection: toPosters(collectionParts, resolvedType, id),
     similar: toPosters(detail.similar, resolvedType).slice(0, 8),

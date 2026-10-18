@@ -1,4 +1,4 @@
-import { bestProvider, mineFirst, movieState } from '../availability';
+import { bestProvider, isOnMyPlatforms, mineFirst, movieState } from '../availability';
 import { posterBadge } from '../badge';
 
 import { ALL_FILMS, MY_PROVIDER_IDS, TODAY } from '../__fixtures__/prototypeFilms';
@@ -27,6 +27,13 @@ describe('movieState', () => {
   it('sans offre et sorti depuis plus de 60 jours → inconnu', () => {
     expect(movieState({ ...film('odyssey'), releaseTheatrical: '2026-08-01' }, TODAY)).toBe(
       'unknown',
+    );
+  });
+
+  it('sorti en salle avec un simple achat en ligne → toujours au cinéma', () => {
+    const buyOnly = { sub: [], rent: [], buy: [{ id: 7, name: 'Fandango At Home', short: 'FA' }] };
+    expect(movieState({ releaseTheatrical: '2026-10-08', availability: buyOnly }, TODAY)).toBe(
+      'cinema',
     );
   });
 
@@ -102,6 +109,13 @@ describe('bestProvider : priorité des plateformes (docs/01 §5)', () => {
   });
   it('5) sinon le premier achat', () => {
     expect(bestProvider({ sub: [], rent: [], buy: [prime, crave] }, mine)).toBe(prime);
+  });
+});
+
+describe('isOnMyPlatforms', () => {
+  it('compte une location chez mes plateformes, pas un achat', () => {
+    expect(isOnMyPlatforms({ sub: [], rent: [apple], buy: [] }, [apple.id])).toBe(true);
+    expect(isOnMyPlatforms({ sub: [], rent: [], buy: [apple] }, [apple.id])).toBe(false);
   });
 });
 

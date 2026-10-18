@@ -97,9 +97,12 @@ export function searchRows(pages: readonly SearchPage[] | undefined): SearchRow[
   for (const page of pages ?? []) {
     page.people.forEach((person) => push({ kind: 'person', key: `person-${person.id}`, person }));
   }
-  for (const page of pages ?? []) {
-    page.titles.forEach((title) => push({ kind: 'title', key: title.id, title }));
-  }
+  // Du plus récent au plus ancien ; sans année en dernier. Le tri est stable : à année égale,
+  // l'ordre de pertinence de TMDB reste.
+  const titles = (pages ?? [])
+    .flatMap((page) => page.titles)
+    .sort((a, b) => (b.year ?? -Infinity) - (a.year ?? -Infinity));
+  titles.forEach((title) => push({ kind: 'title', key: title.id, title }));
   return rows;
 }
 

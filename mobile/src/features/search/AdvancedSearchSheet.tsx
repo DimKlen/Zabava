@@ -15,7 +15,6 @@ import {
   COUNT_DEBOUNCE_MS,
   FIRST_YEAR,
   GENRES,
-  LANGUAGES,
   RUNTIMES,
   addActor,
   countButtonLabel,
@@ -179,14 +178,6 @@ export function AdvancedSearchSheet({ visible, filters, onChange, onClose, onApp
         </Section>
 
         <View style={styles.fields}>
-          <SelectField
-            label="Langue originale"
-            height={42}
-            value={filters.language}
-            options={LANGUAGES}
-            onChange={(language) => onChange({ ...filters, language })}
-            style={styles.field}
-          />
           <SelectField
             label="Durée maximale"
             height={42}

@@ -6,6 +6,7 @@ import { useRegionProviders } from '@/api/catalog';
 import { useProfile, useSetProviders } from '@/api/profile';
 import { LoadError, showsLoadError } from '@/components/LoadError';
 import { SkeletonBox } from '@/components/Skeleton';
+import { isGroupSelected, toggleGroup, topProviders, type ProviderGroup } from '@/domain/providers';
 import { radii } from '@/theme/tokens';
 
 import { OnboardingFooter } from './OnboardingFooter';
@@ -27,16 +28,11 @@ export function PlatformsScreen() {
   const providers = useRegionProviders(profile.data?.region);
   const setProviders = useSetProviders();
   // Aucune présélection pour un nouveau compte ; un retour arrière garde les choix.
-  const [selected, setSelected] = useState<ReadonlySet<number>>(
-    () => new Set(profile.data?.providerIds ?? []),
+  const [selected, setSelected] = useState<readonly number[]>(
+    () => profile.data?.providerIds ?? [],
   );
 
-  const toggle = (id: number) =>
-    setSelected((current) => {
-      const next = new Set(current);
-      if (!next.delete(id)) next.add(id);
-      return next;
-    });
+  const toggle = (group: ProviderGroup) => setSelected((current) => toggleGroup(current, group));
 
   const submit = () =>
     setProviders.mutate([...selected], {
@@ -56,13 +52,13 @@ export function PlatformsScreen() {
         ) : (
           <View style={styles.grid}>
             {providers.data
-              ? providers.data.map((provider) => (
+              ? topProviders(providers.data, selected).map((provider) => (
                   <PlatformTile
                     key={provider.id}
                     provider={provider}
                     width={tileWidth}
-                    selected={selected.has(provider.id)}
-                    onToggle={() => toggle(provider.id)}
+                    selected={isGroupSelected(provider, selected)}
+                    onToggle={() => toggle(provider)}
                   />
                 ))
               : Array.from({ length: SKELETON_COUNT }, (_, index) => (

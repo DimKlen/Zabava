@@ -37,7 +37,7 @@ Le nom du fichier de référence `App Suivi.dc.html` reste tel quel.
 7. **Logique métier** : `specs/reference/app.js` fait foi pour les algorithmes (sections de la watchlist, prochain épisode, badges, filtres). Porte-les dans `src/domain/` en TypeScript pur, avec des tests unitaires.
 8. **Hors ligne** : cocher un épisode, marquer un film comme vu, ajouter ou retirer un titre doivent marcher sans réseau (file de mutations persistée) et afficher le résultat tout de suite (mise à jour optimiste).
 9. **Annulation** : toute action qui modifie la liste ou le suivi affiche un toast de 5 s avec « Annuler », sauf exceptions listées dans `specs/docs/10`.
-10. **Pas de fonctionnalités hors périmètre** : ni statistiques, ni social, ni lecture vidéo dans l'app.
+10. **Pas de fonctionnalités hors périmètre** : ni statistiques, ni social, ni lecture vidéo dans l'app. Seule exception, demandée le 2026-10-18 : la bande-annonce YouTube lue dans la fiche (`react-native-webview`, arrêtée quand on quitte l'écran).
 
 ## Arborescence cible
 ```

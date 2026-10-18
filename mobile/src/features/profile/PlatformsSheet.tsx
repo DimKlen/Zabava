@@ -9,7 +9,7 @@ import { Button } from '@/components/Button';
 import { SkeletonBox } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { TextField } from '@/components/TextField';
-import { searchProviders } from '@/domain/providers';
+import { isGroupSelected, searchProviders, topProviders } from '@/domain/providers';
 import { colors, durations, radii } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
@@ -32,13 +32,13 @@ export function PlatformsSheet({ visible, onClose }: Props) {
   const { width, height } = useWindowDimensions();
   const profile = useProfile().data;
   const providers = useRegionProviders(profile?.region);
-  const selected = new Set(profile?.providerIds ?? []);
+  const selectedIds = profile?.providerIds ?? [];
   // Largeur réelle de la grille ; 1 pt de marge, sinon l'arrondi au pixel fait passer
   // la 4e tuile à la ligne.
   const [gridWidth, setGridWidth] = useState(width - SIDE * 2);
   const tileWidth = Math.floor((gridWidth - GAP * (COLUMNS - 1)) / COLUMNS) - 1;
   const [query, setQuery] = useState('');
-  const shown = searchProviders(providers.data ?? [], query);
+  const shown = searchProviders(topProviders(providers.data ?? [], selectedIds), query);
 
   return (
     <BottomSheet
@@ -75,9 +75,9 @@ export function PlatformsSheet({ visible, onClose }: Props) {
               <PlatformTile
                 key={provider.id}
                 provider={provider}
-                selected={selected.has(provider.id)}
+                selected={isGroupSelected(provider, selectedIds)}
                 width={tileWidth}
-                onToggle={() => void toggleProvider(provider.id)}
+                onToggle={() => void toggleProvider(provider)}
                 compact
               />
             ))

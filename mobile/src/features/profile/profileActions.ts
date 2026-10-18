@@ -7,6 +7,7 @@ import { api } from '@/api/http';
 import { profileKey, type Profile, type ProfileUpdate } from '@/api/profile';
 import { queryClient } from '@/api/queryClient';
 import { signOut } from '@/api/session';
+import { toggleGroup, type ProviderGroup } from '@/domain/providers';
 import { unregisterPushToken } from '@/lib/notifications';
 import { openDialog, showToast } from '@/store/ui';
 
@@ -110,12 +111,9 @@ export async function changeRegionOrLanguage(
   return true;
 }
 
-/** Coche ou décoche une plateforme ; enregistré à chaque tap. */
-export function toggleProvider(providerId: number): Promise<boolean> {
-  const before = currentProfile()?.providerIds ?? [];
-  const next = before.includes(providerId)
-    ? before.filter((id) => id !== providerId)
-    : [...before, providerId];
+/** Coche ou décoche une plateforme (toutes ses formules) ; enregistré à chaque tap. */
+export function toggleProvider(group: ProviderGroup): Promise<boolean> {
+  const next = toggleGroup(currentProfile()?.providerIds ?? [], group);
   return optimistic(
     (profile) => ({ ...profile, providerIds: next }),
     () => api<void>('/me/providers', { method: 'PUT', body: { providerIds: next } }),

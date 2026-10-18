@@ -1,9 +1,12 @@
 import {
+  DEFAULT_GENRE_FILTERS,
+  GENRE_MIN_RATING,
   addActor,
   advancedQuery,
   countButtonLabel,
   defaultFilters,
   genreCountLabel,
+  genreQuery,
   minRatingLabel,
   removeActor,
   setMinRating,
@@ -26,7 +29,6 @@ describe('filtres par défaut', () => {
       yearTo: 2026,
       minRating: undefined,
       providers: undefined,
-      lang: undefined,
       maxRuntime: undefined,
       sort: 'pop',
     });
@@ -75,7 +77,6 @@ describe('advancedQuery', () => {
       genres: toggleValue(['action' as const], 'thriller' as const),
       minRating: 7.5,
       availability: 'mine' as const,
-      language: 'ja' as const,
       maxRuntime: '120' as const,
       sort: 'recent' as const,
     };
@@ -87,7 +88,6 @@ describe('advancedQuery', () => {
       yearTo: 2026,
       minRating: 7.5,
       providers: 'mine',
-      lang: 'ja',
       maxRuntime: 120,
       sort: 'recent',
     });
@@ -116,5 +116,23 @@ describe('genreCountLabel', () => {
     expect(genreCountLabel(0, 'tv')).toBe('0 série');
     expect(genreCountLabel(12, 'anime')).toBe('12 animés');
     expect(genreCountLabel(1240, 'movie')).toBe(`${(1240).toLocaleString('fr-CA')} films`);
+  });
+});
+
+describe('liste par genre', () => {
+  it('plus récents par défaut, sans filtre', () => {
+    expect(genreQuery('movie', 'animation', DEFAULT_GENRE_FILTERS)).toEqual({
+      type: 'movie',
+      genres: 'animation',
+      sort: 'recent',
+      providers: undefined,
+      minRating: undefined,
+    });
+  });
+
+  it('mes plateformes et note minimale', () => {
+    expect(
+      genreQuery('tv', 'drame', { sort: 'rating', mine: true, minRating: GENRE_MIN_RATING }),
+    ).toEqual({ type: 'tv', genres: 'drame', sort: 'rating', providers: 'mine', minRating: 7 });
   });
 });
