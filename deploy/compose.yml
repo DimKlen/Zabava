@@ -1,0 +1,32 @@
+# Déploiement sur un serveur unique : l'API derrière Caddy (HTTPS automatique).
+# Les variables viennent de deploy/.env sur le serveur (jamais commité).
+services:
+  api:
+    image: zabava-api:latest
+    build: ../backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Mémoire bornée pour tenir dans 1 Go avec Caddy et l'OS.
+      JAVA_TOOL_OPTIONS: -Xmx320m -Xss512k -XX:MaxMetaspaceSize=160m -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?API_DOMAIN manquant dans deploy/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
