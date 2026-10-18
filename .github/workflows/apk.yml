@@ -52,12 +52,12 @@ jobs:
             --title "APK Zabava #${{ github.run_number }}" \
             --notes "APK Android (profil preview), commit ${GITHUB_SHA::7}."
 
-      - name: Garder les 5 releases APK les plus récentes
+      - name: Garder les 2 releases APK les plus récentes
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release list --limit 100 --json tagName,createdAt \
-            --jq '[.[] | select(.tagName | startswith("apk-"))] | sort_by(.createdAt) | reverse | .[5:] | .[].tagName' |
+            --jq '[.[] | select(.tagName | startswith("apk-"))] | sort_by(.createdAt) | reverse | .[2:] | .[].tagName' |
           while read -r tag; do
             gh release delete "$tag" --yes --cleanup-tag
           done
