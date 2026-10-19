@@ -28,6 +28,12 @@ const PERSISTED_ROOTS = new Set(['profile', 'watchlist', 'upcoming']);
 // Fiche et épisodes : seulement pour les titres de Ma liste.
 const LIST_TITLE_ROOTS = new Set(['title', 'episodes']);
 
+/** Carrousel de Découvrir (`['discover', { list, type }]`), pas les listes infinies. */
+function isDiscoverCarousel(key: readonly unknown[]): boolean {
+  const params = key[1];
+  return key[0] === 'discover' && typeof params === 'object' && params !== null && 'list' in params;
+}
+
 /** Le titre est-il dans Ma liste (cache) ? Un animé peut être ouvert sous « tv ». */
 function isInList(type: unknown, tmdbId: unknown): boolean {
   const types = type === 'movie' ? ['movie'] : ['tv', 'anime'];
@@ -42,6 +48,8 @@ export function shouldPersistQuery(query: Query): boolean {
   if (query.state.status !== 'success') return false;
   const [root, type, tmdbId] = query.queryKey;
   if (PERSISTED_ROOTS.has(String(root))) return true;
+  // Découvrir s'ouvre aussitôt au lancement suivant, puis se met à jour s'il a plus d'un jour.
+  if (isDiscoverCarousel(query.queryKey)) return true;
   return LIST_TITLE_ROOTS.has(String(root)) && isInList(type, tmdbId);
 }
 
