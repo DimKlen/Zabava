@@ -34,6 +34,8 @@ setupOnlineManager();
 const persistOptions = {
   persister: queryPersister,
   maxAge: persistMaxAge,
+  // À changer quand la forme d'une réponse en cache évolue (ex. identifiants de l'équipe).
+  buster: 'v2',
   dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
 };
 
