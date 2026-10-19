@@ -128,18 +128,18 @@ public class LibraryStore {
         return result;
     }
 
-    /** Idempotent : un épisode déjà vu garde sa date. */
+    /** Idempotent : un épisode déjà vu garde sa date. Une seule requête, même pour une saison de 300 épisodes. */
     public void markWatched(UUID userId, Collection<Long> episodeIds, Instant watchedAt) {
-        for (Long episodeId : episodeIds) {
-            db.sql("""
-                    insert into user_episodes (user_id, episode_id, watched_at) values (:user, :episode, :at)
-                    on conflict (user_id, episode_id) do nothing
-                    """)
-                    .param("user", userId)
-                    .param("episode", episodeId)
-                    .param("at", Timestamp.from(watchedAt))
-                    .update();
-        }
+        if (episodeIds.isEmpty()) return;
+        db.sql("""
+                insert into user_episodes (user_id, episode_id, watched_at)
+                select :user, e.id, :at from episodes e where e.id in (:ids)
+                on conflict (user_id, episode_id) do nothing
+                """)
+                .param("user", userId)
+                .param("ids", episodeIds)
+                .param("at", Timestamp.from(watchedAt))
+                .update();
     }
 
     public void unmark(UUID userId, Collection<Long> episodeIds) {
