@@ -3,8 +3,8 @@ import {
   baseProviderName,
   groupProviders,
   searchProviders,
+  featuredProviders,
   toggleGroup,
-  topProviders,
 } from '../providers';
 
 const provider = (id: number, name: string): Provider => ({ id, name, short: name.slice(0, 2) });
@@ -57,15 +57,62 @@ describe('groupProviders', () => {
   });
 });
 
-describe('topProviders', () => {
-  const groups = groupProviders([provider(1, 'A'), provider(2, 'B'), provider(3, 'C')]);
+describe('featuredProviders', () => {
+  // Ordre de priorité TMDB des États-Unis (extrait).
+  const us = groupProviders([
+    provider(8, 'Netflix'),
+    provider(9, 'Amazon Prime Video'),
+    provider(350, 'Apple TV'),
+    provider(337, 'Disney Plus'),
+    provider(15, 'Hulu'),
+    provider(2285, 'JustWatch TV'),
+    provider(10, 'Amazon Video'),
+    provider(2, 'Apple TV Store'),
+    provider(2383, 'Philo'),
+    provider(1899, 'HBO Max'),
+    provider(283, 'Crunchyroll'),
+    provider(386, 'Peacock Premium'),
+  ]);
 
-  it('les plus connues seulement', () => {
-    expect(topProviders(groups, [], 2).map((g) => g.name)).toEqual(['A', 'B']);
+  it('les grands services d’abord, sans les plateformes peu connues', () => {
+    expect(featuredProviders(us, []).map((g) => g.name)).toEqual([
+      'Netflix',
+      'Amazon Prime Video',
+      'Disney Plus',
+      'HBO Max',
+      'Apple TV',
+      'Hulu',
+      'Peacock',
+      'Crunchyroll',
+    ]);
   });
 
-  it('garde une plateforme cochée plus bas dans la liste', () => {
-    expect(topProviders(groups, [3], 2).map((g) => g.name)).toEqual(['A', 'B', 'C']);
+  it('garde une plateforme cochée qui n’est pas un grand service', () => {
+    expect(
+      featuredProviders(us, [2383])
+        .map((g) => g.name)
+        .at(-1),
+    ).toBe('Philo');
+  });
+
+  it('région sans grand service connu : les premières par priorité', () => {
+    const others = groupProviders([provider(1, 'A'), provider(2, 'B'), provider(3, 'C')]);
+    expect(featuredProviders(others, []).map((g) => g.name)).toEqual(['A', 'B', 'C']);
+  });
+});
+
+describe('boutiques rattachées à leur service', () => {
+  it('Amazon Video rejoint Amazon Prime Video, Apple TV Store rejoint Apple TV', () => {
+    const groups = groupProviders([
+      provider(350, 'Apple TV'),
+      provider(10, 'Amazon Video'),
+      provider(9, 'Amazon Prime Video'),
+      provider(2, 'Apple TV Store'),
+    ]);
+    expect(groups.map((g) => [g.name, g.ids])).toEqual([
+      ['Apple TV', [350, 2]],
+      ['Amazon Prime Video', [10, 9]],
+    ]);
   });
 });
 

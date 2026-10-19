@@ -23,7 +23,7 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { SkeletonBox } from '@/components/Skeleton';
 import { Switch } from '@/components/Switch';
 import { Text } from '@/components/Text';
-import { LANGUAGES, REGIONS } from '@/domain/onboarding';
+import { LANGUAGES, REGIONS, languageChoice, languageLabel } from '@/domain/onboarding';
 import {
   DIGEST_HOURS,
   NOTIFICATION_SWITCHES,
@@ -133,14 +133,12 @@ function ProfileContent({ profile }: { profile: Profile }) {
               pick(
                 'Langue',
                 LANGUAGES,
-                profile.language,
+                languageChoice(profile.language),
                 (language) => void changeRegionOrLanguage({ language }),
               )
             }
           >
-            <Value
-              text={LANGUAGES.find((l) => l.value === profile.language)?.label ?? profile.language}
-            />
+            <Value text={languageLabel(profile.language)} />
           </SettingsRow>
           <SettingsRow
             label="Mes plateformes"

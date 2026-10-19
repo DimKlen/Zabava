@@ -63,7 +63,7 @@ describe('MovieScreen', () => {
     expect(screen.getByText('Disponibilité inconnue pour ta région.')).toBeTruthy();
   });
 
-  it('affiche les notes, les plateformes par groupe et le bandeau', async () => {
+  it('affiche les notes, les plateformes de location sans libellé et le bandeau', async () => {
     await renderMovie({
       ...base,
       imdbRating: 8.5,
@@ -78,8 +78,11 @@ describe('MovieScreen', () => {
     });
     expect(screen.getByText('8,5/10')).toBeTruthy();
     expect(screen.getByText('Rotten Tomatoes')).toBeTruthy();
-    expect(screen.getByText('Abonnement')).toBeTruthy();
-    expect(screen.getByText('Location')).toBeTruthy();
+    // Location seulement, sans libellé : l'abonnement (Crave) n'est plus affiché.
+    expect(screen.getByLabelText('Apple TV+')).toBeTruthy();
+    expect(screen.queryByLabelText('Crave')).toBeNull();
+    expect(screen.queryByText('Abonnement')).toBeNull();
+    expect(screen.queryByText('Location')).toBeNull();
     expect(screen.queryByText('Achat')).toBeNull();
     expect(screen.getByText('Disponible en streaming')).toBeTruthy();
   });

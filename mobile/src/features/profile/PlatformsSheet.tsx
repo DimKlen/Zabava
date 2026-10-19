@@ -9,7 +9,7 @@ import { Button } from '@/components/Button';
 import { SkeletonBox } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { TextField } from '@/components/TextField';
-import { isGroupSelected, searchProviders, topProviders } from '@/domain/providers';
+import { featuredProviders, isGroupSelected, searchProviders } from '@/domain/providers';
 import { colors, durations, radii } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
@@ -38,7 +38,10 @@ export function PlatformsSheet({ visible, onClose }: Props) {
   const [gridWidth, setGridWidth] = useState(width - SIDE * 2);
   const tileWidth = Math.floor((gridWidth - GAP * (COLUMNS - 1)) / COLUMNS) - 1;
   const [query, setQuery] = useState('');
-  const shown = searchProviders(topProviders(providers.data ?? [], selectedIds), query);
+  // Sans recherche : les grands services ; la recherche couvre toutes les plateformes de la région.
+  const groups = providers.data ?? [];
+  const shown =
+    query.trim() === '' ? featuredProviders(groups, selectedIds) : searchProviders(groups, query);
 
   return (
     <BottomSheet

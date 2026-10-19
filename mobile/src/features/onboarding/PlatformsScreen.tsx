@@ -6,7 +6,12 @@ import { useRegionProviders } from '@/api/catalog';
 import { useProfile, useSetProviders } from '@/api/profile';
 import { LoadError, showsLoadError } from '@/components/LoadError';
 import { SkeletonBox } from '@/components/Skeleton';
-import { isGroupSelected, toggleGroup, topProviders, type ProviderGroup } from '@/domain/providers';
+import {
+  featuredProviders,
+  isGroupSelected,
+  toggleGroup,
+  type ProviderGroup,
+} from '@/domain/providers';
 import { radii } from '@/theme/tokens';
 
 import { OnboardingFooter } from './OnboardingFooter';
@@ -52,7 +57,7 @@ export function PlatformsScreen() {
         ) : (
           <View style={styles.grid}>
             {providers.data
-              ? topProviders(providers.data, selected).map((provider) => (
+              ? featuredProviders(providers.data, selected).map((provider) => (
                   <PlatformTile
                     key={provider.id}
                     provider={provider}

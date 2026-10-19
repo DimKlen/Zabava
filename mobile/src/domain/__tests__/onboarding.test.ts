@@ -1,6 +1,9 @@
 import {
   addedCountLabel,
+  LANGUAGES,
   defaultRegion,
+  languageChoice,
+  languageLabel,
   initialStatus,
   nextStep,
   previousStep,
@@ -56,5 +59,18 @@ describe('initialStatus', () => {
     expect(initialStatus('movie')).toBe('towatch');
     expect(initialStatus('tv')).toBe('following');
     expect(initialStatus('anime')).toBe('following');
+  });
+});
+
+describe('langues', () => {
+  it('seulement Français et Anglais', () => {
+    expect(LANGUAGES.map((language) => language.label)).toEqual(['Français', 'Anglais']);
+  });
+
+  it('un ancien code se lit comme sa langue', () => {
+    expect(languageLabel('fr-FR')).toBe('Français');
+    expect(languageLabel('en-CA')).toBe('Anglais');
+    expect(languageChoice('fr-FR')).toBe('fr-CA');
+    expect(languageChoice('en-CA')).toBe('en-US');
   });
 });
