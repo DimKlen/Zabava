@@ -1,6 +1,5 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { removeFromList } from '@/api/libraryActions';
 import { useProfile } from '@/api/profile';
 import { Button } from '@/components/Button';
 import { Poster } from '@/components/Poster';
@@ -26,10 +25,7 @@ export function NotStartedCarousel({ entries }: { entries: SeriesEntry[] }) {
           <Poster
             title={series}
             badge={posterBadge(series, myProviderIds, now)}
-            showAdd
-            inList
             onPress={() => openSeries(series)}
-            onToggle={() => removeFromList(series)}
             style={styles.poster}
           />
           <Button

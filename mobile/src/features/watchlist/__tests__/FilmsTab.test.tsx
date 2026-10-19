@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
-import { removeFromList, setMovieWatched } from '@/api/libraryActions';
+import { setMovieWatched } from '@/api/libraryActions';
 import { LIBRARY } from '@/domain/__fixtures__/prototypeFilms';
 import type { LibraryMovie } from '@/domain/watchlist';
 import { useUiStore } from '@/store/ui';
@@ -126,12 +126,9 @@ describe('FilmsTab', () => {
     );
   });
 
-  it('la coche d’une affiche retire le film', async () => {
+  it('les affiches n’ont pas de coche : on sait déjà qu’elles sont dans la liste', async () => {
     await renderTab();
-    await fireEvent.press(first(screen.getAllByTestId('poster-add')));
-    expect(removeFromList).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'dune3', type: 'movie' }),
-    );
+    expect(screen.queryAllByTestId('poster-add')).toHaveLength(0);
   });
 
   it('filtre sans résultat : « Aucun film pour ce filtre » puis « Tout afficher »', async () => {

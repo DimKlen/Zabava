@@ -3,7 +3,6 @@ import { FilmStripIcon } from 'phosphor-react-native';
 import { useRef, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 
-import { removeFromList } from '@/api/libraryActions';
 import { useProfile } from '@/api/profile';
 import { useMovieWatchlist } from '@/api/watchlist';
 import { EmptyState } from '@/components/EmptyState';
@@ -133,10 +132,7 @@ export function FilmsTab() {
         <Poster
           title={film}
           badge={posterBadge({ ...film, type: 'movie' }, myProviderIds, now)}
-          showAdd
-          inList
           onPress={() => router.push(`/title/movie/${film.tmdbId}`)}
-          onToggle={() => removeFromList({ ...film, type: 'movie' })}
           onLongPress={() => openFilmMenu(film)}
           style={{ width }}
         />

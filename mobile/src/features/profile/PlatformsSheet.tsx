@@ -45,6 +45,7 @@ export function PlatformsSheet({ visible, onClose }: Props) {
       visible={visible}
       onClose={onClose}
       enterDuration={durations.sheetPlatforms}
+      dragToClose={false}
       panelStyle={[styles.panel, { maxHeight: height - TOP_GAP }]}
     >
       <View style={styles.header}>
