@@ -48,13 +48,14 @@ export function TrailerButton({ titleId, trailerKey, backdropPath }: Props) {
   return (
     <View style={styles.section}>
       {playing ? (
-        <View style={styles.frame}>
+        <View style={styles.playerFrame}>
           <WebView
             testID="trailer-player"
             source={{ html: trailerHtml(trailerKey), baseUrl: ORIGIN }}
             originWhitelist={['*']}
             allowsInlineMediaPlayback
             allowsFullscreenVideo
+            androidLayerType="hardware"
             mediaPlaybackRequiresUserAction={false}
             onShouldStartLoadWithRequest={stayInPlayer}
             style={styles.player}
@@ -92,6 +93,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Ni coins arrondis ni overflow: hidden : ce rognage rend la vidéo noire sur Android (le son passe).
+  playerFrame: {
+    aspectRatio: 16 / 9,
   },
   player: {
     width: '100%',
