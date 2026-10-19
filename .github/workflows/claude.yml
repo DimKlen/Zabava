@@ -25,7 +25,11 @@ jobs:
       pull-requests: write
       issues: write
       id-token: write
-      actions: read # Required for Claude to read CI results on PRs
+      # gh run rerun : relancer un workflow en échec.
+      actions: write
+      # gh pr checks : vérifications et statuts de la PR.
+      checks: read
+      statuses: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -62,7 +66,9 @@ jobs:
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
-            actions: read
+            actions: write
+            checks: read
+            statuses: read
 
           # Typecheck, lint et tests (mobile et backend), comme dans CLAUDE.md,
           # puis branche, PR, attente de la CI et fusion si elle est verte.
