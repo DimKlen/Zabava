@@ -77,15 +77,16 @@ export const TitleRow = memo(function TitleRow({
   );
 });
 
-type PersonRowProps = { person: PersonResult; onPress: () => void };
+type PersonRowProps = { person: PersonResult; onPress: () => void; onPressIn?: () => void };
 
 /** Ligne de personne : photo ronde, nom, « Personne · 2 titres connus », chevron. */
-export function PersonRow({ person, onPress }: PersonRowProps) {
+export function PersonRow({ person, onPress, onPressIn }: PersonRowProps) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={person.name}
       onPress={onPress}
+      onPressIn={onPressIn}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
       <PersonAvatar

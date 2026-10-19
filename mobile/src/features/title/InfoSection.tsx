@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
-import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Text';
 import type { InfoRow } from '@/domain/movieDetail';
 import { colors } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
+import { openPerson, pressPerson } from '../person/openPerson';
 
 type SectionProps = {
   title: string;
@@ -53,7 +53,8 @@ export function InfoRows({ rows }: { rows: InfoRow[] }) {
                   key={person.id}
                   accessibilityRole="button"
                   accessibilityLabel={person.name}
-                  onPress={() => router.push(`/person/${person.id}`)}
+                  onPress={() => openPerson(person)}
+                  onPressIn={() => pressPerson(person)}
                   style={styles.person}
                 >
                   <Text style={styles.link}>{person.name}</Text>

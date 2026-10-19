@@ -26,6 +26,7 @@ import { LazyBadgePoster } from '../catalog/CatalogPoster';
 import { GridSkeleton } from '../catalog/GridSkeleton';
 import { PersonAvatar } from '../catalog/PersonAvatar';
 import { useLibraryMembership, useMyProviderIds } from '../catalog/useLibraryMembership';
+import { personPreview, type PersonPreview } from './openPerson';
 import { PersonBio } from './PersonBio';
 
 const TABS = [
@@ -61,7 +62,7 @@ export function PersonScreen({ id }: { id: number }) {
       ) : showsLoadError(query) ? (
         <LoadError onRetry={() => void query.refetch()} />
       ) : (
-        <PersonSkeleton />
+        <PersonSkeleton preview={personPreview(id)} />
       )}
     </View>
   );
@@ -131,13 +132,27 @@ function PersonContent({ person }: { person: PersonDetail }) {
   );
 }
 
-function PersonSkeleton() {
+/**
+ * Chargement. Ouverte depuis un nom (casting, équipe, recherche), la fiche montre tout de
+ * suite la photo et le nom déjà connus ; le reste est en squelette.
+ */
+function PersonSkeleton({ preview }: { preview?: PersonPreview }) {
   return (
     <View>
       <View style={[styles.identity, styles.skeletonIdentity]}>
-        <SkeletonBox width={96} height={96} radius={48} />
+        {preview ? (
+          <PersonAvatar name={preview.name} profilePath={preview.profilePath} size={96} />
+        ) : (
+          <SkeletonBox width={96} height={96} radius={48} />
+        )}
         <View style={styles.identityText}>
-          <SkeletonBox width="70%" height={24} radius={radii.rXs} />
+          {preview ? (
+            <Text accessibilityRole="header" style={styles.name}>
+              {preview.name}
+            </Text>
+          ) : (
+            <SkeletonBox width="70%" height={24} radius={radii.rXs} />
+          )}
           <SkeletonBox width="90%" height={13} radius={radii.rXs} style={styles.skeletonLine} />
         </View>
       </View>

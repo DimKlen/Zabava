@@ -16,6 +16,7 @@ import { toBadgeData, type BadgeData } from './badges';
 import { toPosterTitle, type PosterTitle } from './catalog';
 import { api } from './http';
 import { toMediaType } from './mappers';
+import { queryClient } from './queryClient';
 import type { components } from './types';
 
 type ApiDiscoverResult = components['schemas']['DiscoverResult'];
@@ -162,12 +163,21 @@ export function toPersonDetail(person: ApiPersonDetail, id: number): PersonDetai
   };
 }
 
-/** Fiche personne (`GET /people/{id}`), gardée 24 h. */
-export function usePerson(id: number) {
-  return useQuery({
+function personQuery(id: number) {
+  return queryOptions({
     queryKey: ['person', id],
     queryFn: async () => toPersonDetail(await api<ApiPersonDetail>(`/people/${id}`), id),
     staleTime: DAY,
     enabled: Number.isFinite(id),
   });
+}
+
+/** Fiche personne (`GET /people/{id}`), gardée 24 h. */
+export function usePerson(id: number) {
+  return useQuery(personQuery(id));
+}
+
+/** Lance le chargement d'une fiche personne avant son ouverture (début de l'appui). */
+export function prefetchPerson(id: number): void {
+  void queryClient.prefetchQuery(personQuery(id));
 }

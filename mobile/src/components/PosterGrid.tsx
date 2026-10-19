@@ -14,6 +14,8 @@ import { spacing } from '@/theme/tokens';
 const COLUMNS = 3;
 const GAP = spacing.gridGap;
 const SIDE = spacing.screenX;
+/** Rangées rendues d'emblée : un écran de téléphone en montre trois à quatre. */
+const INITIAL_ROWS = 4;
 /** Affiches en 2:3, titre superposé : la hauteur d'une rangée est connue d'avance. */
 const POSTER_RATIO = 3 / 2;
 
@@ -65,6 +67,11 @@ export function PosterGrid<T>({
   ) : null;
   return (
     <FlatList
+      // Rangées proches de l'écran seulement : une filmographie compte des centaines
+      // d'affiches, chacune avec son badge à charger.
+      initialNumToRender={INITIAL_ROWS}
+      maxToRenderPerBatch={2}
+      windowSize={5}
       {...rest}
       ListHeaderComponent={header}
       getItemLayout={(_data, index) => gridRowLayout(index, posterWidth, paddingTop + headerHeight)}
