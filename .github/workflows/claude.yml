@@ -18,6 +18,8 @@ jobs:
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
     runs-on: ubuntu-latest
+    # Correction, PR, puis attente de la CI (~10 min par passage) et corrections éventuelles.
+    timeout-minutes: 120
     permissions:
       contents: write
       pull-requests: write
@@ -51,6 +53,10 @@ jobs:
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
+        env:
+          # Une commande Bash peut attendre toute la CI (gh pr checks --watch) sans être coupée.
+          BASH_DEFAULT_TIMEOUT_MS: '900000'
+          BASH_MAX_TIMEOUT_MS: '1800000'
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
@@ -61,6 +67,6 @@ jobs:
           # Typecheck, lint et tests (mobile et backend), comme dans CLAUDE.md,
           # puis branche, PR, attente de la CI et fusion si elle est verte.
           claude_args: >-
-            --allowedTools "Bash(cd:*),Bash(npm test:*),Bash(npm run:*),Bash(npx tsc:*),Bash(npx eslint:*),Bash(npx jest:*),Bash(./gradlew:*),Bash(git diff:*),Bash(git log:*),Bash(git status:*),Bash(git checkout:*),Bash(git switch:*),Bash(git branch:*),Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git fetch:*),Bash(git pull:*),Bash(git rebase:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh pr checks:*),Bash(gh pr merge:*),Bash(gh pr comment:*),Bash(gh run list:*),Bash(gh run view:*),Bash(gh run watch:*),Bash(gh issue view:*),Bash(gh issue comment:*)"
-            --append-system-prompt "Autorisation explicite du propriétaire du dépôt, valable dans ce workflow : quand tu corriges une issue, travaille sur une branche dédiée (jamais sur main), vérifie (typecheck, lint, tests), committe (Conventional Commits), pousse la branche, puis ouvre une PR vers main avec gh pr create (corps avec « Closes #<numéro de l'issue> »). Attends la CI avec gh pr checks <n> --watch --interval 30. Si toutes les vérifications passent, fusionne avec gh pr merge <n> --merge --delete-branch sans demander de confirmation. Si une vérification échoue, analyse (gh run view --log-failed), corrige, pousse et attends de nouveau ; après trois échecs, ne fusionne pas et explique le blocage en commentaire. Jamais de push --force ni de push direct sur main, ne modifie pas .github/ ni specs/."
+            --allowedTools "Bash(cd:*),Bash(npm ci:*),Bash(npm test:*),Bash(npm run:*),Bash(npx tsc:*),Bash(npx eslint:*),Bash(npx prettier:*),Bash(npx jest:*),Bash(./gradlew:*),Bash(git diff:*),Bash(git log:*),Bash(git status:*),Bash(git show:*),Bash(git checkout:*),Bash(git switch:*),Bash(git branch:*),Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git fetch:*),Bash(git pull:*),Bash(git rebase:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh pr diff:*),Bash(gh pr checks:*),Bash(gh pr merge:*),Bash(gh pr comment:*),Bash(gh run list:*),Bash(gh run view:*),Bash(gh run watch:*),Bash(gh run rerun:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(grep:*),Bash(wc:*),Bash(sort:*),Bash(sleep:*),Bash(echo:*)"
+            --append-system-prompt "Autorisation explicite du propriétaire du dépôt, valable dans ce workflow : quand tu corriges une issue, travaille sur une branche dédiée (jamais sur main). Avant chaque commit, vérifie toi-même : côté mobile cd mobile puis npx eslint --fix . puis npx tsc --noEmit puis npx jest ; côté backend, si tu l'as modifié, cd backend puis ./gradlew test. Committe (Conventional Commits), pousse la branche, puis ouvre une PR vers main avec gh pr create (corps avec « Closes #<numéro de l'issue> »). Ensuite attends la CI de la PR, sans terminer avant qu'elle soit finie : gh pr checks <n> --watch --interval 30 avec un délai de commande de 900000 ms ; si aucune vérification n'est encore listée, attends (sleep 30) et relance. Si une vérification échoue, lis l'erreur (gh run view <id> --log-failed), corrige, vérifie localement, pousse, puis attends de nouveau la CI. Quand toutes les vérifications passent, fusionne avec gh pr merge <n> --merge --delete-branch sans demander de confirmation. Après trois échecs de suite, ne fusionne pas et explique le blocage en commentaire. Jamais de push --force ni de push direct sur main, ne modifie pas .github/ ni specs/."
 
