@@ -48,12 +48,34 @@ const base: TitleDetail = {
 async function renderMovie(movie: TitleDetail) {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <MovieScreen movie={movie} />
+      <MovieScreen id={movie.id} movie={movie} />
     </SafeAreaProvider>,
   );
 }
 
 beforeEach(() => jest.clearAllMocks());
+
+describe('chargement', () => {
+  it('l’en-tête reste en place à l’arrivée de la fiche : seuls les squelettes sont remplacés', async () => {
+    const preview = { type: 'movie' as const, tmdbId: 1, title: base.title, posterPath: '/p.jpg' };
+    const tree = (movie?: TitleDetail) => (
+      <SafeAreaProvider initialMetrics={metrics}>
+        <MovieScreen id="movie-1" preview={preview} movie={movie} />
+      </SafeAreaProvider>
+    );
+    await render(tree());
+    const poster = screen.getByLabelText(base.title);
+    expect(screen.getByTestId('title-skeleton')).toBeTruthy();
+    expect(screen.queryByText('Ajouter à ma liste')).toBeNull();
+
+    await screen.rerender(tree({ ...base, posterPath: '/p.jpg' }));
+
+    // Même élément d'affiche : pas de remontage (ni nouveau fondu de l'image).
+    expect(screen.getByLabelText(base.title)).toBe(poster);
+    expect(screen.queryByTestId('title-skeleton')).toBeNull();
+    expect(screen.getByText('Ajouter à ma liste')).toBeTruthy();
+  });
+});
 
 describe('MovieScreen', () => {
   it('sans note : aucune chip ; sans plateforme : disponibilité inconnue', async () => {

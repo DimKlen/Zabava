@@ -15,6 +15,7 @@ import { colors, durations } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
 import { titlePreview } from './openTitle';
+import { HeaderTextSkeleton } from './TitleSkeleton';
 
 type Props = {
   id: string;
@@ -28,6 +29,8 @@ type Props = {
   onToggleAlerts?: () => void;
   /** Boutons de droite en plus de la cloche (DotsThree des séries). */
   extraActions?: ReactNode;
+  /** Fiche pas encore reçue : méta et genres en squelette (titre aussi s'il manque). */
+  loading?: boolean;
 };
 
 const BACKDROP_HEIGHT = 250;
@@ -43,6 +46,7 @@ export function TitleHeader({
   alertsOn,
   onToggleAlerts,
   extraActions,
+  loading = false,
 }: Props) {
   const insets = useSafeAreaInsets();
   const backdrop = tmdbImage(backdropPath, 'w780');
@@ -84,11 +88,19 @@ export function TitleHeader({
           style={styles.poster}
         />
         <View style={styles.titleText}>
-          <Text accessibilityRole="header" textBreakStrategy="balanced" style={styles.title}>
-            {title}
-          </Text>
-          {meta ? <Text style={styles.meta}>{meta}</Text> : null}
-          {genres.length > 0 ? <Text style={styles.genres}>{genres.join(', ')}</Text> : null}
+          {title ? (
+            <Text accessibilityRole="header" textBreakStrategy="balanced" style={styles.title}>
+              {title}
+            </Text>
+          ) : null}
+          {loading ? (
+            <HeaderTextSkeleton withTitle={!title} />
+          ) : (
+            <>
+              {meta ? <Text style={styles.meta}>{meta}</Text> : null}
+              {genres.length > 0 ? <Text style={styles.genres}>{genres.join(', ')}</Text> : null}
+            </>
+          )}
         </View>
       </View>
     </View>
