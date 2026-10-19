@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { setEpisodesWatched, type ListTitle } from '@/api/libraryActions';
@@ -35,6 +36,21 @@ export function EpisodesTab({
     .sort((a, b) => a.number - b.number);
   const progress = seasonProgress(seasonEpisodes, now);
 
+  // Gestes stables pour les lignes (EpisodeRow est mémoïsé), lus avec les données du moment.
+  const latest = useRef({ series, episodes, onOpenEpisode });
+  useEffect(() => {
+    latest.current = { series, episodes, onOpenEpisode };
+  });
+  const openEpisode = useCallback(
+    (episode: SeriesEpisode) => latest.current.onOpenEpisode(episode),
+    [],
+  );
+  const check = useCallback(
+    (episode: SeriesEpisode) =>
+      checkEpisode(latest.current.series, latest.current.episodes, episode),
+    [],
+  );
+
   const toggleAll = () => {
     const toggle = seasonToggle(seasonEpisodes, now);
     if (toggle.watched) hapticLight();
@@ -67,8 +83,8 @@ export function EpisodesTab({
             episode={episode}
             spoilerProtection={spoilerProtection}
             now={now}
-            onPress={() => onOpenEpisode(episode)}
-            onCheck={() => checkEpisode(series, episodes, episode)}
+            onPress={openEpisode}
+            onCheck={check}
           />
         ))}
       </View>

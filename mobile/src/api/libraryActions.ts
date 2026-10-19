@@ -215,13 +215,30 @@ function sync(
   return [{ kind: 'patch', titleId: title.id, patch: { status, watchedAt, notificationsEnabled } }];
 }
 
-/** Recoche des épisodes avec leur date d'origine (une requête par date). */
+/** Épisodes par requête : une saison de 300 épisodes part en tranches courtes, pas d'un bloc. */
+const EPISODES_PER_REQUEST = 100;
+
+function chunk<T>(items: readonly T[]): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += EPISODES_PER_REQUEST) {
+    chunks.push(items.slice(i, i + EPISODES_PER_REQUEST));
+  }
+  return chunks;
+}
+
+const markOps = (ids: readonly number[], watchedAt?: string): Op[] =>
+  chunk(ids).map((episodeIds) => ({ kind: 'mark', episodeIds, watchedAt }));
+
+const unmarkOps = (ids: readonly number[]): Op[] =>
+  chunk(ids).map((episodeIds) => ({ kind: 'unmark', episodeIds }));
+
+/** Recoche des épisodes avec leur date d'origine (une requête par date et par tranche). */
 function remark(states: EpisodeStates): Op[] {
   const byDate = new Map<string, number[]>();
   for (const [id, watchedAt] of states) {
     if (watchedAt) byDate.set(watchedAt, [...(byDate.get(watchedAt) ?? []), id]);
   }
-  return [...byDate].map(([watchedAt, episodeIds]) => ({ kind: 'mark', episodeIds, watchedAt }));
+  return [...byDate].flatMap(([watchedAt, ids]) => markOps(ids, watchedAt));
 }
 
 /** Ma liste et les épisodes des fiches du type. */
@@ -436,9 +453,9 @@ export function setEpisodesWatched(
       const snapshot = snapshotTitle(title);
       const known = knownEpisodes(title);
       const previous: EpisodeStates = new Map(
-        ids.map((id) => [
-          id,
-          known.get(id)?.watchedAt ?? episodes.find((e) => e.id === id)?.watchedAt,
+        episodes.map((episode) => [
+          episode.id,
+          known.get(episode.id)?.watchedAt ?? episode.watchedAt,
         ]),
       );
       const followed =
@@ -457,8 +474,8 @@ export function setEpisodesWatched(
       applyEpisodes(title, previous);
     },
     send: ({ followed, at }) => {
-      if (!watched) return [{ kind: 'unmark', episodeIds: ids }];
-      const ops: Op[] = [{ kind: 'mark', episodeIds: ids, watchedAt: at }];
+      if (!watched) return unmarkOps(ids);
+      const ops: Op[] = markOps(ids, at);
       // Le serveur suit la série avec les alertes actives : on reprend le choix local.
       if (followed && !followed.notificationsEnabled) {
         ops.push({ kind: 'patch', titleId: title.id, patch: { notificationsEnabled: false } });
@@ -469,7 +486,7 @@ export function setEpisodesWatched(
       if (followed) return [{ kind: 'remove', titleId: title.id }];
       if (!watched) return remark(previous);
       const unseen = ids.filter((id) => !previous.get(id));
-      return unseen.length > 0 ? [{ kind: 'unmark', episodeIds: unseen }] : [];
+      return unmarkOps(unseen);
     },
   });
 }

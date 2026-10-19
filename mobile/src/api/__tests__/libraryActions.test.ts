@@ -303,6 +303,26 @@ describe('séries', () => {
     expect(unmarkEpisodes).toHaveBeenCalledWith([13]);
   });
 
+  it('une longue saison part en tranches de 100 épisodes, et « Annuler » aussi', async () => {
+    const many = Array.from({ length: 336 }, (_, i) => episode(1000 + i, i + 1));
+    queryClient.setQueryData(episodesKey('tv', 1), many);
+
+    setEpisodesWatched(bearTitle, many, true);
+    // Tout est à l'écran tout de suite, avant la moindre requête.
+    expect(ficheEpisodes().every((e) => e.watchedAt)).toBe(true);
+    await flush();
+    expect(jest.mocked(markEpisodes).mock.calls.map(([ids]) => ids.length)).toEqual([
+      100, 100, 100, 36,
+    ]);
+
+    undo();
+    await flush();
+    expect(jest.mocked(unmarkEpisodes).mock.calls.map(([ids]) => ids.length)).toEqual([
+      100, 100, 100, 36,
+    ]);
+    expect(ficheEpisodes().some((e) => e.watchedAt)).toBe(false);
+  });
+
   it('la carte avance et « Annuler » la remet immédiatement, sans attendre de rechargement', async () => {
     // Un rechargement de Ma liste est en cours (après une action précédente).
     void queryClient

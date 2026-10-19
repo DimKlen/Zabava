@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { CheckButton } from '@/components/CheckButton';
@@ -16,12 +17,34 @@ type Props = {
   episode: SeriesEpisode;
   spoilerProtection: boolean;
   now: Date;
-  onPress: () => void;
-  onCheck: () => void;
+  /** Stables d'un rendu à l'autre : une saison de 300 épisodes ne se redessine pas en entier. */
+  onPress: (episode: SeriesEpisode) => void;
+  onCheck: (episode: SeriesEpisode) => void;
 };
 
+const MINUTE = 60_000;
+
+/** Ne se redessine que si l'épisode, la protection ou la minute courante changent. */
+function sameProps(a: Props, b: Props): boolean {
+  return (
+    a.seriesId === b.seriesId &&
+    a.episode === b.episode &&
+    a.spoilerProtection === b.spoilerProtection &&
+    a.onPress === b.onPress &&
+    a.onCheck === b.onCheck &&
+    Math.floor(a.now.getTime() / MINUTE) === Math.floor(b.now.getTime() / MINUTE)
+  );
+}
+
 /** Ligne d'épisode de la fiche : vignette, « E05 · Titre », méta, coche si diffusé. */
-export function EpisodeRow({ seriesId, episode, spoilerProtection, now, onPress, onCheck }: Props) {
+export const EpisodeRow = memo(function EpisodeRow({
+  seriesId,
+  episode,
+  spoilerProtection,
+  now,
+  onPress,
+  onCheck,
+}: Props) {
   const aired = isAired(episode, now);
   const watched = episode.watchedAt !== undefined;
   const blur = spoilerProtection && !watched;
@@ -31,7 +54,7 @@ export function EpisodeRow({ seriesId, episode, spoilerProtection, now, onPress,
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={onPress}
+      onPress={() => onPress(episode)}
       style={[styles.row, !aired && styles.notAired]}
       testID="episode-row"
     >
@@ -55,10 +78,10 @@ export function EpisodeRow({ seriesId, episode, spoilerProtection, now, onPress,
         </Text>
         <Text style={styles.meta}>{episodeRowMeta(episode, now)}</Text>
       </View>
-      {aired ? <CheckButton watched={watched} onPress={onCheck} /> : null}
+      {aired ? <CheckButton watched={watched} onPress={() => onCheck(episode)} /> : null}
     </Pressable>
   );
-}
+}, sameProps);
 
 const styles = StyleSheet.create({
   row: {
