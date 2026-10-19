@@ -86,6 +86,67 @@ class TitlesIT extends IntegrationTest {
     }
 
     @Test
+    void ficheFraicheLueSansAucuneEcriture() throws Exception {
+        mvc.perform(as(user, get("/api/v1/titles/movie/603"))).andExpect(status().isOk());
+        db.sql("delete from title_availability").update();
+        db.sql("update titles set title = 'Titre en base' where tmdb_id = 603").update();
+
+        // Enregistrée il y a moins de 24 h : la fiche répond sans rien réécrire.
+        mvc.perform(as(user, get("/api/v1/titles/movie/603")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.availability.sub[0].name").value("Netflix"));
+        assertThat(db.sql("select count(*) from title_availability").query(Long.class).single()).isZero();
+        assertThat(db.sql("select title from titles where tmdb_id = 603").query(String.class).single())
+                .isEqualTo("Titre en base");
+    }
+
+    @Test
+    void fichePerimeeReecriteEnGardantLaDateDArriveeDesOffres() throws Exception {
+        mvc.perform(as(user, get("/api/v1/titles/movie/603"))).andExpect(status().isOk());
+        // Offre Netflix arrivée le 1er mai ; une offre disparue depuis chez TMDB ; un titre enregistré il y a 2 jours.
+        db.sql("update title_availability set first_seen_at = '2026-05-01T00:00:00Z' where region = 'CA' and provider_id = 8")
+                .update();
+        long titleId = db.sql("select id from titles where tmdb_id = 603").query(Long.class).single();
+        db.sql("insert into title_availability (title_id, region, provider_id, type) values (:id, 'US', 999, 'abonnement')")
+                .param("id", titleId)
+                .update();
+        db.sql("update titles set updated_at = :old where id = :id")
+                .param("old", java.sql.Timestamp.from(NOW.minus(java.time.Duration.ofDays(2))))
+                .param("id", titleId)
+                .update();
+
+        mvc.perform(as(user, get("/api/v1/titles/movie/603"))).andExpect(status().isOk());
+
+        assertThat(db.sql("""
+                        select count(*) from title_availability
+                        where region = 'CA' and provider_id = 8 and first_seen_at = '2026-05-01T00:00:00Z'
+                        """).query(Long.class).single())
+                .isEqualTo(1);
+        // Région proposée absente de la réponse TMDB : ses anciennes offres sont retirées.
+        assertThat(db.sql("select count(*) from title_availability where provider_id = 999").query(Long.class).single())
+                .isZero();
+    }
+
+    @Test
+    void seulesLesRegionsProposeesSontEnregistrees() throws Exception {
+        WIREMOCK.stubFor(com.github.tomakehurst.wiremock.client.WireMock.get(urlPathEqualTo("/tmdb/movie/605"))
+                .willReturn(com.github.tomakehurst.wiremock.client.WireMock.okJson("""
+                        {"id": 605, "title": "Ailleurs", "release_date": "2026-01-02",
+                         "release_dates": {"results": [
+                           {"iso_3166_1": "CA", "release_dates": [{"type": 3, "release_date": "2026-01-02T00:00:00.000Z"}]},
+                           {"iso_3166_1": "DE", "release_dates": [{"type": 3, "release_date": "2026-01-05T00:00:00.000Z"}]}]},
+                         "watch/providers": {"results": {
+                           "CA": {"link": "https://tmdb/ca", "flatrate": [{"provider_id": 8, "provider_name": "Netflix"}]},
+                           "DE": {"link": "https://tmdb/de", "flatrate": [{"provider_id": 8, "provider_name": "Netflix"}]}}}}
+                        """)));
+
+        mvc.perform(as(user, get("/api/v1/titles/movie/605"))).andExpect(status().isOk());
+
+        assertThat(db.sql("select region from title_availability").query(String.class).list()).containsExactly("CA");
+        assertThat(db.sql("select region from release_dates").query(String.class).list()).containsExactly("CA");
+    }
+
+    @Test
     void ficheSerie() throws Exception {
         mvc.perform(as(user, get("/api/v1/titles/tv/1399")))
                 .andExpect(status().isOk())

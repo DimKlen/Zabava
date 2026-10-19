@@ -11,7 +11,9 @@ import { goBack } from '@/lib/navigation';
 import { colors } from '@/theme/tokens';
 
 import { MovieScreen } from './MovieScreen';
+import { titlePreview } from './openTitle';
 import { SeriesScreen } from './SeriesScreen';
+import { TitleHeader } from './TitleHeader';
 
 type Props = { type: MediaType; tmdbId: number; season?: number; episode?: number };
 
@@ -40,17 +42,31 @@ export function TitleScreen({ type, tmdbId, season, episode }: Props) {
 
 type LoadingProps = { gradientKey: string; error: boolean; onRetry: () => void };
 
-/** Chargement ou erreur : backdrop de remplacement et bouton retour. */
+/**
+ * Chargement ou erreur. Ouverte depuis une liste, la fiche montre tout de suite ce que
+ * la liste savait (affiche, titre, année) ; sinon (lien profond), backdrop et retour.
+ */
 function TitleLoading({ gradientKey, error, onRetry }: LoadingProps) {
   const insets = useSafeAreaInsets();
+  const preview = titlePreview(gradientKey);
   return (
     <View style={styles.screen}>
-      <View style={styles.backdrop}>
-        <GradientFill gradientKey={gradientKey} />
-        <View style={[styles.back, { top: insets.top + 3 }]}>
-          <RoundIconButton icon={CaretLeftIcon} accessibilityLabel="Retour" onPress={goBack} />
+      {preview ? (
+        <TitleHeader
+          id={gradientKey}
+          title={preview.title}
+          posterPath={preview.posterPath}
+          meta={preview.year !== undefined ? String(preview.year) : ''}
+          genres={[]}
+        />
+      ) : (
+        <View style={styles.backdrop}>
+          <GradientFill gradientKey={gradientKey} />
+          <View style={[styles.back, { top: insets.top + 3 }]}>
+            <RoundIconButton icon={CaretLeftIcon} accessibilityLabel="Retour" onPress={goBack} />
+          </View>
         </View>
-      </View>
+      )}
       {error ? <LoadError onRetry={onRetry} /> : null}
     </View>
   );

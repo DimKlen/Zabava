@@ -26,7 +26,11 @@ type Props = {
   inList?: boolean;
   /** w342 pour les grilles et carrousels, w185 en compact. */
   imageSize?: 'w185' | 'w342';
+  /** Taille déjà en cache (liste d'origine), affichée le temps que `imageSize` arrive. */
+  placeholderSize?: 'w92' | 'w185';
   onPress?: () => void;
+  /** Début de l'appui : précharger la fiche. */
+  onPressIn?: () => void;
   onToggle?: () => void;
   /** Films de Ma liste uniquement : délai 480 ms, haptique Medium. */
   onLongPress?: () => void;
@@ -42,12 +46,15 @@ export function Poster({
   showAdd = false,
   inList = false,
   imageSize = 'w342',
+  placeholderSize,
   onPress,
+  onPressIn,
   onToggle,
   onLongPress,
   style,
 }: Props) {
   const uri = tmdbImage(title.posterPath, imageSize);
+  const placeholder = placeholderSize ? tmdbImage(title.posterPath, placeholderSize) : undefined;
 
   return (
     <PressableScale
@@ -55,6 +62,7 @@ export function Poster({
       accessibilityRole="button"
       accessibilityLabel={title.title}
       onPress={onPress}
+      onPressIn={onPressIn}
       onLongPress={
         onLongPress
           ? () => {
@@ -86,6 +94,8 @@ export function Poster({
       {uri ? (
         <Image
           source={{ uri }}
+          placeholder={placeholder ? { uri: placeholder } : undefined}
+          placeholderContentFit="cover"
           contentFit="cover"
           transition={durations.posterFadeIn}
           cachePolicy="memory-disk"

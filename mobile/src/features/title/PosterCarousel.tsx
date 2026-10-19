@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
 import type { PosterTitle } from '@/api/catalog';
@@ -7,6 +6,7 @@ import { HorizontalCarousel } from '@/components/HorizontalCarousel';
 import { Poster } from '@/components/Poster';
 
 import { InfoSection } from './InfoSection';
+import { openTitle, pressTitle, previewOf } from './openTitle';
 
 type Props = {
   title: string;
@@ -28,7 +28,8 @@ export function PosterCarousel({ title, titles, libraryIds }: Props) {
             title={item}
             showAdd
             inList={libraryIds.has(item.id)}
-            onPress={() => router.push(`/title/${item.type}/${item.tmdbId}`)}
+            onPress={() => openTitle(previewOf(item, 'w342'))}
+            onPressIn={() => pressTitle(previewOf(item, 'w342'))}
             onToggle={() => toggleInList(item)}
             style={styles.poster}
           />

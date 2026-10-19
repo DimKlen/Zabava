@@ -3,10 +3,11 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useTitle } from '@/api/titles';
 
+import { openTitle } from '../openTitle';
 import { TitleScreen } from '../TitleScreen';
 
 jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
-jest.mock('@/api/titles', () => ({ useTitle: jest.fn() }));
+jest.mock('@/api/titles', () => ({ useTitle: jest.fn(), prefetchTitle: jest.fn() }));
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -39,4 +40,15 @@ it('reprend l’état de chargement pendant la nouvelle tentative', async () => 
   mockQuery({ isError: true, isFetching: true });
   await renderTitle();
   expect(screen.queryByText('Impossible de charger')).toBeNull();
+});
+
+it('ouverte depuis une liste : affiche, titre et année tout de suite, pendant le chargement', async () => {
+  openTitle({ type: 'movie', tmdbId: 550, title: 'Fight Club', posterPath: '/fc.jpg', year: 1999 });
+  mockQuery({ isError: false, isFetching: true });
+  await renderTitle();
+  expect(screen.getByRole('header', { name: 'Fight Club' })).toBeTruthy();
+  expect(screen.getByText('1999')).toBeTruthy();
+  // La cloche attend la fiche (suivi de l'utilisateur).
+  expect(screen.queryByLabelText('Activer les alertes')).toBeNull();
+  expect(screen.getByLabelText('Retour')).toBeTruthy();
 });

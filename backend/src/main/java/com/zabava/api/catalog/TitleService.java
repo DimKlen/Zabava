@@ -7,7 +7,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -99,8 +98,12 @@ public class TitleService {
     public TitleDetail detail(TitleRef ref, Prefs prefs) {
         String tmdbType = ref.type().tmdbType();
         JsonNode d = details(tmdbType, ref.tmdbId(), prefs.language());
-        long id = persist(d, tmdbType);
-        TitleRow row = refreshRatings(store.findById(id).orElseThrow());
+        // Fiche enregistrée il y a moins de 24 h : aucune écriture, la réponse vient de TMDB (en cache).
+        TitleRow stored = store.find(tmdbType, ref.tmdbId())
+                .filter(r -> r.updatedAt().isAfter(clock.instant().minus(TITLE_TTL)))
+                .orElseGet(() -> store.findById(persist(d, tmdbType)).orElseThrow());
+        TitleRow row = refreshRatings(stored);
+        long id = row.id();
         MediaType type = row.type();
         boolean movie = type == MediaType.MOVIE;
         String region = prefs.region();
@@ -274,8 +277,11 @@ public class TitleService {
 
         if (movie) {
             List<ReleaseDate> dates = new ArrayList<>();
-            releaseDates(d).forEach((region, byType) ->
-                    byType.forEach((type, date) -> dates.add(new ReleaseDate(region, type, date))));
+            releaseDates(d).forEach((region, byType) -> {
+                if (Regions.SUPPORTED.contains(region)) {
+                    byType.forEach((type, date) -> dates.add(new ReleaseDate(region, type, date)));
+                }
+            });
             store.replaceReleaseDates(id, dates);
         } else {
             store.upsertSeasons(id, Json.map(d, "seasons", s -> new SeasonData(
@@ -287,12 +293,12 @@ public class TitleService {
         }
 
         JsonNode providers = d.path("watch/providers").path("results");
-        Set<String> regions = new HashSet<>();
         List<Offer> offers = new ArrayList<>();
         Map<Integer, ProviderData> seen = new HashMap<>();
         for (Map.Entry<String, JsonNode> entry : providers.properties()) {
             String region = entry.getKey();
-            regions.add(region);
+            // Seules les régions proposées dans l'app sont lues ; TMDB en renvoie une soixantaine.
+            if (!Regions.SUPPORTED.contains(region)) continue;
             String link = Json.text(entry.getValue(), "link");
             OFFER_TYPES.forEach((field, type) -> Json.array(entry.getValue(), field).forEach(p -> {
                 int providerId = p.path("provider_id").asInt();
@@ -304,7 +310,8 @@ public class TitleService {
             }));
         }
         store.upsertProviders(seen.values());
-        store.replaceOffers(id, regions, offers, saved.created());
+        // Une région absente de la réponse n'a plus aucune offre : ses anciennes offres partent aussi.
+        store.replaceOffers(id, Regions.SUPPORTED, offers, saved.created());
         return id;
     }
 

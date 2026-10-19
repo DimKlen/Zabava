@@ -19,6 +19,7 @@ import { AdvancedResults } from './AdvancedResults';
 import { AdvancedSearchSheet } from './AdvancedSearchSheet';
 import { SearchIdle } from './SearchIdle';
 import { SearchResults } from './SearchResults';
+import { openTitle, previewOf } from '../title/openTitle';
 
 /**
  * Recherche (specs/docs/08 §8.1). Requête, onglet et filtres avancés vivent le temps
@@ -54,9 +55,9 @@ export function SearchScreen() {
 
   const remember = () => addRecent(text);
 
-  const openTitle = (title: TitleResult) => {
+  const showTitle = (title: TitleResult) => {
     remember();
-    router.push(`/title/${title.type}/${title.tmdbId}`);
+    openTitle(previewOf(title, 'w92'));
   };
   const openPerson = (person: PersonResult) => {
     remember();
@@ -87,7 +88,7 @@ export function SearchScreen() {
     body = (
       <SearchIdle
         onPickRecent={searchNow}
-        onOpenTitle={openTitle}
+        onOpenTitle={showTitle}
         onToggleTitle={toggleTitle}
         isInList={isInList}
       />
@@ -99,7 +100,7 @@ export function SearchScreen() {
         typing={text.trim() !== query}
         tab={tab}
         onChangeTab={setTab}
-        onOpenTitle={openTitle}
+        onOpenTitle={showTitle}
         onToggleTitle={toggleTitle}
         isInList={isInList}
         onOpenPerson={openPerson}

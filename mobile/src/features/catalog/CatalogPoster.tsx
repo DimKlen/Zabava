@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { memo } from 'react';
 
 import { useBadgeData, type BadgeData } from '@/api/badges';
@@ -7,6 +6,7 @@ import type { CatalogTitle } from '@/api/discover';
 import { toggleInList, withLibraryType, type ListTitle } from '@/api/libraryActions';
 import { Poster } from '@/components/Poster';
 import { posterBadge } from '@/domain/badge';
+import { openTitle, pressTitle, previewOf } from '../title/openTitle';
 
 /** Ce qu'il faut pour ajouter le titre à Ma liste avec son badge. */
 export function toListTitle(title: PosterTitle, badge?: BadgeData | null): ListTitle {
@@ -53,7 +53,8 @@ export const CatalogPoster = memo(function CatalogPoster({
       badge={posterBadgeValue}
       showAdd
       inList={inList}
-      onPress={() => router.push(`/title/${title.type}/${title.tmdbId}`)}
+      onPress={() => openTitle(previewOf(title, 'w342'))}
+      onPressIn={() => pressTitle(previewOf(title, 'w342'))}
       onToggle={() => toggleInList(toListTitle(title, badge))}
       style={{ width }}
     />

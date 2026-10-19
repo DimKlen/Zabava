@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { queryOptions, useQuery } from '@tanstack/react-query';
 
 import type { Availability, MediaType, UserTitle } from '@/domain/types';
 
@@ -6,6 +6,7 @@ import { toPosterTitle, type PosterTitle } from './catalog';
 import { api } from './http';
 import { toAvailability, toMediaType, toUserTitle } from './mappers';
 import { whenSettled } from './mutationQueue';
+import { queryClient } from './queryClient';
 import type { components } from './types';
 
 type ApiTitleDetail = components['schemas']['TitleDetail'];
@@ -137,8 +138,8 @@ export function toTitleDetail(
   };
 }
 
-export function useTitle(type: MediaType, tmdbId: number) {
-  return useQuery({
+function titleQuery(type: MediaType, tmdbId: number) {
+  return queryOptions({
     queryKey: titleKey(type, tmdbId),
     queryFn: async () => {
       // Le statut de la fiche suit les écritures en file.
@@ -147,4 +148,13 @@ export function useTitle(type: MediaType, tmdbId: number) {
     },
     staleTime: DAY,
   });
+}
+
+export function useTitle(type: MediaType, tmdbId: number) {
+  return useQuery(titleQuery(type, tmdbId));
+}
+
+/** Lance le chargement d'une fiche avant son ouverture ; sans effet si elle est déjà en cache. */
+export function prefetchTitle(type: MediaType, tmdbId: number): void {
+  void queryClient.prefetchQuery(titleQuery(type, tmdbId));
 }

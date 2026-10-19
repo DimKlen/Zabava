@@ -1,5 +1,4 @@
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { GradientFill } from '@/components/GradientFill';
@@ -10,6 +9,7 @@ import type { UpcomingTitle } from '@/domain/upcoming';
 import { tmdbImage } from '@/lib/tmdb';
 import { colors, motion, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
+import { openTitle, pressTitle, previewOf } from '../title/openTitle';
 
 type Props = {
   title: UpcomingTitle;
@@ -25,7 +25,8 @@ export function UpcomingRow({ title, line, tag }: Props) {
       pressedScale={motion.pressScaleUpcoming}
       accessibilityRole="button"
       accessibilityLabel={`${title.title}, ${line}`}
-      onPress={() => router.push(`/title/${title.type}/${title.tmdbId}`)}
+      onPress={() => openTitle(previewOf(title, 'w92'))}
+      onPressIn={() => pressTitle(previewOf(title, 'w92'))}
       style={styles.row}
     >
       <View style={styles.poster}>

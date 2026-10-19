@@ -7,6 +7,7 @@ import { posterBadge } from '@/domain/badge';
 import type { SeriesEntry } from '@/domain/seriesList';
 
 import { openSeries } from './openSeries';
+import { pressTitle, previewOf } from '../title/openTitle';
 
 const POSTER_WIDTH = 112;
 
@@ -25,7 +26,8 @@ export function NotStartedCarousel({ entries }: { entries: SeriesEntry[] }) {
           <Poster
             title={series}
             badge={posterBadge(series, myProviderIds, now)}
-            onPress={() => openSeries(series)}
+            onPress={() => openSeries(series, undefined, 'w342')}
+            onPressIn={() => pressTitle(previewOf(series, 'w342'))}
             style={styles.poster}
           />
           <Button
@@ -33,7 +35,7 @@ export function NotStartedCarousel({ entries }: { entries: SeriesEntry[] }) {
             height={34}
             fontSize={13}
             label="Commencer"
-            onPress={() => openSeries(series, 1)}
+            onPress={() => openSeries(series, 1, 'w342')}
           />
         </View>
       ))}
