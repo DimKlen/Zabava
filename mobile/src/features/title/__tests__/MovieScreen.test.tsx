@@ -48,12 +48,34 @@ const base: TitleDetail = {
 async function renderMovie(movie: TitleDetail) {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <MovieScreen movie={movie} />
+      <MovieScreen id={movie.id} movie={movie} />
     </SafeAreaProvider>,
   );
 }
 
 beforeEach(() => jest.clearAllMocks());
+
+describe('chargement', () => {
+  it('l’en-tête reste en place à l’arrivée de la fiche : seuls les squelettes sont remplacés', async () => {
+    const preview = { type: 'movie' as const, tmdbId: 1, title: base.title, posterPath: '/p.jpg' };
+    const tree = (movie?: TitleDetail) => (
+      <SafeAreaProvider initialMetrics={metrics}>
+        <MovieScreen id="movie-1" preview={preview} movie={movie} />
+      </SafeAreaProvider>
+    );
+    await render(tree());
+    const poster = screen.getByLabelText(base.title);
+    expect(screen.getByTestId('title-skeleton')).toBeTruthy();
+    expect(screen.queryByText('Ajouter à ma liste')).toBeNull();
+
+    await screen.rerender(tree({ ...base, posterPath: '/p.jpg' }));
+
+    // Même élément d'affiche : pas de remontage (ni nouveau fondu de l'image).
+    expect(screen.getByLabelText(base.title)).toBe(poster);
+    expect(screen.queryByTestId('title-skeleton')).toBeNull();
+    expect(screen.getByText('Ajouter à ma liste')).toBeTruthy();
+  });
+});
 
 describe('MovieScreen', () => {
   it('sans note : aucune chip ; sans plateforme : disponibilité inconnue', async () => {
@@ -63,7 +85,7 @@ describe('MovieScreen', () => {
     expect(screen.getByText('Disponibilité inconnue pour ta région.')).toBeTruthy();
   });
 
-  it('affiche les notes, les plateformes par groupe et le bandeau', async () => {
+  it('affiche les notes, les plateformes de location sans libellé et le bandeau', async () => {
     await renderMovie({
       ...base,
       imdbRating: 8.5,
@@ -78,8 +100,11 @@ describe('MovieScreen', () => {
     });
     expect(screen.getByText('8,5/10')).toBeTruthy();
     expect(screen.getByText('Rotten Tomatoes')).toBeTruthy();
-    expect(screen.getByText('Abonnement')).toBeTruthy();
-    expect(screen.getByText('Location')).toBeTruthy();
+    // Location seulement, sans libellé : l'abonnement (Crave) n'est plus affiché.
+    expect(screen.getByLabelText('Apple TV+')).toBeTruthy();
+    expect(screen.queryByLabelText('Crave')).toBeNull();
+    expect(screen.queryByText('Abonnement')).toBeNull();
+    expect(screen.queryByText('Location')).toBeNull();
     expect(screen.queryByText('Achat')).toBeNull();
     expect(screen.getByText('Disponible en streaming')).toBeTruthy();
   });
@@ -88,7 +113,8 @@ describe('MovieScreen', () => {
     await renderMovie(base);
     expect(screen.getByText('2026 · 13+')).toBeTruthy();
     expect(screen.getByText('Science-fiction, Aventure')).toBeTruthy();
-    expect(screen.getByText('Denis Villeneuve')).toBeTruthy();
+    // Équipe et Infos : montées à l'image suivante.
+    expect(await screen.findByText('Denis Villeneuve')).toBeTruthy();
     expect(screen.getByText('Sortie (Canada)')).toBeTruthy();
     expect(screen.getByText('En salle le 18 déc.')).toBeTruthy();
   });

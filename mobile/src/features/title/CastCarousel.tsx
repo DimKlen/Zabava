@@ -1,5 +1,4 @@
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { CastMember } from '@/api/titles';
@@ -12,6 +11,7 @@ import { colors } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
 
 import { InfoSection } from './InfoSection';
+import { openPerson, pressPerson } from '../person/openPerson';
 
 const MAX_CAST = 15;
 const PHOTO = 64;
@@ -37,7 +37,8 @@ function CastItem({ member }: { member: CastMember }) {
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={member.character ? `${member.name}, ${member.character}` : member.name}
-      onPress={() => router.push(`/person/${member.id}`)}
+      onPress={() => openPerson(member)}
+      onPressIn={() => pressPerson(member)}
       style={styles.item}
     >
       <View style={styles.photo}>

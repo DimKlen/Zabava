@@ -12,39 +12,27 @@ import { InfoSection } from './InfoSection';
 
 type Props = { availability: Availability; myProviderIds: readonly number[] };
 
-const GROUPS = [
-  { key: 'sub', label: 'Abonnement' },
-  { key: 'rent', label: 'Location' },
-] as const;
-
 function open(provider: Provider, fallbackLink: string | undefined) {
   const link = provider.link ?? fallbackLink;
   if (link) void Linking.openURL(link).catch(() => undefined);
   showToast(`Ouverture de ${provider.name}…`);
 }
 
-/** « Où regarder » : abonnement et location ; mes plateformes en premier et cerclées. */
+/** « Où regarder » : les plateformes de location, sans libellé ; les miennes en premier et cerclées. */
 export function WhereToWatch({ availability, myProviderIds }: Props) {
-  const groups = GROUPS.filter((group) => availability[group.key].length > 0);
+  const providers = mineFirst(availability.rent, myProviderIds);
 
   return (
     <InfoSection title="Où regarder">
-      {groups.length > 0 ? (
-        <View style={styles.groups}>
-          {groups.map((group) => (
-            <View key={group.key}>
-              <Text style={styles.groupLabel}>{group.label}</Text>
-              <View style={styles.logos}>
-                {mineFirst(availability[group.key], myProviderIds).map((provider) => (
-                  <ProviderLogo
-                    key={provider.id}
-                    provider={provider}
-                    mine={myProviderIds.includes(provider.id)}
-                    onPress={() => open(provider, availability.link)}
-                  />
-                ))}
-              </View>
-            </View>
+      {providers.length > 0 ? (
+        <View style={styles.logos}>
+          {providers.map((provider) => (
+            <ProviderLogo
+              key={provider.id}
+              provider={provider}
+              mine={myProviderIds.includes(provider.id)}
+              onPress={() => open(provider, availability.link)}
+            />
           ))}
         </View>
       ) : (
@@ -56,14 +44,6 @@ export function WhereToWatch({ availability, myProviderIds }: Props) {
 }
 
 const styles = StyleSheet.create({
-  groups: {
-    gap: 12,
-  },
-  groupLabel: {
-    ...typography.small,
-    marginBottom: 6,
-    color: colors.neutral500,
-  },
   logos: {
     flexDirection: 'row',
     flexWrap: 'wrap',

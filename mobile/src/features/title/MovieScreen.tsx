@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 
 import { setTitleAlerts } from '@/api/libraryActions';
@@ -7,45 +8,72 @@ import { useMovieWatchlist } from '@/api/watchlist';
 import { RatingChips } from '@/components/RatingChips';
 import { movieCrew, movieInfos, movieMeta, movieStatus } from '@/domain/movieDetail';
 import { REGIONS } from '@/domain/onboarding';
+import { useAfterFirstFrame } from '@/lib/useAfterFirstFrame';
 import { useUiStore } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 
 import { CastCarousel } from './CastCarousel';
 import { InfoRows, InfoSection } from './InfoSection';
 import { MovieActions } from './MovieActions';
+import type { TitlePreview } from './openTitle';
 import { PosterCarousel } from './PosterCarousel';
 import { StatusBanner } from './StatusBanner';
 import { Synopsis } from './Synopsis';
 import { TitleHeader } from './TitleHeader';
+import { TitleBodySkeleton } from './TitleSkeleton';
 import { TrailerButton } from './TrailerButton';
 import { WhereToWatch } from './WhereToWatch';
 
-/** Fiche film complète (specs/docs/07 §7.1). */
-export function MovieScreen({ movie }: { movie: TitleDetail }) {
+type Props = {
+  /** Identifiant de la route (`movie-603`) : stable du tap jusqu'à la fiche complète. */
+  id: string;
+  /** Ce que la liste savait du titre, affiché pendant le chargement. */
+  preview?: TitlePreview;
+  /** Absente tant que la fiche n'est pas reçue : squelettes sous l'en-tête. */
+  movie?: TitleDetail;
+  /** Erreur de chargement (« Réessayer ») à la place des squelettes. */
+  failure?: ReactNode;
+};
+
+/**
+ * Fiche film (specs/docs/07 §7.1). Le même écran sert du tap à la fiche complète :
+ * l'en-tête reste en place et seules les données qui arrivent remplacent leurs squelettes.
+ */
+export function MovieScreen({ id, preview, movie, failure }: Props) {
+  const localAlertsOff = useUiStore((s) => s.alertsOff[id] ?? false);
+  const alertsOn = movie?.userTitle ? movie.userTitle.notificationsEnabled : !localAlertsOff;
+
+  return (
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <TitleHeader
+        id={id}
+        title={movie?.title ?? preview?.title ?? ''}
+        posterPath={movie?.posterPath ?? preview?.posterPath}
+        backdropPath={movie?.backdropPath}
+        meta={movie ? movieMeta(movie) : ''}
+        genres={movie?.genres ?? []}
+        loading={!movie}
+        alertsOn={alertsOn}
+        onToggleAlerts={movie ? () => setTitleAlerts(movie, !alertsOn) : undefined}
+      />
+      {movie ? <MovieBody movie={movie} /> : (failure ?? <TitleBodySkeleton />)}
+    </ScrollView>
+  );
+}
+
+/** Sections sous l'en-tête, une fois la fiche reçue. */
+function MovieBody({ movie }: { movie: TitleDetail }) {
   const profile = useProfile().data;
   const myProviderIds = profile?.providerIds ?? [];
   const regionName =
     REGIONS.find((r) => r.value === profile?.region)?.label ?? profile?.region ?? '';
   const libraryIds = new Set((useMovieWatchlist().data ?? []).map((film) => film.id));
-  const localAlertsOff = useUiStore((s) => s.alertsOff[movie.id] ?? false);
-  const alertsOn = movie.userTitle ? movie.userTitle.notificationsEnabled : !localAlertsOff;
 
-  const crew = movieCrew(movie);
-  const infos = movieInfos(movie, regionName);
+  const belowFold = useAfterFirstFrame();
   const hasRating = movie.imdbRating !== undefined || movie.rtScore !== undefined;
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <TitleHeader
-        id={movie.id}
-        title={movie.title}
-        posterPath={movie.posterPath}
-        backdropPath={movie.backdropPath}
-        meta={movieMeta(movie)}
-        genres={movie.genres}
-        alertsOn={alertsOn}
-        onToggleAlerts={() => setTitleAlerts(movie, !alertsOn)}
-      />
+    <>
       {hasRating ? (
         <RatingChips
           imdbRating={movie.imdbRating}
@@ -59,13 +87,34 @@ export function MovieScreen({ movie }: { movie: TitleDetail }) {
 
       <WhereToWatch availability={movie.availability} myProviderIds={myProviderIds} />
       {movie.overview ? <Synopsis text={movie.overview} /> : null}
-      {movie.trailerKey ? (
+      {/* Sous la ligne de flottaison : montés à l'image suivante, sans figer l'écran. */}
+      {belowFold && movie.trailerKey ? (
         <TrailerButton
           titleId={movie.id}
           trailerKey={movie.trailerKey}
           backdropPath={movie.backdropPath}
         />
       ) : null}
+      {belowFold ? (
+        <MovieMore movie={movie} regionName={regionName} libraryIds={libraryIds} />
+      ) : null}
+    </>
+  );
+}
+
+function MovieMore({
+  movie,
+  regionName,
+  libraryIds,
+}: {
+  movie: TitleDetail;
+  regionName: string;
+  libraryIds: Set<string>;
+}) {
+  const crew = movieCrew(movie);
+  const infos = movieInfos(movie, regionName);
+  return (
+    <>
       <CastCarousel cast={movie.cast} />
       {crew.length > 0 ? (
         <InfoSection title="Équipe" titleGap={8}>
@@ -79,7 +128,7 @@ export function MovieScreen({ movie }: { movie: TitleDetail }) {
       ) : null}
       <PosterCarousel title="Saga" titles={movie.collection} libraryIds={libraryIds} />
       <PosterCarousel title="Titres similaires" titles={movie.similar} libraryIds={libraryIds} />
-    </ScrollView>
+    </>
   );
 }
 

@@ -12,12 +12,21 @@ export const REGIONS: readonly { value: RegionCode; label: string }[] = [
   { value: 'US', label: 'États-Unis' },
 ];
 
+/** Deux langues proposées ; les anciens fr-FR et en-CA restent lus (même langue). */
 export const LANGUAGES: readonly { value: LanguageCode; label: string }[] = [
-  { value: 'fr-CA', label: 'Français (fr-CA)' },
-  { value: 'fr-FR', label: 'Français (fr-FR)' },
-  { value: 'en-CA', label: 'English (en-CA)' },
-  { value: 'en-US', label: 'English (en-US)' },
+  { value: 'fr-CA', label: 'Français' },
+  { value: 'en-US', label: 'Anglais' },
 ];
+
+/** Langue proposée correspondant à un code enregistré (« fr-FR » → « fr-CA »). */
+export function languageChoice(code: string | undefined): LanguageCode {
+  return code?.startsWith('en') ? 'en-US' : 'fr-CA';
+}
+
+export function languageLabel(code: string | undefined): string {
+  const choice = languageChoice(code);
+  return LANGUAGES.find((language) => language.value === choice)?.label ?? '';
+}
 
 export const DEFAULT_LANGUAGE: LanguageCode = 'fr-CA';
 

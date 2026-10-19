@@ -97,7 +97,13 @@ beforeEach(async () => {
 async function renderSeries(series: TitleDetail & { type: 'tv' } = bear, season?: number) {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <SeriesScreen series={series} initialSeason={season} />
+      <SeriesScreen
+        id={series.id}
+        type={series.type}
+        tmdbId={series.tmdbId}
+        series={series}
+        initialSeason={season}
+      />
       <DialogHost />
     </SafeAreaProvider>,
   );
@@ -196,7 +202,7 @@ describe('SeriesScreen', () => {
   it('onglet Infos : Créateurs et Saisons', async () => {
     await renderSeries();
     await fireEvent.press(screen.getByText('Infos'));
-    expect(screen.getByText('Créateurs')).toBeTruthy();
+    expect(await screen.findByText('Créateurs')).toBeTruthy();
     expect(screen.getByText('Christopher Storer')).toBeTruthy();
     expect(screen.getByText('2 saisons · 10 épisodes')).toBeTruthy();
   });

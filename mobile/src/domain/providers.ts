@@ -1,11 +1,50 @@
-/** Liste des plateformes : une seule entrée par service, les plus connues, et recherche par nom. */
+/** Liste des plateformes : une seule entrée par service, les grands services d'abord, recherche. */
 import type { Provider } from './types';
 
 /** Une plateforme affichée et tous les identifiants TMDB qu'elle regroupe. */
 export type ProviderGroup = Provider & { ids: readonly number[] };
 
-/** Plateformes proposées dans la grille (les plus connues de la région). */
-export const TOP_PROVIDERS = 50;
+/**
+ * Grands services, du plus utilisé et du plus gros catalogue au moins : montrés par défaut
+ * (clés de groupe). Les autres plateformes de la région restent trouvables par la recherche.
+ */
+const FEATURED = [
+  'netflix',
+  'amazon prime video',
+  'disney plus',
+  'hbo max',
+  'crave',
+  'canal plus',
+  'apple tv',
+  'paramount plus',
+  'hulu',
+  'peacock',
+  'crunchyroll',
+  'animation digital network',
+  'icitoutv',
+  'm6 plus',
+  'arte',
+  'youtube',
+  'google play movies',
+  'fandango at home',
+  'mubi',
+  'rakuten tv',
+  'tubi tv',
+  'pluto tv',
+  'cbc gem',
+];
+
+/** Sans grand service connu dans la région : les premières plateformes par priorité. */
+const FALLBACK_COUNT = 12;
+
+/** Boutique ou ancien nom d'un service déjà listé : une seule entrée (Amazon, Apple…). */
+const ALIASES: Record<string, string> = {
+  'amazon video': 'amazon prime video',
+  'apple tv store': 'apple tv',
+  'apple tv plus': 'apple tv',
+  max: 'hbo max',
+  'canal vod': 'canal plus',
+};
 
 const normalize = (text: string) =>
   text
@@ -32,8 +71,14 @@ export function baseProviderName(name: string): string {
 }
 
 /** « Paramount+ » et « Paramount Plus » sont le même service. */
-const groupKey = (name: string) =>
+const ownKey = (name: string) =>
   normalize(baseProviderName(name)).replace(/\+/g, ' plus').replace(/\s+/g, ' ').trim();
+
+/** Clé du service : la boutique « Amazon Video » rejoint « Amazon Prime Video ». */
+function groupKey(name: string): string {
+  const key = ownKey(name);
+  return ALIASES[key] ?? key;
+}
 
 /**
  * Une entrée par service, dans l'ordre reçu (priorité d'affichage). Le nom est le plus
@@ -46,14 +91,16 @@ export function groupProviders(providers: readonly Provider[]): ProviderGroup[] 
     const key = groupKey(provider.name);
     groups.set(key, [...(groups.get(key) ?? []), provider]);
   }
-  return [...groups.values()].flatMap((members) => {
+  return [...groups].flatMap(([key, members]) => {
     const first = members[0];
     if (!first) return [];
-    const name = baseProviderName(first.name);
+    // Le service lui-même plutôt que sa boutique (« Amazon Prime Video », pas « Amazon Video »).
+    const main = members.find((member) => ownKey(member.name) === key) ?? first;
+    const name = baseProviderName(main.name);
     const logo =
       members.find((member) => member.name.trim() === name) ??
       members.find((member) => !RESELLER.test(member.name)) ??
-      first;
+      main;
     return [{ ...logo, id: first.id, name, ids: members.map((member) => member.id) }];
   });
 }
@@ -63,13 +110,21 @@ export function isGroupSelected(group: ProviderGroup, selectedIds: readonly numb
   return group.ids.some((id) => selectedIds.includes(id));
 }
 
-/** Les plus connues, plus celles déjà cochées plus bas dans la liste (pour pouvoir les retirer). */
-export function topProviders(
+/**
+ * Grille par défaut : les grands services de la région dans l'ordre de `FEATURED`, puis
+ * les plateformes déjà cochées ailleurs (pour pouvoir les retirer).
+ */
+export function featuredProviders(
   groups: readonly ProviderGroup[],
   selectedIds: readonly number[],
-  limit = TOP_PROVIDERS,
 ): ProviderGroup[] {
-  return groups.filter((group, index) => index < limit || isGroupSelected(group, selectedIds));
+  const rank = (group: ProviderGroup) => FEATURED.indexOf(groupKey(group.name));
+  const featured = groups.filter((group) => rank(group) >= 0).sort((a, b) => rank(a) - rank(b));
+  const base = featured.length >= FALLBACK_COUNT / 2 ? featured : groups.slice(0, FALLBACK_COUNT);
+  const selected = groups.filter(
+    (group) => !base.includes(group) && isGroupSelected(group, selectedIds),
+  );
+  return [...base, ...selected];
 }
 
 /** Coche tout le groupe, ou le retire en entier s'il était coché. */

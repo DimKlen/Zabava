@@ -20,6 +20,7 @@ import { AdvancedSearchSheet } from './AdvancedSearchSheet';
 import { SearchIdle } from './SearchIdle';
 import { SearchResults } from './SearchResults';
 import { openTitle, previewOf } from '../title/openTitle';
+import { openPerson } from '../person/openPerson';
 
 /**
  * Recherche (specs/docs/08 §8.1). Requête, onglet et filtres avancés vivent le temps
@@ -59,9 +60,9 @@ export function SearchScreen() {
     remember();
     openTitle(previewOf(title, 'w92'));
   };
-  const openPerson = (person: PersonResult) => {
+  const showPerson = (person: PersonResult) => {
     remember();
-    router.push(`/person/${person.id}`);
+    openPerson(person);
   };
   const toggleTitle = (title: TitleResult) => toggleInList(toListTitle(title));
 
@@ -103,7 +104,7 @@ export function SearchScreen() {
         onOpenTitle={showTitle}
         onToggleTitle={toggleTitle}
         isInList={isInList}
-        onOpenPerson={openPerson}
+        onOpenPerson={showPerson}
         onAdvanced={openSheet}
       />
     );

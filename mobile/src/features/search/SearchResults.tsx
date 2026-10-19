@@ -14,6 +14,7 @@ import { fonts } from '@/theme/typography';
 import type { Membership } from '../catalog/useLibraryMembership';
 import { PersonRow, TitleRow } from './ResultRows';
 import { pressTitle, previewOf } from '../title/openTitle';
+import { pressPerson } from '../person/openPerson';
 
 const SKELETON_ROWS = 3;
 
@@ -94,7 +95,11 @@ export function SearchResults({
         }
         renderItem={({ item }) =>
           item.kind === 'person' ? (
-            <PersonRow person={item.person} onPress={() => onOpenPerson(item.person)} />
+            <PersonRow
+              person={item.person}
+              onPress={() => onOpenPerson(item.person)}
+              onPressIn={() => pressPerson(item.person)}
+            />
           ) : (
             <TitleRow
               title={item.title}

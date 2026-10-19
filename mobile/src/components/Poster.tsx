@@ -239,12 +239,12 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    // Translucide : laisse voir l'affiche dessous.
-    opacity: 0.6,
     alignItems: 'center',
     justifyContent: 'center',
   },
   addOff: {
+    // Translucide : laisse voir l'affiche dessous.
+    opacity: 0.6,
     backgroundColor: colors.bgA25,
     borderWidth: 1,
     borderColor: colors.neutral600,

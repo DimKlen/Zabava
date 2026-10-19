@@ -105,7 +105,7 @@ describe('ProfileScreen', () => {
     await renderProfile();
     expect(screen.getByText('dim@exemple.ca · Apple')).toBeTruthy();
     expect(screen.getByText('Canada')).toBeTruthy();
-    expect(screen.getByText('Français (fr-CA)')).toBeTruthy();
+    expect(screen.getByText('Français')).toBeTruthy();
     expect(await screen.findByText('Netflix, Crave')).toBeTruthy();
     expect(screen.getByText('9 h')).toBeTruthy();
     expect(screen.getByText('Version 1.0.0')).toBeTruthy();

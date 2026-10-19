@@ -70,7 +70,7 @@ export function DiscoverTab({ type }: { type: MediaType }) {
           myProviderIds={myProviderIds}
         />
       )}
-      initialNumToRender={2}
+      initialNumToRender={3}
       maxToRenderPerBatch={1}
       windowSize={5}
       ListHeaderComponent={allFailed ? <LoadError onRetry={() => void refresh()} /> : null}

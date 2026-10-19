@@ -42,12 +42,13 @@ it('reprend l’état de chargement pendant la nouvelle tentative', async () => 
   expect(screen.queryByText('Impossible de charger')).toBeNull();
 });
 
-it('ouverte depuis une liste : affiche, titre et année tout de suite, pendant le chargement', async () => {
+it('ouverte depuis une liste : affiche et titre tout de suite, le reste en squelette', async () => {
   openTitle({ type: 'movie', tmdbId: 550, title: 'Fight Club', posterPath: '/fc.jpg', year: 1999 });
   mockQuery({ isError: false, isFetching: true });
   await renderTitle();
   expect(screen.getByRole('header', { name: 'Fight Club' })).toBeTruthy();
-  expect(screen.getByText('1999')).toBeTruthy();
+  expect(screen.getByTestId('title-header-skeleton', { includeHiddenElements: true })).toBeTruthy();
+  expect(screen.getByTestId('title-skeleton')).toBeTruthy();
   // La cloche attend la fiche (suivi de l'utilisateur).
   expect(screen.queryByLabelText('Activer les alertes')).toBeNull();
   expect(screen.getByLabelText('Retour')).toBeTruthy();

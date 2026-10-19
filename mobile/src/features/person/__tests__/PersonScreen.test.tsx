@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { api } from '@/api/http';
 
+import { openPerson } from '../openPerson';
 import { PersonScreen } from '../PersonScreen';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
@@ -101,5 +102,35 @@ describe('PersonScreen', () => {
     await renderPerson({ ...PERSON, birthday: undefined, placeOfBirth: undefined, credits: [] });
     expect(screen.getByText('Date et lieu de naissance non renseignés')).toBeTruthy();
     expect(screen.getByText('Aucun titre dans cette catégorie.')).toBeTruthy();
+  });
+});
+
+describe('ouverture depuis un nom', () => {
+  it('nom tout de suite pendant le chargement, puis la fiche', async () => {
+    let answer: (value: unknown) => void = () => undefined;
+    mockApi.mockImplementation((path) =>
+      path.startsWith('/people/')
+        ? new Promise((resolve) => {
+            answer = resolve;
+          })
+        : Promise.resolve(path === '/me/profile' ? { providerIds: [] } : []),
+    );
+    openPerson({ id: 505710, name: 'Zendaya' });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    await render(
+      <SafeAreaProvider initialMetrics={METRICS}>
+        <QueryClientProvider client={client}>
+          <PersonScreen id={505710} />
+        </QueryClientProvider>
+      </SafeAreaProvider>,
+    );
+
+    const name = screen.getByRole('header', { name: 'Zendaya' });
+    expect(screen.queryByText('Filmographie')).toBeNull();
+
+    await act(() => answer(PERSON));
+    expect(await screen.findByText('Filmographie')).toBeTruthy();
+    // Identité restée en place (photo non remontée) : même élément qu'au chargement.
+    expect(screen.getByRole('header', { name: 'Zendaya' })).toBe(name);
   });
 });
