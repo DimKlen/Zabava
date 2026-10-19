@@ -46,7 +46,8 @@ export function EpisodesTab({
     [],
   );
   const check = useCallback(
-    (episode: SeriesEpisode) => checkEpisode(latest.current.series, latest.current.episodes, episode),
+    (episode: SeriesEpisode) =>
+      checkEpisode(latest.current.series, latest.current.episodes, episode),
     [],
   );
 

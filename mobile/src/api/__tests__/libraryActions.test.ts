@@ -311,11 +311,15 @@ describe('séries', () => {
     // Tout est à l'écran tout de suite, avant la moindre requête.
     expect(ficheEpisodes().every((e) => e.watchedAt)).toBe(true);
     await flush();
-    expect(jest.mocked(markEpisodes).mock.calls.map(([ids]) => ids.length)).toEqual([100, 100, 100, 36]);
+    expect(jest.mocked(markEpisodes).mock.calls.map(([ids]) => ids.length)).toEqual([
+      100, 100, 100, 36,
+    ]);
 
     undo();
     await flush();
-    expect(jest.mocked(unmarkEpisodes).mock.calls.map(([ids]) => ids.length)).toEqual([100, 100, 100, 36]);
+    expect(jest.mocked(unmarkEpisodes).mock.calls.map(([ids]) => ids.length)).toEqual([
+      100, 100, 100, 36,
+    ]);
     expect(ficheEpisodes().some((e) => e.watchedAt)).toBe(false);
   });
 
