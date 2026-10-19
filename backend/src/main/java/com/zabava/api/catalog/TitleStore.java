@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -214,20 +215,23 @@ public class TitleStore {
 
     // ─── Dates de sortie et disponibilité ─────────────────────────────────────
 
+    /** Deux requêtes quel que soit le nombre de dates : chaque aller-retour vers la base compte. */
     @Transactional
     public void replaceReleaseDates(long titleId, List<ReleaseDate> dates) {
         db.sql("delete from release_dates where title_id = :id").param("id", titleId).update();
-        for (ReleaseDate date : dates) {
-            db.sql("""
-                    insert into release_dates (title_id, region, type, date) values (:id, :region, :type, :date)
-                    on conflict do nothing
-                    """)
-                    .param("id", titleId)
-                    .param("region", date.region())
-                    .param("type", date.type())
-                    .param("date", Date.valueOf(date.date()))
-                    .update();
-        }
+        if (dates.isEmpty()) return;
+        db.sql("""
+                insert into release_dates (title_id, region, type, date)
+                select :id, d.region, d.type, cast(d.date as date)
+                from unnest(cast(:regions as text[]), cast(:types as text[]), cast(:dates as text[]))
+                  as d(region, type, date)
+                on conflict do nothing
+                """)
+                .param("id", titleId)
+                .param("regions", dates.stream().map(ReleaseDate::region).toArray(String[]::new))
+                .param("types", dates.stream().map(ReleaseDate::type).toArray(String[]::new))
+                .param("dates", dates.stream().map(d -> d.date().toString()).toArray(String[]::new))
+                .update();
     }
 
     /** Date de sortie {@code type} (salle, numerique) d'un titre dans une région. */
@@ -254,52 +258,60 @@ public class TitleStore {
      */
     @Transactional
     public void replaceOffers(long titleId, Set<String> regions, List<Offer> offers, boolean firstSync) {
-        for (String region : regions) {
-            List<String> keep = offers.stream()
-                    .filter(o -> o.region().equals(region))
-                    .map(o -> o.providerId() + ":" + o.type())
-                    .toList();
-            db.sql("""
-                    delete from title_availability where title_id = :id and region = :region
-                      and not (provider_id::text || ':' || type = any (:keep))
-                    """)
-                    .param("id", titleId)
-                    .param("region", region)
-                    .param("keep", keep.toArray(String[]::new))
-                    .update();
-        }
-        for (Offer offer : offers) {
-            db.sql("""
-                    insert into title_availability (title_id, region, provider_id, type, link, first_seen_at)
-                    values (:id, :region, :provider, :type, :link, coalesce(cast(:seen as timestamptz), now()))
-                    on conflict (title_id, region, provider_id, type) do update set link = excluded.link
-                    """)
-                    .param("seen", firstSync ? Timestamp.from(KNOWN_BEFORE_TRACKING) : null)
-                    .param("id", titleId)
-                    .param("region", offer.region())
-                    .param("provider", offer.providerId())
-                    .param("type", offer.type())
-                    .param("link", offer.link())
-                    .update();
-        }
+        if (regions.isEmpty()) return;
+        // Une offre en double ferait échouer l'insertion groupée (« cannot affect row a second time »).
+        List<Offer> unique = distinct(offers, o -> o.region() + ":" + o.providerId() + ":" + o.type());
+        String[] offerRegions = unique.stream().map(Offer::region).toArray(String[]::new);
+        Integer[] providers = unique.stream().map(Offer::providerId).toArray(Integer[]::new);
+        String[] types = unique.stream().map(Offer::type).toArray(String[]::new);
+        db.sql("""
+                delete from title_availability a
+                where a.title_id = :id and a.region = any (cast(:regions as text[]))
+                  and not exists (
+                    select 1
+                    from unnest(cast(:offerRegions as text[]), cast(:providers as int[]), cast(:types as text[]))
+                      as o(region, provider_id, type)
+                    where o.region = a.region and o.provider_id = a.provider_id and o.type = a.type)
+                """)
+                .param("id", titleId)
+                .param("regions", regions.toArray(String[]::new))
+                .param("offerRegions", offerRegions)
+                .param("providers", providers)
+                .param("types", types)
+                .update();
+        if (unique.isEmpty()) return;
+        db.sql("""
+                insert into title_availability (title_id, region, provider_id, type, link, first_seen_at)
+                select :id, o.region, o.provider_id, o.type, o.link, coalesce(cast(:seen as timestamptz), now())
+                from unnest(cast(:offerRegions as text[]), cast(:providers as int[]), cast(:types as text[]),
+                  cast(:links as text[])) as o(region, provider_id, type, link)
+                on conflict (title_id, region, provider_id, type) do update set link = excluded.link
+                """)
+                .param("seen", firstSync ? Timestamp.from(KNOWN_BEFORE_TRACKING) : null)
+                .param("id", titleId)
+                .param("offerRegions", offerRegions)
+                .param("providers", providers)
+                .param("types", types)
+                .param("links", unique.stream().map(Offer::link).toArray(String[]::new))
+                .update();
     }
 
     /** Plateformes rencontrées dans les offres : nom et logo pour Ma liste et À venir. */
     public void upsertProviders(Collection<ProviderData> providers) {
-        for (ProviderData p : providers) {
-            db.sql("""
-                    insert into providers (id, name, short, logo_path, display_priority)
-                    values (:id, :name, :short, :logo, :priority)
-                    on conflict (id) do update set name = excluded.name, logo_path = excluded.logo_path,
-                      short = coalesce(providers.short, excluded.short)
-                    """)
-                    .param("id", p.id())
-                    .param("name", p.name())
-                    .param("short", p.shortName())
-                    .param("logo", p.logoPath())
-                    .param("priority", p.displayPriority())
-                    .update();
-        }
+        if (providers.isEmpty()) return;
+        db.sql("""
+                insert into providers (id, name, short, logo_path, display_priority)
+                select * from unnest(cast(:ids as int[]), cast(:names as text[]), cast(:shorts as text[]),
+                  cast(:logos as text[]), cast(:priorities as int[]))
+                on conflict (id) do update set name = excluded.name, logo_path = excluded.logo_path,
+                  short = coalesce(providers.short, excluded.short)
+                """)
+                .param("ids", providers.stream().map(ProviderData::id).toArray(Integer[]::new))
+                .param("names", providers.stream().map(ProviderData::name).toArray(String[]::new))
+                .param("shorts", providers.stream().map(ProviderData::shortName).toArray(String[]::new))
+                .param("logos", providers.stream().map(ProviderData::logoPath).toArray(String[]::new))
+                .param("priorities", providers.stream().map(ProviderData::displayPriority).toArray(Integer[]::new))
+                .update();
     }
 
     /** Offres d'une région pour plusieurs titres, avec le nom et le logo des plateformes. */
@@ -361,48 +373,67 @@ public class TitleStore {
 
     @Transactional
     public void upsertSeasons(long titleId, List<SeasonData> seasons) {
-        for (SeasonData s : seasons) {
-            db.sql("""
-                    insert into seasons (title_id, season_number, name, episode_count, air_date, poster_path)
-                    values (:id, :number, :name, :count, :air, :poster)
-                    on conflict (title_id, season_number) do update set name = excluded.name,
-                      episode_count = excluded.episode_count, air_date = excluded.air_date,
-                      poster_path = excluded.poster_path
-                    """)
-                    .param("id", titleId)
-                    .param("number", s.number())
-                    .param("name", s.name())
-                    .param("count", s.episodeCount())
-                    .param("air", s.airDate() == null ? null : Date.valueOf(s.airDate()))
-                    .param("poster", s.posterPath())
-                    .update();
-        }
+        List<SeasonData> unique = distinct(seasons, SeasonData::number);
+        if (unique.isEmpty()) return;
+        db.sql("""
+                insert into seasons (title_id, season_number, name, episode_count, air_date, poster_path)
+                select :id, s.number, s.name, s.count, cast(s.air as date), s.poster
+                from unnest(cast(:numbers as int[]), cast(:names as text[]), cast(:counts as int[]),
+                  cast(:airs as text[]), cast(:posters as text[])) as s(number, name, count, air, poster)
+                on conflict (title_id, season_number) do update set name = excluded.name,
+                  episode_count = excluded.episode_count, air_date = excluded.air_date,
+                  poster_path = excluded.poster_path
+                """)
+                .param("id", titleId)
+                .param("numbers", unique.stream().map(SeasonData::number).toArray(Integer[]::new))
+                .param("names", unique.stream().map(SeasonData::name).toArray(String[]::new))
+                .param("counts", unique.stream().map(SeasonData::episodeCount).toArray(Integer[]::new))
+                .param("airs", unique.stream().map(x -> text(x.airDate())).toArray(String[]::new))
+                .param("posters", unique.stream().map(SeasonData::posterPath).toArray(String[]::new))
+                .update();
     }
 
     /** Insère ou met à jour les épisodes ; l'airstamp TVmaze déjà connu n'est jamais effacé. */
     @Transactional
     public void upsertEpisodes(long titleId, List<EpisodeData> episodes) {
-        for (EpisodeData e : episodes) {
-            db.sql("""
-                    insert into episodes (title_id, season_number, episode_number, name, overview, still_path,
-                      air_date, airstamp, runtime)
-                    values (:id, :season, :number, :name, :overview, :still, :air, :airstamp, :runtime)
-                    on conflict (title_id, season_number, episode_number) do update set
-                      name = excluded.name, overview = excluded.overview, still_path = excluded.still_path,
-                      air_date = excluded.air_date, airstamp = coalesce(excluded.airstamp, episodes.airstamp),
-                      runtime = excluded.runtime
-                    """)
-                    .param("id", titleId)
-                    .param("season", e.season())
-                    .param("number", e.number())
-                    .param("name", e.name())
-                    .param("overview", e.overview())
-                    .param("still", e.stillPath())
-                    .param("air", e.airDate() == null ? null : Date.valueOf(e.airDate()))
-                    .param("airstamp", e.airstamp() == null ? null : Timestamp.from(e.airstamp()))
-                    .param("runtime", e.runtime())
-                    .update();
-        }
+        List<EpisodeData> unique = distinct(episodes, e -> e.season() + ":" + e.number());
+        if (unique.isEmpty()) return;
+        db.sql("""
+                insert into episodes (title_id, season_number, episode_number, name, overview, still_path,
+                  air_date, airstamp, runtime)
+                select :id, e.season, e.number, e.name, e.overview, e.still, cast(e.air as date),
+                  cast(e.airstamp as timestamptz), e.runtime
+                from unnest(cast(:seasons as int[]), cast(:numbers as int[]), cast(:names as text[]),
+                  cast(:overviews as text[]), cast(:stills as text[]), cast(:airs as text[]),
+                  cast(:airstamps as text[]), cast(:runtimes as int[]))
+                  as e(season, number, name, overview, still, air, airstamp, runtime)
+                on conflict (title_id, season_number, episode_number) do update set
+                  name = excluded.name, overview = excluded.overview, still_path = excluded.still_path,
+                  air_date = excluded.air_date, airstamp = coalesce(excluded.airstamp, episodes.airstamp),
+                  runtime = excluded.runtime
+                """)
+                .param("id", titleId)
+                .param("seasons", unique.stream().map(EpisodeData::season).toArray(Integer[]::new))
+                .param("numbers", unique.stream().map(EpisodeData::number).toArray(Integer[]::new))
+                .param("names", unique.stream().map(EpisodeData::name).toArray(String[]::new))
+                .param("overviews", unique.stream().map(EpisodeData::overview).toArray(String[]::new))
+                .param("stills", unique.stream().map(EpisodeData::stillPath).toArray(String[]::new))
+                .param("airs", unique.stream().map(e -> text(e.airDate())).toArray(String[]::new))
+                .param("airstamps", unique.stream().map(e -> text(e.airstamp())).toArray(String[]::new))
+                .param("runtimes", unique.stream().map(EpisodeData::runtime).toArray(Integer[]::new))
+                .update();
+    }
+
+    /** Première occurrence de chaque clé : une insertion groupée refuse deux fois la même ligne. */
+    private static <T> List<T> distinct(List<T> items, Function<T, Object> key) {
+        return List.copyOf(items.stream()
+                .collect(Collectors.toMap(key, item -> item, (a, b) -> a, LinkedHashMap::new))
+                .values());
+    }
+
+    /** Valeur passée en texte dans un tableau SQL (date ou instant ISO) ; null reste null. */
+    private static String text(Object value) {
+        return value == null ? null : value.toString();
     }
 
     public List<EpisodeRow> episodes(long titleId) {
