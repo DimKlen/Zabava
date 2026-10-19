@@ -29,6 +29,8 @@ type Props = {
   children: ReactNode;
   /** Au-dessus du panneau, dans la même fenêtre (toast de la fiche épisode). */
   overlay?: ReactNode;
+  /** false : pas de fermeture par glissement (contenu qui défile, fermeture par « OK »). */
+  dragToClose?: boolean;
 };
 
 /**
@@ -42,6 +44,7 @@ export function BottomSheet({
   panelStyle,
   children,
   overlay,
+  dragToClose = true,
 }: Props) {
   // Reste monté pendant l'animation de sortie.
   const [mounted, setMounted] = useState(visible);
@@ -79,6 +82,7 @@ export function BottomSheet({
   }, [visible, mounted, height, scrim, translateY]);
 
   const drag = Gesture.Pan()
+    .enabled(dragToClose)
     .activeOffsetY(10)
     .failOffsetX([-20, 20])
     .onUpdate((e) => {
