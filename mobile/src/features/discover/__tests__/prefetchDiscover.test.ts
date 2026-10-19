@@ -18,9 +18,12 @@ const lite = (id: number) => ({
   posterPath: `/p${id}.jpg`,
 });
 
+// Cache global de l'app (minuteurs de 7 jours) : vidé après chaque test, sinon Jest ne
+// se termine pas quand les tests tournent dans un seul processus (CI).
+afterEach(() => queryClient.clear());
+
 beforeEach(() => {
   jest.clearAllMocks();
-  queryClient.clear();
   mockApi.mockResolvedValue({ results: [1, 2, 3, 4, 5, 6].map(lite), total: 6, page: 1 });
 });
 
