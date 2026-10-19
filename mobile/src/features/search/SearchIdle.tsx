@@ -11,6 +11,7 @@ import { fonts, typography } from '@/theme/typography';
 
 import type { Membership } from '../catalog/useLibraryMembership';
 import { TitleRow } from './ResultRows';
+import { pressTitle, previewOf } from '../title/openTitle';
 
 type Props = {
   onPickRecent: (query: string) => void;
@@ -82,6 +83,7 @@ export function SearchIdle({ onPickRecent, onOpenTitle, onToggleTitle, isInList 
               title={title}
               inList={isInList(title)}
               onPress={() => onOpenTitle(title)}
+              onPressIn={() => pressTitle(previewOf(title, 'w92'))}
               onToggle={() => onToggleTitle(title)}
             />
           ))}

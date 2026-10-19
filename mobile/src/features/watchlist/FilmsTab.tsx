@@ -1,4 +1,4 @@
-import { router, useScrollToTop } from 'expo-router';
+import { useScrollToTop } from 'expo-router';
 import { FilmStripIcon } from 'phosphor-react-native';
 import { useRef, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
@@ -28,6 +28,7 @@ import { typography } from '@/theme/typography';
 import { FilmControls } from './FilmControls';
 import { openFilmMenu } from './filmMenu';
 import { useMinimumDelay } from './useMinimumDelay';
+import { openTitle, pressTitle, previewOf } from '../title/openTitle';
 
 /** Squelettes au moins 700 ms, pour éviter un flash au premier affichage. */
 const MIN_SKELETON_MS = 700;
@@ -132,7 +133,8 @@ export function FilmsTab() {
         <Poster
           title={film}
           badge={posterBadge({ ...film, type: 'movie' }, myProviderIds, now)}
-          onPress={() => router.push(`/title/movie/${film.tmdbId}`)}
+          onPress={() => openTitle(previewOf({ ...film, type: 'movie' }, 'w342'))}
+          onPressIn={() => pressTitle(previewOf({ ...film, type: 'movie' }, 'w342'))}
           onLongPress={() => openFilmMenu(film)}
           style={{ width }}
         />

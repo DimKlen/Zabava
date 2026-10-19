@@ -17,6 +17,8 @@ type TitleRowProps = {
   title: TitleResult;
   inList: boolean;
   onPress: () => void;
+  /** Début de l'appui : précharger la fiche. */
+  onPressIn?: () => void;
   onToggle: () => void;
 };
 
@@ -25,6 +27,7 @@ export const TitleRow = memo(function TitleRow({
   title,
   inList,
   onPress,
+  onPressIn,
   onToggle,
 }: TitleRowProps) {
   const poster = tmdbImage(title.posterPath, 'w92');
@@ -33,6 +36,7 @@ export const TitleRow = memo(function TitleRow({
       accessibilityRole="button"
       accessibilityLabel={title.title}
       onPress={onPress}
+      onPressIn={onPressIn}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
       <View style={styles.poster}>

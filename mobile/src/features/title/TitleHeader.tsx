@@ -14,6 +14,8 @@ import { goBack } from '@/lib/navigation';
 import { colors, durations } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
+import { titlePreview } from './openTitle';
+
 type Props = {
   id: string;
   title: string;
@@ -21,8 +23,9 @@ type Props = {
   backdropPath?: string;
   meta: string;
   genres: string[];
-  alertsOn: boolean;
-  onToggleAlerts: () => void;
+  alertsOn?: boolean;
+  /** Absent pendant le chargement de la fiche : pas de cloche. */
+  onToggleAlerts?: () => void;
   /** Boutons de droite en plus de la cloche (DotsThree des séries). */
   extraActions?: ReactNode;
 };
@@ -43,6 +46,9 @@ export function TitleHeader({
 }: Props) {
   const insets = useSafeAreaInsets();
   const backdrop = tmdbImage(backdropPath, 'w780');
+  // Affiche déjà chargée par la liste d'où vient l'utilisateur (recherche, À venir : w92).
+  const listSize = titlePreview(id)?.posterSize;
+  const placeholderSize = listSize === 'w92' || listSize === 'w185' ? listSize : undefined;
 
   return (
     <View>
@@ -60,17 +66,23 @@ export function TitleHeader({
         <View style={[styles.buttons, { top: insets.top + 3 }]}>
           <RoundIconButton icon={CaretLeftIcon} accessibilityLabel="Retour" onPress={goBack} />
           <View style={styles.right}>
-            <RoundIconButton
-              icon={alertsOn ? BellRingingIcon : BellSlashIcon}
-              accessibilityLabel={alertsOn ? 'Couper les alertes' : 'Activer les alertes'}
-              onPress={onToggleAlerts}
-            />
+            {onToggleAlerts ? (
+              <RoundIconButton
+                icon={alertsOn ? BellRingingIcon : BellSlashIcon}
+                accessibilityLabel={alertsOn ? 'Couper les alertes' : 'Activer les alertes'}
+                onPress={onToggleAlerts}
+              />
+            ) : null}
             {extraActions}
           </View>
         </View>
       </View>
       <View style={styles.titleBlock}>
-        <Poster title={{ id, title, posterPath }} style={styles.poster} />
+        <Poster
+          title={{ id, title, posterPath }}
+          placeholderSize={placeholderSize}
+          style={styles.poster}
+        />
         <View style={styles.titleText}>
           <Text accessibilityRole="header" textBreakStrategy="balanced" style={styles.title}>
             {title}

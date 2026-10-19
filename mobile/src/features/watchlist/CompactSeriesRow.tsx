@@ -9,6 +9,7 @@ import { colors, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
 import { openSeries } from './openSeries';
+import { pressTitle, previewOf } from '../title/openTitle';
 
 type Props = { entry: SeriesEntry; section: SeriesSection };
 
@@ -19,7 +20,8 @@ export function CompactSeriesRow({ entry: { series, info }, section }: Props) {
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${series.title}, ${label}`}
-      onPress={() => openSeries(series)}
+      onPress={() => openSeries(series, undefined, 'w185')}
+      onPressIn={() => pressTitle(previewOf(series, 'w185'))}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
       {/* Affiche décorative : le tap revient à la ligne. */}

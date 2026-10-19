@@ -13,6 +13,7 @@ import { fonts } from '@/theme/typography';
 
 import type { Membership } from '../catalog/useLibraryMembership';
 import { PersonRow, TitleRow } from './ResultRows';
+import { pressTitle, previewOf } from '../title/openTitle';
 
 const SKELETON_ROWS = 3;
 
@@ -99,6 +100,7 @@ export function SearchResults({
               title={item.title}
               inList={isInList(item.title)}
               onPress={() => onOpenTitle(item.title)}
+              onPressIn={() => pressTitle(previewOf(item.title, 'w92'))}
               onToggle={() => onToggleTitle(item.title)}
             />
           )
