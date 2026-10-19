@@ -8,6 +8,7 @@ import { useMovieWatchlist } from '@/api/watchlist';
 import { RatingChips } from '@/components/RatingChips';
 import { movieCrew, movieInfos, movieMeta, movieStatus } from '@/domain/movieDetail';
 import { REGIONS } from '@/domain/onboarding';
+import { useAfterFirstFrame } from '@/lib/useAfterFirstFrame';
 import { useUiStore } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 
@@ -68,8 +69,7 @@ function MovieBody({ movie }: { movie: TitleDetail }) {
     REGIONS.find((r) => r.value === profile?.region)?.label ?? profile?.region ?? '';
   const libraryIds = new Set((useMovieWatchlist().data ?? []).map((film) => film.id));
 
-  const crew = movieCrew(movie);
-  const infos = movieInfos(movie, regionName);
+  const belowFold = useAfterFirstFrame();
   const hasRating = movie.imdbRating !== undefined || movie.rtScore !== undefined;
 
   return (
@@ -87,13 +87,34 @@ function MovieBody({ movie }: { movie: TitleDetail }) {
 
       <WhereToWatch availability={movie.availability} myProviderIds={myProviderIds} />
       {movie.overview ? <Synopsis text={movie.overview} /> : null}
-      {movie.trailerKey ? (
+      {/* Sous la ligne de flottaison : montés à l'image suivante, sans figer l'écran. */}
+      {belowFold && movie.trailerKey ? (
         <TrailerButton
           titleId={movie.id}
           trailerKey={movie.trailerKey}
           backdropPath={movie.backdropPath}
         />
       ) : null}
+      {belowFold ? (
+        <MovieMore movie={movie} regionName={regionName} libraryIds={libraryIds} />
+      ) : null}
+    </>
+  );
+}
+
+function MovieMore({
+  movie,
+  regionName,
+  libraryIds,
+}: {
+  movie: TitleDetail;
+  regionName: string;
+  libraryIds: Set<string>;
+}) {
+  const crew = movieCrew(movie);
+  const infos = movieInfos(movie, regionName);
+  return (
+    <>
       <CastCarousel cast={movie.cast} />
       {crew.length > 0 ? (
         <InfoSection title="Équipe" titleGap={8}>

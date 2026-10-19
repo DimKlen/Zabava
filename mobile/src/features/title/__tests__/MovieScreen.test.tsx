@@ -113,7 +113,8 @@ describe('MovieScreen', () => {
     await renderMovie(base);
     expect(screen.getByText('2026 · 13+')).toBeTruthy();
     expect(screen.getByText('Science-fiction, Aventure')).toBeTruthy();
-    expect(screen.getByText('Denis Villeneuve')).toBeTruthy();
+    // Équipe et Infos : montées à l'image suivante.
+    expect(await screen.findByText('Denis Villeneuve')).toBeTruthy();
     expect(screen.getByText('Sortie (Canada)')).toBeTruthy();
     expect(screen.getByText('En salle le 18 déc.')).toBeTruthy();
   });

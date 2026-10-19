@@ -202,7 +202,7 @@ describe('SeriesScreen', () => {
   it('onglet Infos : Créateurs et Saisons', async () => {
     await renderSeries();
     await fireEvent.press(screen.getByText('Infos'));
-    expect(screen.getByText('Créateurs')).toBeTruthy();
+    expect(await screen.findByText('Créateurs')).toBeTruthy();
     expect(screen.getByText('Christopher Storer')).toBeTruthy();
     expect(screen.getByText('2 saisons · 10 épisodes')).toBeTruthy();
   });

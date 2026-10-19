@@ -16,6 +16,7 @@ import { UnderlineTabs } from '@/components/UnderlineTabs';
 import { seriesPlatform } from '@/domain/badge';
 import { defaultSeason, seriesInfo } from '@/domain/series';
 import { nextEpisodeLine, seriesCrew, seriesInfos, seriesMeta } from '@/domain/seriesDetail';
+import { useAfterFirstFrame } from '@/lib/useAfterFirstFrame';
 import { useUiStore } from '@/store/ui';
 import { colors, radii } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
@@ -193,29 +194,39 @@ function SeriesInfos({
 }) {
   const crew = seriesCrew(series.creators, series.networks, series.creatorIds);
   const infos = seriesInfos(series);
+  const belowFold = useAfterFirstFrame();
   return (
     <View>
       <WhereToWatch availability={series.availability} myProviderIds={myProviderIds} />
       {series.overview ? <Synopsis text={series.overview} /> : null}
-      {series.trailerKey ? (
-        <TrailerButton
-          titleId={series.id}
-          trailerKey={series.trailerKey}
-          backdropPath={series.backdropPath}
-        />
+      {/* Sous la ligne de flottaison : montés à l'image suivante, sans figer l'écran. */}
+      {belowFold ? (
+        <>
+          {series.trailerKey ? (
+            <TrailerButton
+              titleId={series.id}
+              trailerKey={series.trailerKey}
+              backdropPath={series.backdropPath}
+            />
+          ) : null}
+          <CastCarousel cast={series.cast} />
+          {crew.length > 0 ? (
+            <InfoSection title="Créateurs" titleGap={8}>
+              <InfoRows rows={crew} />
+            </InfoSection>
+          ) : null}
+          {infos.length > 0 ? (
+            <InfoSection title="Infos" titleGap={8} paddingTop={16}>
+              <InfoRows rows={infos} />
+            </InfoSection>
+          ) : null}
+          <PosterCarousel
+            title="Titres similaires"
+            titles={series.similar}
+            libraryIds={libraryIds}
+          />
+        </>
       ) : null}
-      <CastCarousel cast={series.cast} />
-      {crew.length > 0 ? (
-        <InfoSection title="Créateurs" titleGap={8}>
-          <InfoRows rows={crew} />
-        </InfoSection>
-      ) : null}
-      {infos.length > 0 ? (
-        <InfoSection title="Infos" titleGap={8} paddingTop={16}>
-          <InfoRows rows={infos} />
-        </InfoSection>
-      ) : null}
-      <PosterCarousel title="Titres similaires" titles={series.similar} libraryIds={libraryIds} />
     </View>
   );
 }

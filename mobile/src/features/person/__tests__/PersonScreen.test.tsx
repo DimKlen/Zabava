@@ -125,10 +125,12 @@ describe('ouverture depuis un nom', () => {
       </SafeAreaProvider>,
     );
 
-    expect(screen.getByRole('header', { name: 'Zendaya' })).toBeTruthy();
+    const name = screen.getByRole('header', { name: 'Zendaya' });
     expect(screen.queryByText('Filmographie')).toBeNull();
 
     await act(() => answer(PERSON));
     expect(await screen.findByText('Filmographie')).toBeTruthy();
+    // Identité restée en place (photo non remontée) : même élément qu'au chargement.
+    expect(screen.getByRole('header', { name: 'Zendaya' })).toBe(name);
   });
 });

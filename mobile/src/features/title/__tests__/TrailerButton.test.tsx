@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useFocusEffect } from 'expo-router';
+import { useEffect } from 'react';
 import { Linking } from 'react-native';
 
 import { TRAILER_LOADING_TIMEOUT_MS, TrailerButton, trailerHtml } from '../TrailerButton';
@@ -11,8 +12,11 @@ const mockFocusEffect = useFocusEffect as jest.Mock;
 let leaveScreen: (() => void) | undefined;
 beforeEach(() => {
   leaveScreen = undefined;
+  // Comme le vrai : l'effet part après le rendu, pas pendant.
   mockFocusEffect.mockImplementation((effect: () => (() => void) | undefined) => {
-    leaveScreen = effect() ?? undefined;
+    useEffect(() => {
+      leaveScreen = effect() ?? undefined;
+    }, [effect]);
   });
 });
 
@@ -89,4 +93,16 @@ it('page du lecteur : identifiant échappé', () => {
   const html = trailerHtml('a"b</script>');
   expect(html).toContain(String.raw`videoId:"a\"b\u003c/script>"`);
   expect(html.match(/<\/script>/g)).toHaveLength(1);
+});
+
+it('moteur préparé derrière la vignette, puis le même lecteur reçoit la vidéo', async () => {
+  await render(<TrailerButton titleId="movie-1" trailerKey="abc123" backdropPath="/b.jpg" />);
+  const warmup = await screen.findByTestId('trailer-warmup');
+  expect(warmup.props.source.html).not.toContain('iframe_api');
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Lire la bande-annonce' }));
+
+  // Même lecteur (pas de nouveau démarrage) et même vignette sous le voile (pas de flash).
+  expect(screen.getByTestId('trailer-player')).toBe(warmup);
+  expect(screen.getByTestId('trailer-loading')).toBeTruthy();
 });

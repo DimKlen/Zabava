@@ -57,39 +57,76 @@ export function PersonScreen({ id }: { id: number }) {
           onPress={goBack}
         />
       </View>
-      {query.data ? (
-        <PersonContent person={query.data} />
-      ) : showsLoadError(query) ? (
+      {!query.data && showsLoadError(query) ? (
         <LoadError onRetry={() => void query.refetch()} />
       ) : (
-        <PersonSkeleton preview={personPreview(id)} />
+        <PersonContent person={query.data} preview={personPreview(id)} />
       )}
     </View>
   );
 }
 
-function PersonContent({ person }: { person: PersonDetail }) {
+/**
+ * Même écran du tap à la fiche complète : la photo et le nom (déjà connus par le casting,
+ * l'équipe ou la recherche) restent en place, le reste arrive à la place des squelettes.
+ */
+function PersonContent({ person, preview }: { person?: PersonDetail; preview?: PersonPreview }) {
   const [tab, setTab] = useState<FilmographyTab>('movie');
   const [sort, setSort] = useState<FilmographySort>('pop');
-  const titles = filmography(person.credits, tab, sort);
+  const titles = person ? filmography(person.credits, tab, sort) : [];
   const isInList = useLibraryMembership();
   const myProviderIds = useMyProviderIds();
-  const biography =
-    person.biography ?? generatedBiography(person.name, person.gender, person.roles);
+  const name = person?.name ?? preview?.name;
+  const biography = person
+    ? (person.biography ?? generatedBiography(person.name, person.gender, person.roles))
+    : undefined;
 
-  const header = (
-    <View>
-      <View style={styles.identity}>
-        <PersonAvatar name={person.name} profilePath={person.profilePath} size={96} />
-        <View style={styles.identityText}>
+  const identity = (
+    <View style={styles.identity}>
+      {name !== undefined ? (
+        <PersonAvatar
+          name={name}
+          profilePath={person?.profilePath ?? preview?.profilePath}
+          size={96}
+        />
+      ) : (
+        <SkeletonBox width={96} height={96} radius={48} />
+      )}
+      <View style={styles.identityText}>
+        {name !== undefined ? (
           <Text accessibilityRole="header" style={styles.name}>
-            {person.name}
+            {name}
           </Text>
+        ) : (
+          <SkeletonBox width="70%" height={24} radius={radii.rXs} />
+        )}
+        {person ? (
           <Text style={styles.born}>
             {birthLine(person.gender, person.birthday, person.placeOfBirth)}
           </Text>
-        </View>
+        ) : (
+          <SkeletonBox width="90%" height={13} radius={radii.rXs} style={styles.skeletonLine} />
+        )}
       </View>
+    </View>
+  );
+
+  if (!person) {
+    return (
+      <PosterGrid
+        data={[]}
+        renderPoster={() => <View />}
+        // Même structure d'en-tête qu'une fois la fiche reçue : la photo n'est pas remontée.
+        ListHeaderComponent={<View>{identity}</View>}
+        ListHeaderComponentStyle={styles.header}
+        ListEmptyComponent={<GridSkeleton paddingTop={12} />}
+      />
+    );
+  }
+
+  const header = (
+    <View>
+      {identity}
       {biography ? <PersonBio text={biography} /> : null}
       <Text accessibilityRole="header" style={styles.filmography}>
         Filmographie
@@ -132,35 +169,6 @@ function PersonContent({ person }: { person: PersonDetail }) {
   );
 }
 
-/**
- * Chargement. Ouverte depuis un nom (casting, équipe, recherche), la fiche montre tout de
- * suite la photo et le nom déjà connus ; le reste est en squelette.
- */
-function PersonSkeleton({ preview }: { preview?: PersonPreview }) {
-  return (
-    <View>
-      <View style={[styles.identity, styles.skeletonIdentity]}>
-        {preview ? (
-          <PersonAvatar name={preview.name} profilePath={preview.profilePath} size={96} />
-        ) : (
-          <SkeletonBox width={96} height={96} radius={48} />
-        )}
-        <View style={styles.identityText}>
-          {preview ? (
-            <Text accessibilityRole="header" style={styles.name}>
-              {preview.name}
-            </Text>
-          ) : (
-            <SkeletonBox width="70%" height={24} radius={radii.rXs} />
-          )}
-          <SkeletonBox width="90%" height={13} radius={radii.rXs} style={styles.skeletonLine} />
-        </View>
-      </View>
-      <GridSkeleton paddingTop={24} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -177,9 +185,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-  },
-  skeletonIdentity: {
-    paddingHorizontal: 16,
   },
   identityText: {
     flex: 1,

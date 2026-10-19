@@ -8,6 +8,7 @@ import { WebView, type WebViewMessageEvent, type WebViewNavigation } from 'react
 import { GradientFill } from '@/components/GradientFill';
 import { Text } from '@/components/Text';
 import { tmdbImage } from '@/lib/tmdb';
+import { useAfterFirstFrame } from '@/lib/useAfterFirstFrame';
 import { colors, radii } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
@@ -16,8 +17,11 @@ type Props = { titleId: string; trailerKey: string; backdropPath?: string };
 /** Origine déclarée à YouTube : sans référent, le lecteur intégré refuse la lecture. */
 const ORIGIN = 'https://zabava.app';
 
-/** Sans signal du lecteur (YouTube lent, lecture auto refusée), le voile s'efface quand même. */
-export const TRAILER_LOADING_TIMEOUT_MS = 8000;
+/** Sans signal du lecteur (réseau lent, lecture auto refusée), le voile s'efface quand même. */
+export const TRAILER_LOADING_TIMEOUT_MS = 15_000;
+
+/** Page vide : démarre le moteur WebView avant le tap, sans rien télécharger. */
+const BLANK_HTML = `<!doctype html><html><body style="margin:0;background:${colors.bg}"></body></html>`;
 
 /** `idle` : vignette ; `loading` : lecteur qui se charge sous le voile ; `playing` : lecteur visible. */
 type Phase = 'idle' | 'loading' | 'playing';
@@ -56,16 +60,27 @@ function stayInPlayer(request: WebViewNavigation): boolean {
 }
 
 /**
- * Bande-annonce 16:9 lue dans la fiche. Au tap, la vignette reste affichée sous un voile
- * avec un indicateur de chargement pendant que YouTube démarre derrière ; elle disparaît
- * quand la vidéo joue. Quitter la fiche arrête la lecture.
+ * Bande-annonce 16:9 lue dans la fiche. Le moteur WebView démarre derrière la vignette dès
+ * l'affichage de la fiche ; au tap, la même vignette reste en place sous un voile avec un
+ * indicateur, pendant que YouTube se charge, et disparaît quand la vidéo joue. Quitter la
+ * fiche arrête la lecture et libère le lecteur.
  */
 export function TrailerButton({ titleId, trailerKey, backdropPath }: Props) {
   const backdrop = tmdbImage(backdropPath, 'w780');
   const [phase, setPhase] = useState<Phase>('idle');
+  const [focused, setFocused] = useState(true);
+  const warm = useAfterFirstFrame();
 
-  // Quitter la fiche (retour, autre écran, autre onglet) démonte le lecteur : le son s'arrête.
-  useFocusEffect(useCallback(() => () => setPhase('idle'), []));
+  useFocusEffect(
+    useCallback(() => {
+      setFocused(true);
+      // Quitter la fiche (retour, autre écran, autre onglet) : son coupé, lecteur démonté.
+      return () => {
+        setPhase('idle');
+        setFocused(false);
+      };
+    }, []),
+  );
 
   useEffect(() => {
     if (phase !== 'loading') return;
@@ -80,85 +95,88 @@ export function TrailerButton({ titleId, trailerKey, backdropPath }: Props) {
     }
   };
 
-  const thumbnail = (
-    <>
-      <GradientFill gradientKey={titleId} />
-      {backdrop ? (
-        <Image source={{ uri: backdrop }} contentFit="cover" style={StyleSheet.absoluteFill} />
-      ) : null}
-    </>
-  );
-
-  if (phase === 'idle') {
-    return (
-      <View style={styles.section}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Lire la bande-annonce"
-          onPress={() => setPhase('loading')}
-          style={styles.frame}
-        >
-          {thumbnail}
-          <View style={styles.play}>
-            <PlayIcon size={22} weight="fill" color={colors.accent} />
-          </View>
-          <Text style={styles.label}>Bande-annonce · YouTube</Text>
-        </Pressable>
-      </View>
-    );
-  }
+  const active = phase !== 'idle';
 
   return (
     <View style={styles.section}>
-      <View style={styles.playerFrame}>
-        <WebView
-          testID="trailer-player"
-          source={{ html: trailerHtml(trailerKey), baseUrl: ORIGIN }}
-          originWhitelist={['*']}
-          allowsInlineMediaPlayback
-          allowsFullscreenVideo
-          androidLayerType="hardware"
-          mediaPlaybackRequiresUserAction={false}
-          onShouldStartLoadWithRequest={stayInPlayer}
-          onMessage={onMessage}
-          // Pas de barre de défilement ni de rebond pendant le chargement de la page.
-          scrollEnabled={false}
-          showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
-          overScrollMode="never"
-          style={styles.player}
-        />
-        {phase === 'loading' ? (
-          // Le voile ne capte pas les touchers : YouTube les reçoit dès qu'il est prêt.
-          <View pointerEvents="none" style={styles.loading} testID="trailer-loading">
-            {thumbnail}
-            <View style={styles.veil} />
-            <ActivityIndicator
-              size="large"
-              color={colors.text}
-              accessibilityLabel="Chargement de la bande-annonce"
-            />
-          </View>
+      <View style={styles.frame}>
+        {focused && (warm || active) ? (
+          // Un seul lecteur, de la page vide au tap jusqu'à la vidéo : il n'est jamais remonté.
+          <WebView
+            testID={active ? 'trailer-player' : 'trailer-warmup'}
+            source={
+              active
+                ? { html: trailerHtml(trailerKey), baseUrl: ORIGIN }
+                : { html: BLANK_HTML, baseUrl: ORIGIN }
+            }
+            originWhitelist={['*']}
+            allowsInlineMediaPlayback
+            allowsFullscreenVideo
+            androidLayerType="hardware"
+            mediaPlaybackRequiresUserAction={false}
+            onShouldStartLoadWithRequest={stayInPlayer}
+            onMessage={onMessage}
+            // Pas de barre de défilement ni de rebond pendant le chargement de la page.
+            scrollEnabled={false}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+            overScrollMode="never"
+            style={styles.player}
+          />
+        ) : null}
+        {phase !== 'playing' ? (
+          // Même vignette avant et pendant le chargement : rien ne clignote au tap.
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Lire la bande-annonce"
+            accessibilityState={{ busy: phase === 'loading' }}
+            disabled={phase === 'loading'}
+            onPress={() => setPhase('loading')}
+            style={styles.cover}
+            testID={phase === 'loading' ? 'trailer-loading' : undefined}
+          >
+            <GradientFill gradientKey={titleId} />
+            {backdrop ? (
+              <Image
+                source={{ uri: backdrop }}
+                contentFit="cover"
+                style={StyleSheet.absoluteFill}
+              />
+            ) : null}
+            {phase === 'idle' ? (
+              <>
+                <View style={styles.play}>
+                  <PlayIcon size={22} weight="fill" color={colors.accent} />
+                </View>
+                <Text style={styles.label}>Bande-annonce · YouTube</Text>
+              </>
+            ) : (
+              <>
+                <View style={styles.veil} />
+                <ActivityIndicator
+                  size="large"
+                  color={colors.text}
+                  accessibilityLabel="Chargement de la bande-annonce"
+                />
+              </>
+            )}
+          </Pressable>
         ) : null}
       </View>
     </View>
   );
 }
 
+const fill = { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 } as const;
+
 const styles = StyleSheet.create({
   section: {
     paddingTop: 16,
     paddingHorizontal: 16,
   },
+  // Ni coins arrondis ni overflow: hidden sur le cadre du lecteur : ce rognage rend la
+  // vidéo noire sur Android (le son passe). Seule la vignette posée dessus est arrondie.
   frame: {
-    aspectRatio: 16 / 9,
-    borderRadius: radii.rLg,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // Ni coins arrondis ni overflow: hidden : ce rognage rend la vidéo noire sur Android (le son passe).
-  playerFrame: {
     aspectRatio: 16 / 9,
   },
   player: {
@@ -166,24 +184,16 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: colors.bg,
   },
-  // Même cadre que la vignette : le tap ne change rien d'autre que le voile et l'indicateur.
-  loading: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
+  cover: {
+    ...fill,
     borderRadius: radii.rLg,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.bg,
   },
   veil: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
+    ...fill,
     backgroundColor: colors.bgA60,
   },
   play: {
