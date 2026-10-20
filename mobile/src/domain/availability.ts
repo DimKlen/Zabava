@@ -1,5 +1,6 @@
 /** Disponibilité d'un film dans la région — specs/docs/01 §5 (`A.mState`, `A.bestPlat`). */
 import { daysFromToday } from './dates';
+import { groupProviders, isGroupSelected, type ProviderGroup } from './providers';
 import type { Availability, Provider } from './types';
 
 export type MovieState = 'upcoming' | 'avail' | 'cinema' | 'unknown';
@@ -53,13 +54,22 @@ export function mineFirst(providers: readonly Provider[], myProviderIds: readonl
   return [...mine, ...others];
 }
 
-/** « Où regarder » : abonnement, location puis achat, chaque plateforme une seule fois, les miennes en premier. */
-export function whereToWatch({ sub, rent, buy }: Availability, myProviderIds: readonly number[]) {
+/**
+ * « Où regarder » : abonnement, location puis achat, une seule entrée par service (« Netflix
+ * Standard with Ads » et « Amazon Video » rejoignent leur service, Cosmo Go est masqué), les
+ * miennes en premier.
+ */
+export function whereToWatch(
+  { sub, rent, buy }: Availability,
+  myProviderIds: readonly number[],
+): ProviderGroup[] {
   const unique = new Map<number, Provider>();
   for (const provider of [...sub, ...rent, ...buy]) {
     if (!unique.has(provider.id)) unique.set(provider.id, provider);
   }
-  return mineFirst([...unique.values()], myProviderIds);
+  const groups = groupProviders([...unique.values()]);
+  const mine = groups.filter((group) => isGroupSelected(group, myProviderIds));
+  return [...mine, ...groups.filter((group) => !mine.includes(group))];
 }
 
 const COUNTRY_NAMES: Record<string, string> = {

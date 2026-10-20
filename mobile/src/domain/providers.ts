@@ -35,7 +35,7 @@ const FEATURED = [
 ];
 
 /** Formule avec publicités (« Amazon Prime Video with Ads ») et services masqués (Cosmo Go). */
-const HIDDEN = /\bwith ads$|^cosmo go$/i;
+const HIDDEN = /\bwith ads$|^cosmo ?go$/i;
 
 /** Sans grand service connu dans la région : les premières plateformes par priorité. */
 const FALLBACK_COUNT = 12;
