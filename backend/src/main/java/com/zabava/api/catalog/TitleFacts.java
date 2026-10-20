@@ -62,7 +62,7 @@ public class TitleFacts {
             return new TitleBadge(
                     ref.toString(),
                     releases.get("salle"),
-                    TitleService.availability(d, region),
+                    TitleService.availability(d),
                     movie ? null : TitleService.network(d),
                     movie ? null : TitleService.isEnded(Json.text(d, "status")));
         });

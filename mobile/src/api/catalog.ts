@@ -42,6 +42,7 @@ export function toProvider(item: ApiProvider): Provider | null {
     short: item.shortName ?? initials(item.name),
     logoPath: item.logoPath,
     link: item.link,
+    countries: item.countries,
   };
 }
 
@@ -49,14 +50,13 @@ function isDefined<T>(value: T | null): value is T {
   return value !== null;
 }
 
-/** Plateformes d'abonnement de la région du profil (clé : la région). */
-export function useRegionProviders(region: string | undefined) {
+/** Plateformes connues de tous les pays suivis. */
+export function useProviders() {
   return useQuery({
-    queryKey: ['providers', region],
+    queryKey: ['providers'],
     queryFn: async () =>
       groupProviders((await api<ApiProvider[]>('/providers')).map(toProvider).filter(isDefined)),
     staleTime: DAY,
-    enabled: region !== undefined,
   });
 }
 

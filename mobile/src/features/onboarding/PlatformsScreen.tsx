@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 
-import { useRegionProviders } from '@/api/catalog';
+import { useProviders } from '@/api/catalog';
 import { useProfile, useSetProviders } from '@/api/profile';
 import { LoadError, showsLoadError } from '@/components/LoadError';
 import { SkeletonBox } from '@/components/Skeleton';
@@ -30,7 +30,7 @@ export function PlatformsScreen() {
   const { width } = useWindowDimensions();
   const tileWidth = (width - PADDING * 2 - GAP * (COLUMNS - 1)) / COLUMNS;
   const profile = useProfile();
-  const providers = useRegionProviders(profile.data?.region);
+  const providers = useProviders();
   const setProviders = useSetProviders();
   // Aucune présélection pour un nouveau compte ; un retour arrière garde les choix.
   const [selected, setSelected] = useState<readonly number[]>(

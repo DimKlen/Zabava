@@ -4,7 +4,6 @@ import {
   CaretDownIcon,
   CaretRightIcon,
   CheckIcon,
-  GlobeIcon,
   ShieldCheckIcon,
   SignOutIcon,
   TelevisionSimpleIcon,
@@ -14,7 +13,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useRegionProviders } from '@/api/catalog';
+import { useProviders } from '@/api/catalog';
 import { useProfile, type Profile } from '@/api/profile';
 import { Button } from '@/components/Button';
 import { LoadError, showsLoadError } from '@/components/LoadError';
@@ -23,7 +22,7 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { SkeletonBox } from '@/components/Skeleton';
 import { Switch } from '@/components/Switch';
 import { Text } from '@/components/Text';
-import { LANGUAGES, REGIONS, languageChoice, languageLabel } from '@/domain/onboarding';
+import { LANGUAGES, languageChoice, languageLabel } from '@/domain/onboarding';
 import {
   DIGEST_HOURS,
   NOTIFICATION_SWITCHES,
@@ -39,7 +38,7 @@ import { fonts } from '@/theme/typography';
 
 import { PlatformsSheet } from './PlatformsSheet';
 import {
-  changeRegionOrLanguage,
+  changeLanguage,
   confirmDeleteAccount,
   confirmSignOut,
   updatePreference,
@@ -81,7 +80,7 @@ export function ProfileScreen() {
 function ProfileContent({ profile }: { profile: Profile }) {
   const [platformsOpen, setPlatformsOpen] = useState(false);
   // Pendant le chargement : rien plutôt qu'un « Aucune » trompeur.
-  const providers = useRegionProviders(profile.region).data;
+  const providers = useProviders().data;
   const prefs = profile.notificationPrefs;
 
   const pick = <V extends string>(
@@ -111,22 +110,6 @@ function ProfileContent({ profile }: { profile: Profile }) {
       <View style={styles.groups}>
         <SettingsGroup label="Préférences">
           <SettingsRow
-            label="Région"
-            icon={GlobeIcon}
-            onPress={() =>
-              pick(
-                'Région',
-                REGIONS,
-                profile.region,
-                (region) => void changeRegionOrLanguage({ region }),
-              )
-            }
-          >
-            <Value
-              text={REGIONS.find((r) => r.value === profile.region)?.label ?? profile.region}
-            />
-          </SettingsRow>
-          <SettingsRow
             label="Langue"
             icon={TranslateIcon}
             onPress={() =>
@@ -134,7 +117,7 @@ function ProfileContent({ profile }: { profile: Profile }) {
                 'Langue',
                 LANGUAGES,
                 languageChoice(profile.language),
-                (language) => void changeRegionOrLanguage({ language }),
+                (language) => void changeLanguage({ language }),
               )
             }
           >

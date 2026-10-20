@@ -108,14 +108,15 @@ public final class TmdbMapper {
         return new PersonLite(node.path("id").asInt(), Json.text(node, "name"), Json.text(node, "profile_path"), knownFor);
     }
 
-    public static Provider provider(JsonNode node, String shortName, String link) {
+    public static Provider provider(JsonNode node, String shortName, String link, List<String> countries) {
         String name = Json.text(node, "provider_name");
         return new Provider(
                 node.path("provider_id").asInt(),
                 name,
                 shortName != null ? shortName : shortName(name),
                 Json.text(node, "logo_path"),
-                link);
+                link,
+                countries);
     }
 
     /** Abréviation connue, sinon les deux premières lettres. */

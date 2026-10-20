@@ -137,7 +137,7 @@ public class TitleService {
                 row.network(),
                 row.ended(),
                 movie ? null : seasonSummaries(d),
-                availability(d, region),
+                availability(d),
                 trailerKey(d, prefs.language()),
                 cast(d),
                 crew(d, movie),
@@ -406,18 +406,33 @@ public class TitleService {
         return null;
     }
 
-    /** Offres de la région ; « Disponibilité inconnue » côté app si tout est vide. */
-    static Availability availability(JsonNode d, String region) {
-        JsonNode r = d.path("watch/providers").path("results").path(region);
-        if (r.isMissingNode()) return Availability.EMPTY;
-        String link = Json.text(r, "link");
-        return new Availability(providers(r, "flatrate", link), providers(r, "rent", link), providers(r, "buy", link), link);
+    /** Offres de tous les pays suivis, chaque plateforme avec ses pays ; « Disponibilité inconnue » côté app si tout est vide. */
+    static Availability availability(JsonNode d) {
+        JsonNode results = d.path("watch/providers").path("results");
+        List<String> regions = Regions.ALL.stream().filter(code -> !results.path(code).isMissingNode()).toList();
+        if (regions.isEmpty()) return Availability.EMPTY;
+        String link = Json.text(results.path(regions.getFirst()), "link");
+        return new Availability(
+                providers(results, regions, "flatrate"), providers(results, regions, "rent"),
+                providers(results, regions, "buy"), link);
     }
 
-    private static List<Provider> providers(JsonNode region, String field, String link) {
-        return Json.array(region, field).stream()
-                .sorted(Comparator.comparingInt(p -> p.path("display_priority").asInt(999)))
-                .map(p -> TmdbMapper.provider(p, null, link))
+    private static List<Provider> providers(JsonNode results, List<String> regions, String field) {
+        Map<Integer, JsonNode> nodes = new LinkedHashMap<>();
+        Map<Integer, List<String>> countries = new HashMap<>();
+        Map<Integer, String> links = new HashMap<>();
+        for (String region : regions) {
+            String link = Json.text(results.path(region), "link");
+            for (JsonNode p : Json.array(results.path(region), field)) {
+                int id = p.path("provider_id").asInt();
+                nodes.merge(id, p, (a, b) -> a.path("display_priority").asInt(999) <= b.path("display_priority").asInt(999) ? a : b);
+                countries.computeIfAbsent(id, k -> new ArrayList<>()).add(region);
+                links.putIfAbsent(id, link);
+            }
+        }
+        return nodes.entrySet().stream()
+                .sorted(Comparator.comparingInt(e -> e.getValue().path("display_priority").asInt(999)))
+                .map(e -> TmdbMapper.provider(e.getValue(), null, links.get(e.getKey()), countries.get(e.getKey())))
                 .toList();
     }
 

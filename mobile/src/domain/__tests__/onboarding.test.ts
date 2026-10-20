@@ -1,7 +1,6 @@
 import {
   addedCountLabel,
   LANGUAGES,
-  defaultRegion,
   languageChoice,
   languageLabel,
   initialStatus,
@@ -9,19 +8,6 @@ import {
   previousStep,
   stepFromPath,
 } from '../onboarding';
-
-describe('defaultRegion', () => {
-  it('reprend la région du téléphone si elle est proposée', () => {
-    expect(defaultRegion('FR')).toBe('FR');
-    expect(defaultRegion('ch')).toBe('CH');
-  });
-
-  it('se rabat sur le Canada sinon', () => {
-    expect(defaultRegion('DE')).toBe('CA');
-    expect(defaultRegion(null)).toBe('CA');
-    expect(defaultRegion(undefined)).toBe('CA');
-  });
-});
 
 describe('étapes', () => {
   it('« Passer » mène à l’étape suivante, puis aux notifications', () => {

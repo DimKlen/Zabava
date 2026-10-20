@@ -52,3 +52,30 @@ export function mineFirst(providers: readonly Provider[], myProviderIds: readonl
   const others = providers.filter((provider) => !myProviderIds.includes(provider.id));
   return [...mine, ...others];
 }
+
+/** « Où regarder » : abonnement, location puis achat, chaque plateforme une seule fois, les miennes en premier. */
+export function whereToWatch({ sub, rent, buy }: Availability, myProviderIds: readonly number[]) {
+  const unique = new Map<number, Provider>();
+  for (const provider of [...sub, ...rent, ...buy]) {
+    if (!unique.has(provider.id)) unique.set(provider.id, provider);
+  }
+  return mineFirst([...unique.values()], myProviderIds);
+}
+
+const COUNTRY_NAMES: Record<string, string> = {
+  CA: 'Canada',
+  FR: 'France',
+  BE: 'Belgique',
+  CH: 'Suisse',
+  US: 'États-Unis',
+  GB: 'Royaume-Uni',
+  DE: 'Allemagne',
+  ES: 'Espagne',
+  IT: 'Italie',
+};
+
+/** « (France, Canada) » : pays où la plateforme propose le titre, ou rien si on ne le sait pas. */
+export function countriesLabel(countries: readonly string[] | undefined): string | undefined {
+  if (!countries || countries.length === 0) return undefined;
+  return `(${countries.map((code) => COUNTRY_NAMES[code] ?? code).join(', ')})`;
+}

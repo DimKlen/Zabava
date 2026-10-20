@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.zabava.api.catalog.Regions;
 import com.zabava.api.catalog.TmdbMapper;
 import com.zabava.api.catalog.dto.CatalogDtos.Provider;
 import com.zabava.api.common.Json;
@@ -17,8 +18,8 @@ import tools.jackson.databind.JsonNode;
 @Service
 public class ProviderService {
 
-    /** Régions proposées par l'app (specs/docs/05 §5.2). */
-    public static final List<String> REGIONS = List.of("CA", "FR", "BE", "CH", "US");
+    /** Pays dont les plateformes sont chargées. */
+    public static final List<String> REGIONS = Regions.ALL;
 
     private final JdbcClient db;
     private final TmdbClient tmdb;
@@ -28,21 +29,21 @@ public class ProviderService {
         this.tmdb = tmdb;
     }
 
-    /** Plateformes de la région, triées par priorité d'affichage TMDB. */
-    public List<Provider> forRegion(String region) {
+    /** Plateformes de tous les pays, triées par meilleure priorité d'affichage TMDB. */
+    public List<Provider> all() {
         return db.sql("""
                 select p.id, p.name, p.short, p.logo_path from provider_regions r
                 join providers p on p.id = r.provider_id
-                where r.region = :region
-                order by coalesce(r.display_priority, 999), p.name
+                group by p.id, p.name, p.short, p.logo_path
+                order by min(coalesce(r.display_priority, 999)), p.name
                 """)
-                .param("region", region)
                 .query((rs, n) -> new Provider(
                         rs.getInt("id"),
                         rs.getString("name"),
                         rs.getString("short") != null ? rs.getString("short") : TmdbMapper.shortName(rs.getString("name")),
                         rs.getString("logo_path"),
-                        null))
+                        null,
+                        List.of()))
                 .list();
     }
 

@@ -8,6 +8,8 @@ export type Provider = {
   short: string;
   logoPath?: string;
   link?: string;
+  /** Pays (ISO 3166-1) où la plateforme propose le titre. */
+  countries?: string[];
 };
 
 export type Availability = {

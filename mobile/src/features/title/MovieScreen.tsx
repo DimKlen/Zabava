@@ -7,7 +7,6 @@ import type { TitleDetail } from '@/api/titles';
 import { useMovieWatchlist } from '@/api/watchlist';
 import { RatingChips } from '@/components/RatingChips';
 import { movieCrew, movieInfos, movieMeta, movieStatus } from '@/domain/movieDetail';
-import { REGIONS } from '@/domain/onboarding';
 import { useAfterFirstFrame } from '@/lib/useAfterFirstFrame';
 import { useUiStore } from '@/store/ui';
 import { colors } from '@/theme/tokens';
@@ -65,8 +64,6 @@ export function MovieScreen({ id, preview, movie, failure }: Props) {
 function MovieBody({ movie }: { movie: TitleDetail }) {
   const profile = useProfile().data;
   const myProviderIds = profile?.providerIds ?? [];
-  const regionName =
-    REGIONS.find((r) => r.value === profile?.region)?.label ?? profile?.region ?? '';
   const libraryIds = new Set((useMovieWatchlist().data ?? []).map((film) => film.id));
 
   const belowFold = useAfterFirstFrame();
@@ -95,24 +92,14 @@ function MovieBody({ movie }: { movie: TitleDetail }) {
           backdropPath={movie.backdropPath}
         />
       ) : null}
-      {belowFold ? (
-        <MovieMore movie={movie} regionName={regionName} libraryIds={libraryIds} />
-      ) : null}
+      {belowFold ? <MovieMore movie={movie} libraryIds={libraryIds} /> : null}
     </>
   );
 }
 
-function MovieMore({
-  movie,
-  regionName,
-  libraryIds,
-}: {
-  movie: TitleDetail;
-  regionName: string;
-  libraryIds: Set<string>;
-}) {
+function MovieMore({ movie, libraryIds }: { movie: TitleDetail; libraryIds: Set<string> }) {
   const crew = movieCrew(movie);
-  const infos = movieInfos(movie, regionName);
+  const infos = movieInfos(movie);
   return (
     <>
       <CastCarousel cast={movie.cast} />

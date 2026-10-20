@@ -159,10 +159,10 @@ public class CatalogController {
         return discover.trending(type, window, prefs(user));
     }
 
-    /** Plateformes d'abonnement de la région du profil. */
+    /** Plateformes connues de tous les pays suivis. */
     @GetMapping("/providers")
-    public List<Provider> providers(CurrentUser user) {
-        return providers.forRegion(prefs(user).region());
+    public List<Provider> providers() {
+        return providers.all();
     }
 
     private Prefs prefs(CurrentUser user) {

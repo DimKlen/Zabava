@@ -43,7 +43,7 @@ public class WatchlistService {
                 .toList();
         List<Long> ids = titles.stream().map(TitleRow::id).toList();
 
-        Map<Long, Availability> offers = store.offers(ids, prefs.region());
+        Map<Long, Availability> offers = store.offers(ids);
         Map<Long, Map<String, LocalDate>> releases = store.releaseDates(ids, prefs.region());
         Map<Long, Instant> watched = type.isSeries() ? library.watched(prefs.userId(), ids) : Map.of();
 
