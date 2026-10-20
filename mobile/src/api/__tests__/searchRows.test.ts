@@ -9,11 +9,11 @@ function page(titles: TitleResult[]): SearchPage {
 }
 
 describe('searchRows', () => {
-  it('trie les titres du plus récent au plus ancien, sans année en dernier', () => {
+  it('garde l’ordre de pertinence du serveur, sans retrier par année', () => {
     const rows = searchRows([
       page([title(1, 2020), title(2), title(3, 2025)]),
       page([title(4, 2022)]),
     ]);
-    expect(rows.map((row) => (row.kind === 'title' ? row.title.tmdbId : 0))).toEqual([3, 4, 1, 2]);
+    expect(rows.map((row) => (row.kind === 'title' ? row.title.tmdbId : 0))).toEqual([1, 2, 3, 4]);
   });
 });

@@ -43,6 +43,20 @@ describe('groupProviders', () => {
     ]);
   });
 
+  it('masque les formules avec publicités et Cosmo Go', () => {
+    const groups = groupProviders([
+      provider(9, 'Amazon Prime Video'),
+      provider(2100, 'Amazon Prime Video with Ads'),
+      provider(5, 'Cosmo Go'),
+      provider(8, 'Netflix'),
+      provider(1796, 'Netflix Standard with Ads'),
+    ]);
+    expect(groups.map((g) => [g.name, g.ids])).toEqual([
+      ['Amazon Prime Video', [9]],
+      ['Netflix', [8]],
+    ]);
+  });
+
   it('logo de la version de base quand elle existe', () => {
     const [amc] = groupProviders([
       { ...provider(528, 'AMC+ Amazon Channel'), logoPath: '/channel.png' },

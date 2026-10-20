@@ -130,7 +130,7 @@ public class NotificationService {
             if (!mine.isEmpty() && !mine.contains(a.providerId())) continue;
             WatchedTitle movie = byId.get(a.titleId());
             out.add(new Candidate(Type.STREAMING, movie.titleId(), null,
-                    movie.title() + " est maintenant sur " + a.providerName(),
+                    movie.title() + " est maintenant sur " + cleanProviderName(a.providerName()),
                     "zabava://title/movie/" + movie.tmdbId(),
                     a.firstSeen().atZone(now.getZone())));
         }
@@ -192,6 +192,13 @@ public class NotificationService {
     private static LocalDate localDate(EpisodeRow e, ZoneId zone) {
         if (e.airstamp() != null) return e.airstamp().atZone(zone).toLocalDate();
         return e.airDate();
+    }
+
+    /** « AMC+ Amazon Channel » → « AMC+ » : sans revendeur ni formule. */
+    static String cleanProviderName(String name) {
+        return name.replaceAll("(?i)\\s+(amazon channel|apple tv channel|roku premium channel|youtube primetime channel)$", "")
+                .replaceAll("(?i)\\s+(standard with ads|basic with ads|with ads)$", "")
+                .strip();
     }
 
     /** « S04 E03 ». */
