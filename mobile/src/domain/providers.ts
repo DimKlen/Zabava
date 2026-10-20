@@ -34,6 +34,9 @@ const FEATURED = [
   'cbc gem',
 ];
 
+/** Formule avec publicités (« Amazon Prime Video with Ads ») et services masqués (Cosmo Go). */
+const HIDDEN = /\bwith ads$|^cosmo go$/i;
+
 /** Sans grand service connu dans la région : les premières plateformes par priorité. */
 const FALLBACK_COUNT = 12;
 
@@ -88,6 +91,7 @@ function groupKey(name: string): string {
 export function groupProviders(providers: readonly Provider[]): ProviderGroup[] {
   const groups = new Map<string, Provider[]>();
   for (const provider of providers) {
+    if (HIDDEN.test(provider.name.trim())) continue;
     const key = groupKey(provider.name);
     groups.set(key, [...(groups.get(key) ?? []), provider]);
   }
