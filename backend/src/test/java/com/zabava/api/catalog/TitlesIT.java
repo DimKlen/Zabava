@@ -4,6 +4,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -49,7 +50,8 @@ class TitlesIT extends IntegrationTest {
                 .andExpect(jsonPath("$.availability.sub[0].name").value("Netflix"))
                 .andExpect(jsonPath("$.availability.sub[0].shortName").value("N"))
                 .andExpect(jsonPath("$.availability.rent[0].name").value("Apple TV"))
-                .andExpect(jsonPath("$.availability.buy", hasSize(0)))
+                .andExpect(jsonPath("$.availability.sub[0].countries", hasItem("CA")))
+                .andExpect(jsonPath("$.availability.buy", hasSize(1)))
                 .andExpect(jsonPath("$.availability.link").value("https://www.themoviedb.org/movie/603/watch?locale=CA"))
                 // Notes OMDb.
                 .andExpect(jsonPath("$.imdbRating").value(8.5))
@@ -134,16 +136,33 @@ class TitlesIT extends IntegrationTest {
                         {"id": 605, "title": "Ailleurs", "release_date": "2026-01-02",
                          "release_dates": {"results": [
                            {"iso_3166_1": "CA", "release_dates": [{"type": 3, "release_date": "2026-01-02T00:00:00.000Z"}]},
-                           {"iso_3166_1": "DE", "release_dates": [{"type": 3, "release_date": "2026-01-05T00:00:00.000Z"}]}]},
+                           {"iso_3166_1": "JP", "release_dates": [{"type": 3, "release_date": "2026-01-05T00:00:00.000Z"}]}]},
                          "watch/providers": {"results": {
                            "CA": {"link": "https://tmdb/ca", "flatrate": [{"provider_id": 8, "provider_name": "Netflix"}]},
-                           "DE": {"link": "https://tmdb/de", "flatrate": [{"provider_id": 8, "provider_name": "Netflix"}]}}}}
+                           "JP": {"link": "https://tmdb/jp", "flatrate": [{"provider_id": 8, "provider_name": "Netflix"}]}}}}
                         """)));
 
         mvc.perform(as(user, get("/api/v1/titles/movie/605"))).andExpect(status().isOk());
 
         assertThat(db.sql("select region from title_availability").query(String.class).list()).containsExactly("CA");
         assertThat(db.sql("select region from release_dates").query(String.class).list()).containsExactly("CA");
+    }
+
+    @Test
+    void plateformeDunAutrePaysAvecSesPays() throws Exception {
+        WIREMOCK.stubFor(com.github.tomakehurst.wiremock.client.WireMock.get(urlPathEqualTo("/tmdb/movie/606"))
+                .willReturn(com.github.tomakehurst.wiremock.client.WireMock.okJson("""
+                        {"id": 606, "title": "Pinocchio", "release_date": "2022-09-08",
+                         "watch/providers": {"results": {
+                           "FR": {"link": "https://tmdb/fr", "flatrate": [{"provider_id": 8, "provider_name": "Netflix", "display_priority": 1}]},
+                           "US": {"link": "https://tmdb/us", "flatrate": [{"provider_id": 8, "provider_name": "Netflix", "display_priority": 1}]}}}}
+                        """)));
+
+        mvc.perform(as(user, get("/api/v1/titles/movie/606")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.availability.sub", hasSize(1)))
+                .andExpect(jsonPath("$.availability.sub[0].name").value("Netflix"))
+                .andExpect(jsonPath("$.availability.sub[0].countries", contains("FR", "US")));
     }
 
     @Test

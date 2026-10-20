@@ -99,15 +99,16 @@ describe('Équipe et Infos', () => {
     ]);
   });
 
-  it('affiche la sortie avec la région', () => {
+  it('affiche la sortie', () => {
     expect(
-      movieInfos(
-        { originalTitle: 'Dune: Part Two', releaseTheatrical: '2024-03-01', country: 'États-Unis' },
-        'Canada',
-      ),
+      movieInfos({
+        originalTitle: 'Dune: Part Two',
+        releaseTheatrical: '2024-03-01',
+        country: 'États-Unis',
+      }),
     ).toEqual([
       { key: 'Titre original', value: 'Dune: Part Two' },
-      { key: 'Sortie (Canada)', value: '1 mars 2024' },
+      { key: 'Sortie', value: '1 mars 2024' },
       { key: 'Pays', value: 'États-Unis' },
     ]);
   });

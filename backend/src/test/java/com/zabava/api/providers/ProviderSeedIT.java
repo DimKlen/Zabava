@@ -38,10 +38,10 @@ class ProviderSeedIT extends IntegrationTest {
                     .withQueryParam("watch_region", equalTo(region)));
         }
         assertThat(db.sql("select count(*) from providers").query(Long.class).single()).isEqualTo(2);
-        assertThat(db.sql("select count(*) from provider_regions").query(Long.class).single()).isEqualTo(10);
+        assertThat(db.sql("select count(*) from provider_regions").query(Long.class).single()).isEqualTo(2L * ProviderService.REGIONS.size());
         assertThat(db.sql("select short from providers where id = 8").query(String.class).single()).isEqualTo("N");
-        // Priorité propre à la région quand TMDB la donne.
-        assertThat(providers.forRegion("CA")).extracting(p -> p.name()).containsExactly("Netflix", "Crave");
+        // Meilleure priorité parmi les pays (Netflix : 1 au Canada, Crave : 3).
+        assertThat(providers.all()).extracting(p -> p.name()).containsExactly("Netflix", "Crave");
         assertThat(db.sql("select display_priority from provider_regions where provider_id = 8 and region = 'FR'")
                         .query(Integer.class).single())
                 .isEqualTo(2);

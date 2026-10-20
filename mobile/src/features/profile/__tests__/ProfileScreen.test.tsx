@@ -49,7 +49,6 @@ const PROFILE = {
   displayName: 'Dim',
   email: 'dim@exemple.ca',
   authProvider: 'apple',
-  region: 'CA',
   language: 'fr-CA',
   spoilerProtection: false,
   providerIds: [8, 230],
@@ -104,7 +103,6 @@ describe('ProfileScreen', () => {
   it('compte, préférences et à propos', async () => {
     await renderProfile();
     expect(screen.getByText('dim@exemple.ca · Apple')).toBeTruthy();
-    expect(screen.getByText('Canada')).toBeTruthy();
     expect(screen.getByText('Français')).toBeTruthy();
     expect(await screen.findByText('Netflix, Crave')).toBeTruthy();
     expect(screen.getByText('9 h')).toBeTruthy();

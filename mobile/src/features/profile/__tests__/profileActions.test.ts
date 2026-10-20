@@ -3,7 +3,7 @@ import { profileKey, type Profile } from '@/api/profile';
 import { queryClient } from '@/api/queryClient';
 import { showToast } from '@/store/ui';
 
-import { changeRegionOrLanguage, toggleProvider, updatePreference } from '../profileActions';
+import { changeLanguage, toggleProvider, updatePreference } from '../profileActions';
 
 jest.mock('@/api/http', () => ({ api: jest.fn() }));
 // Le client de l'app garde ses requêtes 7 jours : ses minuteurs empêcheraient Jest de finir.
@@ -23,7 +23,6 @@ jest.mock('@/store/ui', () => ({ showToast: jest.fn(), openDialog: jest.fn() }))
 const mockApi = api as jest.MockedFunction<typeof api>;
 
 const PROFILE: Profile = {
-  region: 'US',
   language: 'fr-CA',
   spoilerProtection: false,
   providerIds: [8],
@@ -54,29 +53,28 @@ beforeEach(() => {
   queryClient.setQueryData(profileKey, PROFILE);
 });
 
-describe('changeRegionOrLanguage', () => {
-  it('ne change la région qu’après l’enregistrement, puis recharge le catalogue', async () => {
+describe('changeLanguage', () => {
+  it('ne change la langue qu’après l’enregistrement, puis recharge le catalogue', async () => {
     const put = deferred<Profile>();
     mockApi.mockReturnValueOnce(put.promise);
-    queryClient.setQueryData(['providers', 'US'], ['us']);
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
 
-    const done = changeRegionOrLanguage({ region: 'CA' });
+    const done = changeLanguage({ language: 'en-US' });
     await Promise.resolve();
-    // Pendant l'envoi : toujours l'ancienne région (sinon /providers partirait trop tôt).
-    expect(profile()?.region).toBe('US');
+    // Pendant l'envoi : toujours l'ancienne langue.
+    expect(profile()?.language).toBe('fr-CA');
     expect(invalidate).not.toHaveBeenCalled();
 
-    put.resolve({ ...PROFILE, region: 'CA' });
+    put.resolve({ ...PROFILE, language: 'en-US' });
     await expect(done).resolves.toBe(true);
-    expect(profile()?.region).toBe('CA');
+    expect(profile()?.language).toBe('en-US');
     expect(invalidate).toHaveBeenCalled();
     invalidate.mockRestore();
   });
 
   it('échec : profil inchangé et toast', async () => {
     mockApi.mockRejectedValueOnce(new Error('réseau'));
-    await expect(changeRegionOrLanguage({ language: 'en-US' })).resolves.toBe(false);
+    await expect(changeLanguage({ language: 'en-US' })).resolves.toBe(false);
     expect(profile()?.language).toBe('fr-CA');
     expect(showToast).toHaveBeenCalledWith("Impossible d'enregistrer, réessaie");
   });

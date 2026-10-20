@@ -84,14 +84,11 @@ export type MovieInfoInput = {
   studio?: string;
 };
 
-/** Lignes « Infos » ; `regionName` donne « Sortie (Canada) ». */
-export function movieInfos(movie: MovieInfoInput, regionName: string): InfoRow[] {
+/** Lignes « Infos ». */
+export function movieInfos(movie: MovieInfoInput): InfoRow[] {
   return rows([
     ['Titre original', movie.originalTitle],
-    [
-      `Sortie (${regionName})`,
-      movie.releaseTheatrical ? formatLongDate(movie.releaseTheatrical) : undefined,
-    ],
+    ['Sortie', movie.releaseTheatrical ? formatLongDate(movie.releaseTheatrical) : undefined],
     ['Langue originale', movie.originalLanguage],
     ['Pays', movie.country],
     ['Studio', movie.studio],

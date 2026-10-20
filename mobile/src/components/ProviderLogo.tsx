@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { countriesLabel } from '@/domain/availability';
 import type { Provider } from '@/domain/types';
 import { tmdbImage } from '@/lib/tmdb';
 import { colors } from '@/theme/tokens';
@@ -23,6 +24,7 @@ const SIZE = 40;
  */
 export function ProviderLogo({ provider, mine, onPress }: Props) {
   const uri = tmdbImage(provider.logoPath, 'w92');
+  const countries = countriesLabel(provider.countries);
   return (
     <Pressable
       accessibilityRole="link"
@@ -38,6 +40,7 @@ export function ProviderLogo({ provider, mine, onPress }: Props) {
         )}
       </View>
       <Text style={styles.name}>{provider.name}</Text>
+      {countries ? <Text style={styles.name}>{countries}</Text> : null}
     </Pressable>
   );
 }

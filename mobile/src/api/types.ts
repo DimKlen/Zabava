@@ -403,6 +403,7 @@ export interface components {
       shortName?: string;
       logoPath?: string;
       link?: string;
+      countries?: string[];
     };
     TitleBadge: {
       id?: string;

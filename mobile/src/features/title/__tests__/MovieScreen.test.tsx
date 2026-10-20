@@ -82,7 +82,7 @@ describe('MovieScreen', () => {
     await renderMovie(base);
     expect(screen.queryByText('IMDb')).toBeNull();
     expect(screen.queryByText('Rotten Tomatoes')).toBeNull();
-    expect(screen.getByText('Disponibilité inconnue pour ta région.')).toBeTruthy();
+    expect(screen.getByText('Disponibilité inconnue.')).toBeTruthy();
   });
 
   it('affiche les notes, les plateformes de location sans libellé et le bandeau', async () => {
@@ -93,29 +93,30 @@ describe('MovieScreen', () => {
       rtScore: 92,
       releaseTheatrical: '2024-03-01',
       availability: {
-        sub: [{ id: 230, name: 'Crave', short: 'C' }],
+        sub: [{ id: 230, name: 'Crave', short: 'C', countries: ['FR', 'CA'] }],
         rent: [{ id: 350, name: 'Apple TV+', short: 'tv' }],
         buy: [],
       },
     });
     expect(screen.getByText('8,5/10')).toBeTruthy();
     expect(screen.getByText('Rotten Tomatoes')).toBeTruthy();
-    // Location seulement, sans libellé : l'abonnement (Crave) n'est plus affiché.
+    // Abonnement et location, sans libellé, avec les pays entre parenthèses.
     expect(screen.getByLabelText('Apple TV+')).toBeTruthy();
-    expect(screen.queryByLabelText('Crave')).toBeNull();
+    expect(screen.getByLabelText('Crave')).toBeTruthy();
+    expect(screen.getByText('(France, Canada)')).toBeTruthy();
     expect(screen.queryByText('Abonnement')).toBeNull();
     expect(screen.queryByText('Location')).toBeNull();
     expect(screen.queryByText('Achat')).toBeNull();
     expect(screen.getByText('Disponible en streaming')).toBeTruthy();
   });
 
-  it('montre la méta, l’équipe et la sortie dans la région', async () => {
+  it('montre la méta, l’équipe et la sortie', async () => {
     await renderMovie(base);
     expect(screen.getByText('2026 · 13+')).toBeTruthy();
     expect(screen.getByText('Science-fiction, Aventure')).toBeTruthy();
     // Équipe et Infos : montées à l'image suivante.
     expect(await screen.findByText('Denis Villeneuve')).toBeTruthy();
-    expect(screen.getByText('Sortie (Canada)')).toBeTruthy();
+    expect(screen.getByText('Sortie')).toBeTruthy();
     expect(screen.getByText('En salle le 18 déc.')).toBeTruthy();
   });
 

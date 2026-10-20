@@ -56,7 +56,8 @@ class DiscoverIT extends IntegrationTest {
                 .andExpect(jsonPath("$.people", hasSize(3)))
                 .andExpect(jsonPath("$.people[0].name").value("Zendaya"))
                 .andExpect(jsonPath("$.people[0].knownFor", contains("Dune", "Euphoria")))
-                .andExpect(jsonPath("$.titles[*].id", contains("movie-603", "tv-85552", "anime-209867")))
+                // Par popularité décroissante.
+                .andExpect(jsonPath("$.titles[*].id", contains("movie-603", "anime-209867", "tv-85552")))
                 .andExpect(jsonPath("$.titles[0].year").value(2026))
                 .andExpect(jsonPath("$.totalPages").value(3));
         WIREMOCK.verify(getRequestedFor(urlPathEqualTo("/tmdb/search/multi"))

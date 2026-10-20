@@ -89,7 +89,7 @@ class ProfileIT extends IntegrationTest {
     }
 
     @Test
-    void plateformesDeLaRegionDuProfil() throws Exception {
+    void plateformesDeTousLesPays() throws Exception {
         UUID user = createUser("alice@example.com");
         db.sql("""
                 insert into providers (id, name, short) values (8, 'Netflix', 'N'), (230, 'Crave', 'C'), (381, 'Canal+', null);
@@ -98,7 +98,7 @@ class ProfileIT extends IntegrationTest {
                 """).update();
         mvc.perform(as(user, get("/api/v1/providers")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].name", contains("Crave", "Netflix")))
+                .andExpect(jsonPath("$[*].name", contains("Crave", "Netflix", "Canal+")))
                 .andExpect(jsonPath("$[0].shortName").value("C"));
     }
 

@@ -93,7 +93,7 @@ public class UpcomingService {
                 .filter(t -> t.type().isSeries() && "following".equals(userTitles.get(t.id()).status()))
                 .toList();
         Map<Long, Instant> watched = library.watched(prefs.userId(), series.stream().map(TitleRow::id).toList());
-        Map<Long, Availability> offers = store.offers(series.stream().map(TitleRow::id).toList(), prefs.region());
+        Map<Long, Availability> offers = store.offers(series.stream().map(TitleRow::id).toList());
         LocalDate today = LocalDate.now(clock.withZone(zone));
         for (TitleRow title : series) {
             List<EpisodeRow> episodes = store.episodes(title.id()).stream().filter(e -> e.season() > 0).toList();

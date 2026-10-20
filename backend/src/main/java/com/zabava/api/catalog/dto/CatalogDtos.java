@@ -39,9 +39,10 @@ public final class CatalogDtos {
 
     public record PersonLite(int id, String name, String profilePath, List<String> knownFor) {}
 
-    public record Provider(int id, String name, String shortName, String logoPath, String link) {}
+    /** {@code countries} : pays (ISO 3166-1) où la plateforme propose le titre ; vide pour une simple plateforme. */
+    public record Provider(int id, String name, String shortName, String logoPath, String link, List<String> countries) {}
 
-    /** Offres d'une région : abonnement, location, achat (JustWatch via TMDB). */
+    /** Offres de tous les pays suivis : abonnement, location, achat (JustWatch via TMDB). */
     public record Availability(List<Provider> sub, List<Provider> rent, List<Provider> buy, String link) {
         public static final Availability EMPTY = new Availability(List.of(), List.of(), List.of(), null);
     }

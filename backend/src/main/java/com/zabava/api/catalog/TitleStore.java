@@ -314,18 +314,19 @@ public class TitleStore {
                 .update();
     }
 
-    /** Offres d'une région pour plusieurs titres, avec le nom et le logo des plateformes. */
-    public Map<Long, Availability> offers(Collection<Long> titleIds, String region) {
+    /** Offres de tous les pays pour plusieurs titres, avec le nom, le logo et les pays des plateformes. */
+    public Map<Long, Availability> offers(Collection<Long> titleIds) {
         if (titleIds.isEmpty()) return Map.of();
         record Line(long titleId, String type, Provider provider) {}
         List<Line> lines = db.sql("""
-                select a.title_id, a.type, a.provider_id, a.link, p.name, p.short, p.logo_path
+                select a.title_id, a.type, a.provider_id, min(a.link) as link, p.name, p.short, p.logo_path,
+                  array_to_string(array_agg(a.region order by a.region), ',') as countries
                 from title_availability a left join providers p on p.id = a.provider_id
-                where a.title_id in (:ids) and a.region = :region
+                where a.title_id in (:ids)
+                group by a.title_id, a.type, a.provider_id, p.name, p.short, p.logo_path, p.display_priority
                 order by coalesce(p.display_priority, 999), a.provider_id
                 """)
                 .param("ids", titleIds)
-                .param("region", region)
                 .query((rs, n) -> new Line(
                         rs.getLong("title_id"),
                         rs.getString("type"),
@@ -336,7 +337,8 @@ public class TitleStore {
                                         ? rs.getString("short")
                                         : TmdbMapper.shortName(rs.getString("name")),
                                 rs.getString("logo_path"),
-                                rs.getString("link"))))
+                                rs.getString("link"),
+                                List.of(rs.getString("countries").split(",")))))
                 .list();
         Map<Long, Availability> result = new HashMap<>();
         lines.stream().collect(Collectors.groupingBy(Line::titleId)).forEach((titleId, rows) -> {

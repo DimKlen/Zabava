@@ -2,7 +2,7 @@ import { MagnifyingGlassIcon } from 'phosphor-react-native';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 
-import { useRegionProviders } from '@/api/catalog';
+import { useProviders } from '@/api/catalog';
 import { useProfile } from '@/api/profile';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Button } from '@/components/Button';
@@ -31,7 +31,7 @@ type Props = { visible: boolean; onClose: () => void };
 export function PlatformsSheet({ visible, onClose }: Props) {
   const { width, height } = useWindowDimensions();
   const profile = useProfile().data;
-  const providers = useRegionProviders(profile?.region);
+  const providers = useProviders();
   const selectedIds = profile?.providerIds ?? [];
   // Largeur réelle de la grille ; 1 pt de marge, sinon l'arrondi au pixel fait passer
   // la 4e tuile à la ligne.

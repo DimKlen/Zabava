@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -117,7 +118,17 @@ public class DiscoverService {
                 if (matchesType(lite, type)) titles.add(lite);
             }
         }
+        titles.sort(byRelevance(query));
         return new SearchResult(people, titles, page, body.path("total_pages").asInt(1));
+    }
+
+    /** Titre exactement égal à la requête d'abord, puis le plus populaire (« Fight Club » de 1999 avant les homonymes). */
+    static Comparator<TitleLite> byRelevance(String query) {
+        String wanted = query.strip().toLowerCase(Locale.ROOT);
+        Comparator<TitleLite> exact = Comparator.comparing(
+                t -> !wanted.equals(t.title() == null ? "" : t.title().strip().toLowerCase(Locale.ROOT)));
+        return exact.thenComparing(
+                Comparator.comparingDouble((TitleLite t) -> t.popularity() == null ? 0 : t.popularity()).reversed());
     }
 
     private static boolean matchesType(TitleLite lite, String type) {

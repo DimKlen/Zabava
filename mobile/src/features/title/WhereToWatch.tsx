@@ -2,7 +2,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 
 import { ProviderLogo } from '@/components/ProviderLogo';
 import { Text } from '@/components/Text';
-import { mineFirst } from '@/domain/availability';
+import { whereToWatch } from '@/domain/availability';
 import type { Availability, Provider } from '@/domain/types';
 import { showToast } from '@/store/ui';
 import { colors } from '@/theme/tokens';
@@ -18,9 +18,9 @@ function open(provider: Provider, fallbackLink: string | undefined) {
   showToast(`Ouverture de ${provider.name}…`);
 }
 
-/** « Où regarder » : les plateformes de location, sans libellé ; les miennes en premier et cerclées. */
+/** « Où regarder » : toutes les plateformes, avec leurs pays ; les miennes en premier et cerclées. */
 export function WhereToWatch({ availability, myProviderIds }: Props) {
-  const providers = mineFirst(availability.rent, myProviderIds);
+  const providers = whereToWatch(availability, myProviderIds);
 
   return (
     <InfoSection title="Où regarder">
@@ -36,7 +36,7 @@ export function WhereToWatch({ availability, myProviderIds }: Props) {
           ))}
         </View>
       ) : (
-        <Text style={styles.unknown}>Disponibilité inconnue pour ta région.</Text>
+        <Text style={styles.unknown}>Disponibilité inconnue.</Text>
       )}
       <Text style={styles.credit}>Données JustWatch · tes plateformes sont cerclées</Text>
     </InfoSection>
