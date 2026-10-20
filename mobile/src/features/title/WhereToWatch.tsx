@@ -3,7 +3,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { ProviderLogo } from '@/components/ProviderLogo';
 import { Text } from '@/components/Text';
 import { whereToWatch } from '@/domain/availability';
-import { baseProviderName } from '@/domain/providers';
+import { baseProviderName, isGroupSelected } from '@/domain/providers';
 import type { Availability, Provider } from '@/domain/types';
 import { showToast } from '@/store/ui';
 import { colors } from '@/theme/tokens';
@@ -31,7 +31,7 @@ export function WhereToWatch({ availability, myProviderIds }: Props) {
             <ProviderLogo
               key={provider.id}
               provider={provider}
-              mine={myProviderIds.includes(provider.id)}
+              mine={isGroupSelected(provider, myProviderIds)}
               onPress={() => open(provider, availability.link)}
             />
           ))}
