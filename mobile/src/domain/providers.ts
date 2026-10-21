@@ -88,6 +88,12 @@ function groupKey(name: string): string {
  * simple ; le logo est celui de la version de base quand elle existe, sinon d'une version
  * qui n'est pas une revente.
  */
+/** Pays où au moins une des offres propose le titre, sans doublon (ordre des codes). */
+export function mergedCountries(providers: readonly Provider[]): string[] | undefined {
+  const countries = new Set(providers.flatMap((provider) => provider.countries ?? []));
+  return countries.size > 0 ? [...countries].sort() : undefined;
+}
+
 export function groupProviders(providers: readonly Provider[]): ProviderGroup[] {
   const groups = new Map<string, Provider[]>();
   for (const provider of providers) {
@@ -105,7 +111,15 @@ export function groupProviders(providers: readonly Provider[]): ProviderGroup[] 
       members.find((member) => member.name.trim() === name) ??
       members.find((member) => !RESELLER.test(member.name)) ??
       main;
-    return [{ ...logo, id: first.id, name, ids: members.map((member) => member.id) }];
+    return [
+      {
+        ...logo,
+        id: first.id,
+        name,
+        ids: members.map((member) => member.id),
+        countries: mergedCountries(members),
+      },
+    ];
   });
 }
 

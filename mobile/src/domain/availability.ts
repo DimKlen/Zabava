@@ -1,6 +1,6 @@
 /** Disponibilité d'un film dans la région — specs/docs/01 §5 (`A.mState`, `A.bestPlat`). */
 import { daysFromToday } from './dates';
-import { groupProviders, isGroupSelected, type ProviderGroup } from './providers';
+import { groupProviders, isGroupSelected, mergedCountries, type ProviderGroup } from './providers';
 import type { Availability, Provider } from './types';
 
 export type MovieState = 'upcoming' | 'avail' | 'cinema' | 'unknown';
@@ -63,29 +63,34 @@ export function whereToWatch(
   { sub, rent, buy }: Availability,
   myProviderIds: readonly number[],
 ): ProviderGroup[] {
-  const unique = new Map<number, Provider>();
+  // Une même plateforme en abonnement et en location : ses pays des deux offres.
+  const offers = new Map<number, Provider[]>();
   for (const provider of [...sub, ...rent, ...buy]) {
-    if (!unique.has(provider.id)) unique.set(provider.id, provider);
+    offers.set(provider.id, [...(offers.get(provider.id) ?? []), provider]);
   }
-  const groups = groupProviders([...unique.values()]);
+  const unique = [...offers.values()].flatMap(([first, ...others]) =>
+    first ? [{ ...first, countries: mergedCountries([first, ...others]) }] : [],
+  );
+  const groups = groupProviders(unique);
   const mine = groups.filter((group) => isGroupSelected(group, myProviderIds));
   return [...mine, ...groups.filter((group) => !mine.includes(group))];
 }
 
-const COUNTRY_NAMES: Record<string, string> = {
-  CA: 'Canada',
-  FR: 'France',
-  BE: 'Belgique',
-  CH: 'Suisse',
-  US: 'États-Unis',
-  GB: 'Royaume-Uni',
-  DE: 'Allemagne',
-  ES: 'Espagne',
-  IT: 'Italie',
+/** Codes ISO 3166-1 alpha-3 : le catalogue d'une plateforme change selon le pays. */
+const COUNTRY_CODES: Record<string, string> = {
+  CA: 'CAN',
+  FR: 'FRA',
+  BE: 'BEL',
+  CH: 'CHE',
+  US: 'USA',
+  GB: 'GBR',
+  DE: 'DEU',
+  ES: 'ESP',
+  IT: 'ITA',
 };
 
-/** « (France, Canada) » : pays où la plateforme propose le titre, ou rien si on ne le sait pas. */
+/** « (USA, FRA) » : pays où la plateforme propose le titre, ou rien si on ne le sait pas. */
 export function countriesLabel(countries: readonly string[] | undefined): string | undefined {
   if (!countries || countries.length === 0) return undefined;
-  return `(${countries.map((code) => COUNTRY_NAMES[code] ?? code).join(', ')})`;
+  return `(${countries.map((code) => COUNTRY_CODES[code] ?? code).join(', ')})`;
 }

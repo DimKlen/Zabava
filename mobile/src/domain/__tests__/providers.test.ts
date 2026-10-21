@@ -65,6 +65,14 @@ describe('groupProviders', () => {
     expect(amc).toMatchObject({ id: 528, name: 'AMC+', logoPath: '/amc.png', ids: [528, 526] });
   });
 
+  it('réunit les pays de toutes les formules regroupées', () => {
+    const [group] = groupProviders([
+      { ...provider(531, 'Paramount Plus Premium'), countries: ['US'] },
+      { ...provider(582, 'Paramount Plus Essential'), countries: ['CA', 'US'] },
+    ]);
+    expect(group?.countries).toEqual(['CA', 'US']);
+  });
+
   it('garde une plateforme sans version de base', () => {
     const groups = groupProviders([provider(1, 'Crave Starz'), provider(2, 'Disney Plus')]);
     expect(groups.map((g) => g.name)).toEqual(['Crave Starz', 'Disney Plus']);

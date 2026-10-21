@@ -32,9 +32,22 @@ describe('whereToWatch', () => {
   });
 });
 
+describe('whereToWatch : pays', () => {
+  it('une plateforme en abonnement et en location garde les pays des deux', () => {
+    const rentUs = { ...netflix, countries: ['US'] };
+    const [first] = whereToWatch({ sub: [netflix], rent: [rentUs], buy: [] }, []);
+    expect(first?.countries).toEqual(['FR', 'US']);
+  });
+});
+
 describe('countriesLabel', () => {
-  it('nomme les pays entre parenthèses', () => {
-    expect(countriesLabel(['FR', 'CA'])).toBe('(France, Canada)');
+  it('codes des pays entre parenthèses (« Netflix (USA, FRA) »)', () => {
+    expect(countriesLabel(['US', 'FR'])).toBe('(USA, FRA)');
+    expect(countriesLabel(['CA', 'BE', 'CH'])).toBe('(CAN, BEL, CHE)');
+  });
+
+  it('pays sans code connu : son code ISO à deux lettres', () => {
+    expect(countriesLabel(['JP'])).toBe('(JP)');
   });
 
   it('ne dit rien sans pays', () => {
