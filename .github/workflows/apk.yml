@@ -60,9 +60,21 @@ jobs:
           fi
           printf '%s' "$CONTENT" > "$RUNNER_TEMP/google-services.json"
 
+      # Dépendances Gradle et caches de compilation, réutilisés d'un build à l'autre.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('mobile/package-lock.json') }}
+          restore-keys: gradle-${{ runner.os }}-
+
       - name: Build local (preview, Android)
         env:
           GOOGLE_SERVICES_JSON: ${{ runner.temp }}/google-services.json
+          # Téléphone en arm64 seulement : environ deux fois moins de code natif à compiler
+          # (cet APK ne s'installe plus dans un émulateur x86_64).
+          ORG_GRADLE_PROJECT_reactNativeArchitectures: arm64-v8a
         run: eas build --profile preview --platform android --local --non-interactive --output zabava.apk
 
       - name: Publier la release
