@@ -60,7 +60,7 @@ export function FilmsTab() {
   const inSegment = filmsInSegment(watchlist.data ?? [], filmSegment);
   const films =
     filmSegment === 'towatch'
-      ? sortFilms(filterFilms(inSegment, filmFilter, myProviderIds, now), filmSort, now)
+      ? sortFilms(filterFilms(inSegment, filmFilter, myProviderIds, now), filmSort)
       : sortWatched(inSegment);
 
   const controls = (

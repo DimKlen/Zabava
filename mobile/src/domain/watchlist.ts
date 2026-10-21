@@ -1,6 +1,6 @@
 /** Ma liste › Films : segments, filtres et tris — specs/docs/06 (`vals()` › watchlist). */
 import { isOnMyPlatforms, movieState, type MovieAvailability } from './availability';
-import { daysFromToday } from './dates';
+import { parseLocalDate } from './dates';
 import type { UserTitle } from './types';
 
 export type LibraryMovie = MovieAvailability & {
@@ -9,6 +9,9 @@ export type LibraryMovie = MovieAvailability & {
   title: string;
   posterPath?: string;
   imdbRating?: number;
+  /** Repli du tri par date de sortie quand la sortie en salle est inconnue. */
+  releaseDigital?: string;
+  year?: number;
   userTitle: UserTitle;
 };
 
@@ -58,25 +61,31 @@ function time(iso: string | undefined): number {
   return iso ? new Date(iso).getTime() : 0;
 }
 
-/** Sortie en salle en jours ; sans date, le film passe en dernier. */
-function releaseKey(film: LibraryMovie, now: Date): number {
-  return film.releaseTheatrical
-    ? daysFromToday(film.releaseTheatrical, now)
-    : Number.POSITIVE_INFINITY;
+/**
+ * Date de sortie pour le tri : salle, sinon numérique, sinon 1er janvier de l'année.
+ * Sans aucune date, le film passe en dernier.
+ */
+function releaseKey(film: LibraryMovie): number {
+  const iso = film.releaseTheatrical ?? film.releaseDigital;
+  if (iso) return parseLocalDate(iso).getTime();
+  if (film.year) return new Date(film.year, 0, 1).getTime();
+  return Number.POSITIVE_INFINITY;
+}
+
+/** Comparaison sûre : `Infinity - Infinity` vaudrait NaN. */
+function compareRelease(a: number, b: number): number {
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
 }
 
 /** Tri du segment À voir. Le tri est stable : à égalité, l'ordre reçu est conservé. */
-export function sortFilms<T extends LibraryMovie>(
-  films: readonly T[],
-  sort: FilmSort,
-  now: Date,
-): T[] {
+export function sortFilms<T extends LibraryMovie>(films: readonly T[], sort: FilmSort): T[] {
   const sorted = [...films];
   switch (sort) {
     case 'added':
       return sorted.sort((a, b) => time(b.userTitle.addedAt) - time(a.userTitle.addedAt));
     case 'release':
-      return sorted.sort((a, b) => releaseKey(a, now) - releaseKey(b, now));
+      return sorted.sort((a, b) => compareRelease(releaseKey(a), releaseKey(b)));
     case 'title':
       return sorted.sort((a, b) => a.title.localeCompare(b.title, 'fr'));
     case 'imdb':

@@ -61,9 +61,8 @@ type UiState = {
   collapsedSections: Partial<Record<SeriesSection, boolean>>;
   /** Onglet de Découvrir, gardé pendant la session. */
   discoverTab: MediaType;
-  /** À venir : filtre (Tout, Films, Séries, Animés) et « Sans date » déplié. */
+  /** À venir : filtre (Tout, Films, Séries, Animés). */
   upcomingFilter: 'all' | MediaType;
-  noDateOpen: boolean;
 
   showToast: (message: string, undo?: () => void) => void;
   hideToast: () => void;
@@ -81,7 +80,6 @@ type UiState = {
   toggleSection: (section: SeriesSection) => void;
   setDiscoverTab: (tab: MediaType) => void;
   setUpcomingFilter: (filter: 'all' | MediaType) => void;
-  toggleNoDate: () => void;
 };
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
@@ -107,7 +105,6 @@ export const useUiStore = create<UiState>()((set, get) => ({
   collapsedSections: { ...DEFAULT_COLLAPSED },
   discoverTab: 'movie',
   upcomingFilter: 'all',
-  noDateOpen: false,
 
   // Un nouveau toast remplace le précédent et relance le minuteur de 5 s.
   showToast: (message, undo) => {
@@ -149,7 +146,6 @@ export const useUiStore = create<UiState>()((set, get) => ({
     })),
   setDiscoverTab: (discoverTab) => set({ discoverTab }),
   setUpcomingFilter: (upcomingFilter) => set({ upcomingFilter }),
-  toggleNoDate: () => set((s) => ({ noDateOpen: !s.noDateOpen })),
 }));
 
 // Raccourcis utilisables hors des composants (mutations, handlers).

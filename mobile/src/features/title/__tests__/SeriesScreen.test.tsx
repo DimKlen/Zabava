@@ -107,6 +107,8 @@ async function renderSeries(series: TitleDetail & { type: 'tv' } = bear, season?
       <DialogHost />
     </SafeAreaProvider>,
   );
+  // Épisodes montés à l'image suivante (sous la ligne de flottaison).
+  await screen.findByText('Spéciaux');
 }
 
 describe('SeriesScreen', () => {
@@ -199,10 +201,10 @@ describe('SeriesScreen', () => {
     expect(screen.getAllByText('1 septembre 2026 · 32 min').length).toBeGreaterThan(1);
   });
 
-  it('onglet Infos : Créateurs et Saisons', async () => {
+  it('un seul écran : pas d’onglets, infos puis épisodes puis titres similaires', async () => {
     await renderSeries();
-    await fireEvent.press(screen.getByText('Infos'));
-    expect(await screen.findByText('Créateurs')).toBeTruthy();
+    expect(screen.queryByText('Épisodes')).toBeNull();
+    expect(screen.getByText('Créateurs')).toBeTruthy();
     expect(screen.getByText('Christopher Storer')).toBeTruthy();
     expect(screen.getByText('2 saisons · 10 épisodes')).toBeTruthy();
   });

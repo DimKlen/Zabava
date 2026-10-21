@@ -12,7 +12,6 @@ import { RatingChips } from '@/components/RatingChips';
 import { RoundIconButton } from '@/components/RoundIconButton';
 import { SkeletonBox } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
-import { UnderlineTabs } from '@/components/UnderlineTabs';
 import { seriesPlatform } from '@/domain/badge';
 import { defaultSeason, seriesInfo } from '@/domain/series';
 import { nextEpisodeLine, seriesCrew, seriesInfos, seriesMeta } from '@/domain/seriesDetail';
@@ -35,13 +34,6 @@ import { TitleBodySkeleton } from './TitleSkeleton';
 import { TrailerButton } from './TrailerButton';
 import { WhereToWatch } from './WhereToWatch';
 
-type DetailTab = 'episodes' | 'infos';
-
-const DETAIL_TABS = [
-  { key: 'episodes', label: 'Épisodes' },
-  { key: 'infos', label: 'Infos' },
-] as const;
-
 type Props = {
   /** Identifiant de la route (`tv-1399`) : stable du tap jusqu'à la fiche complète. */
   id: string;
@@ -60,7 +52,8 @@ type Props = {
 };
 
 /**
- * Fiche série ou animé (specs/docs/07 §7.1) : en-tête, suivi, onglets Épisodes / Infos.
+ * Fiche série ou animé (specs/docs/07 §7.1) : en-tête, suivi, puis infos, épisodes et titres similaires
+ * sur un seul écran, comme la fiche d'un film.
  * Le même écran sert du tap à la fiche complète ; les épisodes se chargent en parallèle.
  */
 export function SeriesScreen({
@@ -83,7 +76,6 @@ export function SeriesScreen({
   const localAlertsOff = useUiStore((s) => s.alertsOff[series?.id ?? id] ?? false);
   const alertsOn = series?.userTitle ? series.userTitle.notificationsEnabled : !localAlertsOff;
 
-  const [tab, setTab] = useState<DetailTab>('episodes');
   const [openEpisodeId, setOpenEpisodeId] = useState<number>();
   // La saison par défaut est fixée au premier chargement : elle ne saute pas quand on coche.
   const [season, setSeason] = useState<number | undefined>(initialSeason);
@@ -145,26 +137,27 @@ export function SeriesScreen({
               userTitle={series.userTitle}
               onOpenMenu={() => openSeriesMenu(series, series.userTitle, alertsOn)}
             />
-            <UnderlineTabs tabs={DETAIL_TABS} value={tab} onChange={setTab} style={styles.tabs} />
-
-            {tab === 'episodes' ? (
-              episodes && season !== undefined ? (
-                <EpisodesTab
-                  series={series}
-                  episodes={episodes}
-                  season={season}
-                  onSeasonChange={setSeason}
-                  spoilerProtection={spoilerProtection}
-                  onOpenEpisode={(episode) => setOpenEpisodeId(episode.id)}
-                />
-              ) : showsLoadError(episodesQuery) ? (
-                <LoadError onRetry={() => void episodesQuery.refetch()} />
-              ) : episodes ? null : (
-                <EpisodesSkeleton />
-              )
-            ) : (
-              <SeriesInfos series={series} myProviderIds={myProviderIds} libraryIds={libraryIds} />
-            )}
+            <SeriesInfos
+              series={series}
+              myProviderIds={myProviderIds}
+              libraryIds={libraryIds}
+              episodesSection={
+                episodes && season !== undefined ? (
+                  <EpisodesTab
+                    series={series}
+                    episodes={episodes}
+                    season={season}
+                    onSeasonChange={setSeason}
+                    spoilerProtection={spoilerProtection}
+                    onOpenEpisode={(episode) => setOpenEpisodeId(episode.id)}
+                  />
+                ) : showsLoadError(episodesQuery) ? (
+                  <LoadError onRetry={() => void episodesQuery.refetch()} />
+                ) : episodes ? null : (
+                  <EpisodesSkeleton />
+                )
+              }
+            />
           </>
         ) : (
           (failure ?? <TitleBodySkeleton series />)
@@ -187,10 +180,13 @@ function SeriesInfos({
   series,
   myProviderIds,
   libraryIds,
+  episodesSection,
 }: {
   series: TitleDetail;
   myProviderIds: number[];
   libraryIds: Set<string>;
+  /** Liste des épisodes, entre les infos et les titres similaires. */
+  episodesSection: ReactNode;
 }) {
   const crew = seriesCrew(series.creators, series.networks, series.creatorIds);
   const infos = seriesInfos(series);
@@ -220,6 +216,7 @@ function SeriesInfos({
               <InfoRows rows={infos} />
             </InfoSection>
           ) : null}
+          {episodesSection}
           <PosterCarousel
             title="Titres similaires"
             titles={series.similar}
@@ -262,9 +259,6 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingHorizontal: 16,
     color: colors.accent300,
-  },
-  tabs: {
-    paddingTop: 12,
   },
   skeletons: {
     gap: 16,
