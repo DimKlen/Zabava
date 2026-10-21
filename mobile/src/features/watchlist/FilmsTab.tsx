@@ -44,6 +44,7 @@ export function FilmsTab() {
   const filmSegment = useUiStore((s) => s.filmSegment);
   const filmFilter = useUiStore((s) => s.filmFilter);
   const filmSort = useUiStore((s) => s.filmSort);
+  const filmSortReversed = useUiStore((s) => s.filmSortReversed);
   const setFilmSegment = useUiStore((s) => s.setFilmSegment);
   const setFilmFilter = useUiStore((s) => s.setFilmFilter);
   const setFilmSort = useUiStore((s) => s.setFilmSort);
@@ -60,13 +61,18 @@ export function FilmsTab() {
   const inSegment = filmsInSegment(watchlist.data ?? [], filmSegment);
   const films =
     filmSegment === 'towatch'
-      ? sortFilms(filterFilms(inSegment, filmFilter, myProviderIds, now), filmSort)
+      ? sortFilms(
+          filterFilms(inSegment, filmFilter, myProviderIds, now),
+          filmSort,
+          filmSortReversed,
+        )
       : sortWatched(inSegment);
 
   const controls = (
     <FilmControls
       segment={filmSegment}
       sort={filmSort}
+      reversed={filmSortReversed}
       filter={filmFilter}
       onSegmentChange={setFilmSegment}
       onSortChange={setFilmSort}

@@ -47,6 +47,8 @@ export type InfoRow = {
   value: string;
   /** Personnes cliquables (fiche personne) ; `value` reste le texte de repli. */
   people?: { id: number; name: string }[];
+  /** Studios cliquables (liste de leurs titres). */
+  studios?: { id: number; name: string }[];
 };
 
 function rows(entries: [string, string | undefined][]): InfoRow[] {

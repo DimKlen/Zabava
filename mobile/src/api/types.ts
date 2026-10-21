@@ -464,6 +464,11 @@ export interface components {
       /** Format: date */
       airDate?: string;
     };
+    Studio: {
+      /** Format: int32 */
+      id?: number;
+      name?: string;
+    };
     TitleDetail: {
       id?: string;
       /** Format: int32 */
@@ -489,6 +494,7 @@ export interface components {
       originalLanguage?: string;
       country?: string;
       studio?: string;
+      studios?: components['schemas']['Studio'][];
       /** Format: date */
       releaseTheatrical?: string;
       /** Format: date */
@@ -1126,6 +1132,7 @@ export interface operations {
         providers?: string;
         lang?: string;
         maxRuntime?: number;
+        studio?: number;
         sort?: string;
         page?: number;
         list?: string;
@@ -1159,6 +1166,7 @@ export interface operations {
         providers?: string;
         lang?: string;
         maxRuntime?: number;
+        studio?: number;
       };
       header?: never;
       path?: never;

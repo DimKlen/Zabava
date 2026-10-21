@@ -7,7 +7,7 @@ import { baseProviderName, isGroupSelected } from '@/domain/providers';
 import type { Availability, Provider } from '@/domain/types';
 import { showToast } from '@/store/ui';
 import { colors } from '@/theme/tokens';
-import { fonts, typography } from '@/theme/typography';
+import { typography } from '@/theme/typography';
 
 import { InfoSection } from './InfoSection';
 
@@ -39,7 +39,6 @@ export function WhereToWatch({ availability, myProviderIds }: Props) {
       ) : (
         <Text style={styles.unknown}>Disponibilité inconnue.</Text>
       )}
-      <Text style={styles.credit}>Données JustWatch · tes plateformes sont cerclées</Text>
     </InfoSection>
   );
 }
@@ -53,12 +52,5 @@ const styles = StyleSheet.create({
   unknown: {
     ...typography.label,
     color: colors.neutral400,
-  },
-  credit: {
-    marginTop: 10,
-    fontFamily: fonts.regular,
-    fontSize: 11,
-    lineHeight: 11 * 1.3,
-    color: colors.neutral500,
   },
 });

@@ -84,6 +84,7 @@ public class CatalogController {
             @RequestParam(required = false) String providers,
             @RequestParam(required = false) @Pattern(regexp = "[a-z]{2}") String lang,
             @RequestParam(required = false) @Min(1) Integer maxRuntime,
+            @RequestParam(required = false) @Min(1) Integer studio,
             @RequestParam(defaultValue = "pop") @Pattern(regexp = "pop|rating|recent") String sort,
             @RequestParam(defaultValue = "1") @Min(1) @Max(500) int page,
             @RequestParam(required = false)
@@ -92,7 +93,7 @@ public class CatalogController {
         Prefs prefs = prefs(user);
         DiscoverResult result = list != null
                 ? discover.list(list, MediaType.parse(type == null ? "movie" : type), page, prefs)
-                : discover.discover(query(type, genres, cast, yearFrom, yearTo, minRating, providers, lang, maxRuntime, sort, page), prefs);
+                : discover.discover(query(type, genres, cast, yearFrom, yearTo, minRating, providers, lang, maxRuntime, studio, sort, page), prefs);
         // Badges joints : les affiches s'affichent complètes, sans second aller-retour.
         return new DiscoverResult(facts.withBadges(result.results(), prefs.region()), result.total(), result.page());
     }
@@ -109,9 +110,10 @@ public class CatalogController {
             @RequestParam(required = false) @Min(0) @Max(10) Double minRating,
             @RequestParam(required = false) String providers,
             @RequestParam(required = false) @Pattern(regexp = "[a-z]{2}") String lang,
-            @RequestParam(required = false) @Min(1) Integer maxRuntime) {
+            @RequestParam(required = false) @Min(1) Integer maxRuntime,
+            @RequestParam(required = false) @Min(1) Integer studio) {
         return new Count(discover.count(
-                query(type, genres, cast, yearFrom, yearTo, minRating, providers, lang, maxRuntime, "pop", 1), prefs(user)));
+                query(type, genres, cast, yearFrom, yearTo, minRating, providers, lang, maxRuntime, studio, "pop", 1), prefs(user)));
     }
 
     /**
@@ -171,13 +173,13 @@ public class CatalogController {
 
     private static DiscoverQuery query(
             String type, String genres, String cast, Integer yearFrom, Integer yearTo, Double minRating,
-            String providers, String lang, Integer maxRuntime, String sort, int page) {
+            String providers, String lang, Integer maxRuntime, Integer studio, String sort, int page) {
         List<MediaType> types = csv(type).stream().map(MediaType::parse).distinct().toList();
         if (types.isEmpty()) types = List.of(MediaType.MOVIE, MediaType.TV, MediaType.ANIME);
         List<String> genreKeys = csv(genres);
         genreKeys.forEach(Genres::byKey);
         List<Integer> castIds = csv(cast).stream().map(Integer::valueOf).toList();
-        return new DiscoverQuery(types, genreKeys, castIds, yearFrom, yearTo, minRating, providers, lang, maxRuntime, sort, page);
+        return new DiscoverQuery(types, genreKeys, castIds, yearFrom, yearTo, minRating, providers, lang, maxRuntime, studio, sort, page);
     }
 
     private static List<String> csv(String value) {

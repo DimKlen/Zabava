@@ -33,6 +33,7 @@ import com.zabava.api.catalog.TitleStore.TitleRow;
 import com.zabava.api.catalog.dto.CatalogDtos.Availability;
 import com.zabava.api.catalog.dto.CatalogDtos.CastMember;
 import com.zabava.api.catalog.dto.CatalogDtos.Collection;
+import com.zabava.api.catalog.dto.CatalogDtos.Studio;
 import com.zabava.api.catalog.dto.CatalogDtos.Crew;
 import com.zabava.api.catalog.dto.CatalogDtos.Episode;
 import com.zabava.api.catalog.dto.CatalogDtos.Provider;
@@ -130,6 +131,7 @@ public class TitleService {
                 TmdbMapper.languageName(Json.text(d, "original_language")),
                 country(d),
                 studio(d),
+                studios(d),
                 releases.get("salle"),
                 releases.get("numerique"),
                 movie ? Json.integer(d.path("belongs_to_collection"), "id") : null,
@@ -584,6 +586,14 @@ public class TitleService {
     private static String studio(JsonNode d) {
         List<JsonNode> companies = Json.array(d, "production_companies");
         return companies.isEmpty() ? null : Json.text(companies.getFirst(), "name");
+    }
+
+    /** Sociétés de production avec identifiant, dans l'ordre de TMDB. */
+    private static List<Studio> studios(JsonNode d) {
+        return Json.array(d, "production_companies").stream()
+                .filter(c -> Json.text(c, "name") != null && c.path("id").isNumber())
+                .map(c -> new Studio(c.path("id").asInt(), Json.text(c, "name")))
+                .toList();
     }
 
     private static String originCountry(JsonNode d) {

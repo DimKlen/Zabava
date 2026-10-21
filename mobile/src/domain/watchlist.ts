@@ -78,18 +78,44 @@ function compareRelease(a: number, b: number): number {
   return a < b ? -1 : 1;
 }
 
-/** Tri du segment À voir. Le tri est stable : à égalité, l'ordre reçu est conservé. */
-export function sortFilms<T extends LibraryMovie>(films: readonly T[], sort: FilmSort): T[] {
+/** Libellés du sens de chaque tri : [sens par défaut, sens inversé]. */
+const SORT_DIRECTION_LABELS: Record<FilmSort, readonly [string, string]> = {
+  added: ['Plus récents', 'Plus anciens'],
+  release: ['Plus proches', 'Plus lointains'],
+  title: ['A → Z', 'Z → A'],
+  imdb: ['Mieux notés', 'Moins bien notés'],
+};
+
+export function sortDirectionLabel(sort: FilmSort, reversed: boolean): string {
+  return SORT_DIRECTION_LABELS[sort][reversed ? 1 : 0];
+}
+
+/**
+ * Tri du segment À voir. Chaque tri a un sens par défaut (récents, plus proches, A → Z, mieux notés) ;
+ * `reversed` l'inverse. Le tri est stable : à égalité, l'ordre reçu est conservé.
+ * Les films sans date de sortie restent à la fin dans les deux sens.
+ */
+export function sortFilms<T extends LibraryMovie>(
+  films: readonly T[],
+  sort: FilmSort,
+  reversed = false,
+): T[] {
+  const sign = reversed ? -1 : 1;
   const sorted = [...films];
   switch (sort) {
     case 'added':
-      return sorted.sort((a, b) => time(b.userTitle.addedAt) - time(a.userTitle.addedAt));
+      return sorted.sort((a, b) => sign * (time(b.userTitle.addedAt) - time(a.userTitle.addedAt)));
     case 'release':
-      return sorted.sort((a, b) => compareRelease(releaseKey(a), releaseKey(b)));
+      return sorted.sort((a, b) => {
+        const keyA = releaseKey(a);
+        const keyB = releaseKey(b);
+        const undated = !Number.isFinite(keyA) || !Number.isFinite(keyB);
+        return (undated ? 1 : sign) * compareRelease(keyA, keyB);
+      });
     case 'title':
-      return sorted.sort((a, b) => a.title.localeCompare(b.title, 'fr'));
+      return sorted.sort((a, b) => sign * a.title.localeCompare(b.title, 'fr'));
     case 'imdb':
-      return sorted.sort((a, b) => (b.imdbRating ?? 0) - (a.imdbRating ?? 0));
+      return sorted.sort((a, b) => sign * ((b.imdbRating ?? 0) - (a.imdbRating ?? 0)));
   }
 }
 

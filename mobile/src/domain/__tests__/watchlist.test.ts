@@ -53,6 +53,28 @@ describe('Ma liste › Films : mêmes résultats que le prototype', () => {
   });
 });
 
+describe('sortFilms inversé', () => {
+  it.each<FilmSort>(['added', 'title'])('« %s » : ordre inverse', (sort) => {
+    expect(ids(sortFilms(towatch, sort, true))).toEqual(ids(sortFilms(towatch, sort)).reverse());
+  });
+
+  it('release : sens inverse, films sans date toujours à la fin', () => {
+    const [first] = towatch;
+    if (!first) throw new Error('données manquantes');
+    const undated = {
+      ...first,
+      id: 'undated',
+      releaseTheatrical: undefined,
+      releaseDigital: undefined,
+      year: undefined,
+    };
+    const result = ids(sortFilms([undated, ...towatch], 'release', true));
+    expect(result[result.length - 1]).toBe('undated');
+    // « monte » est le plus proche : il passe juste avant les films sans date.
+    expect(result[result.length - 2]).toBe('monte');
+  });
+});
+
 describe('sortFilms', () => {
   it('met les films sans date de sortie à la fin du tri par sortie', () => {
     const [first, second] = towatch;

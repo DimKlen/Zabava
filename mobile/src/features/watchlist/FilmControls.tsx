@@ -1,4 +1,10 @@
-import { CheckIcon, CircleIcon, SortAscendingIcon } from 'phosphor-react-native';
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  CircleIcon,
+  SortAscendingIcon,
+  SortDescendingIcon,
+} from 'phosphor-react-native';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
@@ -7,6 +13,7 @@ import { Segmented } from '@/components/Segmented';
 import {
   FILM_FILTERS,
   FILM_SORTS,
+  sortDirectionLabel,
   type FilmFilter,
   type FilmSegment,
   type FilmSort,
@@ -22,6 +29,7 @@ const SEGMENTS = [
 type Props = {
   segment: FilmSegment;
   sort: FilmSort;
+  reversed: boolean;
   filter: FilmFilter;
   onSegmentChange: (segment: FilmSegment) => void;
   onSortChange: (sort: FilmSort) => void;
@@ -32,6 +40,7 @@ type Props = {
 export function FilmControls({
   segment,
   sort,
+  reversed,
   filter,
   onSegmentChange,
   onSortChange,
@@ -39,13 +48,14 @@ export function FilmControls({
 }: Props) {
   const towatch = segment === 'towatch';
   const sortLabel = FILM_SORTS.find((option) => option.value === sort)?.label ?? '';
+  const directionLabel = sortDirectionLabel(sort, reversed);
 
   const openSort = () =>
     openActionSheet({
       title: 'Trier par',
       options: FILM_SORTS.map((option) => ({
-        label: option.label,
-        icon: option.value === sort ? CheckIcon : CircleIcon,
+        label: option.value === sort ? `${option.label} · ${directionLabel}` : option.label,
+        icon: option.value === sort ? (reversed ? ArrowUpIcon : ArrowDownIcon) : CircleIcon,
         onPress: () => onSortChange(option.value),
       })),
     });
@@ -59,11 +69,11 @@ export function FilmControls({
             variant="ghost"
             height={36}
             fontSize={13}
-            icon={SortAscendingIcon}
+            icon={reversed ? SortAscendingIcon : SortDescendingIcon}
             iconSize={16}
             color={colors.neutral300}
-            label={sortLabel}
-            accessibilityLabel={`Trier par : ${sortLabel}`}
+            label={`${sortLabel} · ${directionLabel}`}
+            accessibilityLabel={`Trier par : ${sortLabel}, ${directionLabel}`}
             onPress={openSort}
           />
         ) : null}

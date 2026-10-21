@@ -43,6 +43,7 @@ beforeEach(async () => {
       filmSegment: 'towatch',
       filmFilter: 'all',
       filmSort: 'added',
+      filmSortReversed: false,
       actionSheet: null,
       actionSheetOpen: false,
     }),
@@ -89,17 +90,26 @@ describe('FilmsTab', () => {
 
   it('le tri ouvre « Trier par » et applique le tri par titre', async () => {
     await renderTab();
-    await fireEvent.press(screen.getByText("Date d'ajout"));
+    await fireEvent.press(screen.getByText("Date d'ajout · Plus récents"));
     const sheet = useUiStore.getState().actionSheet;
     expect(sheet?.title).toBe('Trier par');
     expect(sheet?.options.map((option) => option.label)).toEqual([
-      "Date d'ajout",
+      "Date d'ajout · Plus récents",
       'Date de sortie',
       'Titre',
       'Note IMDb',
     ]);
     await act(() => sheet?.options[2]?.onPress());
     expect(posterTitles()[0]).toBe('Avengers : Le Jour du Jugement');
+  });
+
+  it('un second appui sur le tri actif inverse le sens', async () => {
+    await renderTab();
+    const before = posterTitles();
+    await fireEvent.press(screen.getByText("Date d'ajout · Plus récents"));
+    await act(() => useUiStore.getState().actionSheet?.options[0]?.onPress());
+    expect(screen.getByText("Date d'ajout · Plus anciens")).toBeTruthy();
+    expect(posterTitles()).toEqual([...before].reverse());
   });
 
   it('segment Vus : ordre de visionnage, sans tri ni filtre', async () => {
@@ -111,7 +121,7 @@ describe('FilmsTab', () => {
       "Anatomie d'une chute",
     ]);
     expect(screen.queryByText('Tout')).toBeNull();
-    expect(screen.queryByText("Date d'ajout")).toBeNull();
+    expect(screen.queryByText("Date d'ajout · Plus récents")).toBeNull();
   });
 
   it('appui long : menu du film, puis « Marquer comme vu »', async () => {
