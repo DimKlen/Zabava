@@ -1,8 +1,10 @@
 import {
   addedCountLabel,
+  anyNotificationEnabled,
   LANGUAGES,
   languageChoice,
   languageLabel,
+  NOTIFICATIONS_OFF,
   initialStatus,
   nextStep,
   previousStep,
@@ -58,5 +60,18 @@ describe('langues', () => {
     expect(languageLabel('en-CA')).toBe('Anglais');
     expect(languageChoice('fr-FR')).toBe('fr-CA');
     expect(languageChoice('en-CA')).toBe('en-US');
+  });
+});
+
+describe('anyNotificationEnabled', () => {
+  it('vrai dès qu’une notification est activée', () => {
+    expect(
+      anyNotificationEnabled({ episodes: false, cinema: true, streaming: false, seasons: false }),
+    ).toBe(true);
+  });
+
+  it('faux si tout est coupé ou si le profil est absent', () => {
+    expect(anyNotificationEnabled(NOTIFICATIONS_OFF)).toBe(false);
+    expect(anyNotificationEnabled(undefined)).toBe(false);
   });
 });

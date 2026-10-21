@@ -3,7 +3,12 @@ import { useEffect } from 'react';
 
 import { TabBar } from '@/components/TabBar';
 import { prefetchDiscover } from '@/features/discover/prefetchDiscover';
-import { listenToNotificationTaps, refreshPushToken } from '@/lib/notifications';
+import { notificationsWanted } from '@/api/profile';
+import {
+  listenToNotificationTaps,
+  refreshPushToken,
+  showNotificationsInForeground,
+} from '@/lib/notifications';
 import { useUiStore } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 
@@ -11,9 +16,11 @@ import { colors } from '@/theme/tokens';
 const DISCOVER_PREFETCH_DELAY_MS = 1500;
 
 export default function TabsLayout() {
-  // Connecté : jeton et fuseau tenus à jour, taps sur les notifications (à chaud et à froid).
+  // Connecté : jeton et fuseau tenus à jour (permission demandée si elle ne l'a jamais été),
+  // notifications affichées l'app ouverte, taps sur les notifications (à chaud et à froid).
   useEffect(() => {
-    void refreshPushToken().catch(() => undefined);
+    void showNotificationsInForeground().catch(() => undefined);
+    void refreshPushToken(notificationsWanted).catch(() => undefined);
     return listenToNotificationTaps();
   }, []);
 

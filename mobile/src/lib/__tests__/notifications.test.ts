@@ -1,6 +1,16 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 
-import { listenToNotificationTaps, openNotificationUrl } from '../notifications';
+import { api } from '@/api/http';
+
+import {
+  askNotificationPermission,
+  listenToNotificationTaps,
+  markNotificationPermissionAsked,
+  openNotificationUrl,
+  refreshPushToken,
+  showNotificationsInForeground,
+} from '../notifications';
 
 jest.mock('expo-router', () => ({ router: { navigate: jest.fn(), push: jest.fn() } }));
 // Build de développement (pas Expo Go) : expo-notifications est disponible.
@@ -9,15 +19,23 @@ jest.mock('expo-constants', () => ({
   default: { executionEnvironment: 'bare' },
   ExecutionEnvironment: { StoreClient: 'storeClient' },
 }));
-jest.mock('@/api/http', () => ({ api: jest.fn() }));
+jest.mock('@/api/http', () => ({ api: jest.fn(() => Promise.resolve()) }));
+jest.mock('@/api/config', () => ({ easProjectId: () => 'projet-eas' }));
 
 const mockLast = jest.fn();
 const mockClear = jest.fn();
 const mockRemove = jest.fn();
 let mockListener: ((response: unknown) => void) | undefined;
+const mockGetPermissions = jest.fn();
+const mockRequestPermissions = jest.fn();
+const mockSetHandler = jest.fn();
 jest.mock('../expoNotifications', () => ({
   loadNotifications: () =>
     Promise.resolve({
+      getPermissionsAsync: () => mockGetPermissions(),
+      requestPermissionsAsync: () => mockRequestPermissions(),
+      getExpoPushTokenAsync: () => Promise.resolve({ data: 'ExponentPushToken[abc]' }),
+      setNotificationHandler: (handler: unknown) => mockSetHandler(handler),
       addNotificationResponseReceivedListener: (listener: (response: unknown) => void) => {
         mockListener = listener;
         return { remove: mockRemove };
@@ -29,10 +47,99 @@ jest.mock('../expoNotifications', () => ({
 
 const response = (url: string) => ({ notification: { request: { content: { data: { url } } } } });
 
-beforeEach(() => {
+const UNDETERMINED = { granted: false, canAskAgain: true };
+const GRANTED = { granted: true, canAskAgain: true };
+const BLOCKED = { granted: false, canAskAgain: false };
+
+beforeEach(async () => {
   jest.clearAllMocks();
+  await AsyncStorage.clear();
   mockListener = undefined;
   mockLast.mockResolvedValue(null);
+  mockGetPermissions.mockResolvedValue(UNDETERMINED);
+  mockRequestPermissions.mockResolvedValue(GRANTED);
+});
+
+const tokenSaved = () =>
+  expect(api).toHaveBeenCalledWith(
+    '/me/push-token',
+    expect.objectContaining({
+      method: 'POST',
+      body: expect.objectContaining({ expoToken: 'ExponentPushToken[abc]' }),
+    }),
+  );
+const wanted = jest.fn(() => Promise.resolve(true));
+
+describe('refreshPushToken (démarrage)', () => {
+  it('permission accordée : jeton enregistré, sans demande', async () => {
+    mockGetPermissions.mockResolvedValue(GRANTED);
+    await refreshPushToken(wanted);
+    expect(mockRequestPermissions).not.toHaveBeenCalled();
+    tokenSaved();
+  });
+
+  it('jamais demandée sur cet appareil (onboarding fait ailleurs) : demande puis jeton', async () => {
+    await refreshPushToken(wanted);
+    expect(mockRequestPermissions).toHaveBeenCalledTimes(1);
+    tokenSaved();
+  });
+
+  it('demande faite une seule fois : refusée, elle ne revient pas au démarrage suivant', async () => {
+    mockRequestPermissions.mockResolvedValue(UNDETERMINED);
+    await refreshPushToken(wanted);
+    await refreshPushToken(wanted);
+    expect(mockRequestPermissions).toHaveBeenCalledTimes(1);
+    expect(api).not.toHaveBeenCalled();
+  });
+
+  it('« Plus tard » à l’onboarding : pas de demande au démarrage', async () => {
+    await markNotificationPermissionAsked();
+    await refreshPushToken(wanted);
+    expect(mockRequestPermissions).not.toHaveBeenCalled();
+  });
+
+  it('toutes les notifications coupées dans le profil : pas de demande', async () => {
+    await refreshPushToken(() => Promise.resolve(false));
+    expect(mockRequestPermissions).not.toHaveBeenCalled();
+    expect(api).not.toHaveBeenCalled();
+  });
+
+  it('permission bloquée : ni demande ni jeton', async () => {
+    mockGetPermissions.mockResolvedValue(BLOCKED);
+    await refreshPushToken(wanted);
+    expect(mockRequestPermissions).not.toHaveBeenCalled();
+    expect(api).not.toHaveBeenCalled();
+  });
+});
+
+describe('askNotificationPermission (cloche)', () => {
+  it('jamais demandée : demande, même après « Plus tard », puis jeton', async () => {
+    await markNotificationPermissionAsked();
+    await askNotificationPermission();
+    expect(mockRequestPermissions).toHaveBeenCalledTimes(1);
+    tokenSaved();
+  });
+
+  it('déjà accordée : rien à refaire', async () => {
+    mockGetPermissions.mockResolvedValue(GRANTED);
+    await askNotificationPermission();
+    expect(mockRequestPermissions).not.toHaveBeenCalled();
+    expect(api).not.toHaveBeenCalled();
+  });
+});
+
+describe('showNotificationsInForeground', () => {
+  it('app ouverte : la notification est affichée, avec son', async () => {
+    await showNotificationsInForeground();
+    const handler = mockSetHandler.mock.calls[0][0] as {
+      handleNotification: () => Promise<Record<string, boolean>>;
+    };
+    await expect(handler.handleNotification()).resolves.toMatchObject({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+    });
+  });
 });
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));

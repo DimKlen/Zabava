@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 
-import { setTitleAlerts } from '@/api/libraryActions';
 import { useProfile } from '@/api/profile';
 import type { TitleDetail } from '@/api/titles';
 import { useMovieWatchlist } from '@/api/watchlist';
@@ -20,6 +19,7 @@ import { StatusBanner } from './StatusBanner';
 import { Synopsis } from './Synopsis';
 import { TitleHeader } from './TitleHeader';
 import { TitleBodySkeleton } from './TitleSkeleton';
+import { toggleTitleAlerts } from './toggleTitleAlerts';
 import { TrailerButton } from './TrailerButton';
 import { WhereToWatch } from './WhereToWatch';
 
@@ -53,7 +53,7 @@ export function MovieScreen({ id, preview, movie, failure }: Props) {
         genres={movie?.genres ?? []}
         loading={!movie}
         alertsOn={alertsOn}
-        onToggleAlerts={movie ? () => setTitleAlerts(movie, !alertsOn) : undefined}
+        onToggleAlerts={movie ? () => toggleTitleAlerts(movie, !alertsOn) : undefined}
       />
       {movie ? <MovieBody movie={movie} /> : (failure ?? <TitleBodySkeleton />)}
     </ScrollView>

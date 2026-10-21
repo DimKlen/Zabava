@@ -59,3 +59,10 @@ export const NOTIFICATIONS_OFF = {
   streaming: false,
   seasons: false,
 } as const;
+
+/** Au moins une des 4 notifications est activée (`notificationPrefs` du profil). */
+export function anyNotificationEnabled(
+  prefs: Partial<Record<keyof typeof NOTIFICATIONS_OFF, boolean>> | undefined,
+): boolean {
+  return Boolean(prefs?.episodes || prefs?.cinema || prefs?.streaming || prefs?.seasons);
+}

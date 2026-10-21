@@ -14,7 +14,11 @@ import { useProfile, updateProfile } from '@/api/profile';
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
 import { NOTIFICATIONS_OFF } from '@/domain/onboarding';
-import { registerPushToken, requestNotificationPermission } from '@/lib/notifications';
+import {
+  markNotificationPermissionAsked,
+  registerPushToken,
+  requestNotificationPermission,
+} from '@/lib/notifications';
 import { colors } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
@@ -65,6 +69,12 @@ export function NotificationsScreen() {
     await goToWatchlist();
   };
 
+  // Permission non demandée : elle le sera à la première cloche ou au premier interrupteur.
+  const later = async () => {
+    await markNotificationPermissionAsked().catch(() => undefined);
+    await goToWatchlist();
+  };
+
   return (
     <View style={[styles.screen, { paddingTop: 120, paddingBottom: Math.max(34, insets.bottom) }]}>
       <View style={styles.icon}>
@@ -102,7 +112,7 @@ export function NotificationsScreen() {
           label="Plus tard"
           color={colors.neutral400}
           disabled={busy}
-          onPress={() => void goToWatchlist()}
+          onPress={() => void later()}
         />
       </View>
     </View>
