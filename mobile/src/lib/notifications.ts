@@ -11,6 +11,8 @@ import { loadNotifications } from './expoNotifications';
 
 /** Jeton Expo enregistré par cet appareil : retiré du compte à la déconnexion. */
 const TOKEN_KEY = 'zabava.push-token';
+/** Demande système déjà faite sur cet appareil, ou écartée par « Plus tard ». */
+const ASKED_KEY = 'zabava.push-asked';
 
 /**
  * Expo Go sur Android n'embarque plus les notifications push (SDK 53+) : y charger
@@ -30,16 +32,24 @@ export function deviceTimezone(): string | undefined {
 
 async function ensureChannel(Notifications: typeof import('expo-notifications')): Promise<void> {
   // Android 13+ : un canal doit exister avant la demande, sinon elle n'apparaît pas.
+  // Importance haute : la notification s'affiche en bannière (au plus une par titre et par
+  // jour). Android garde l'importance d'un canal déjà créé.
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'Zabava',
-      importance: Notifications.AndroidImportance.DEFAULT,
+      importance: Notifications.AndroidImportance.HIGH,
     });
   }
 }
 
+/** « Plus tard » à l'onboarding : pas de demande au démarrage sur cet appareil. */
+export async function markNotificationPermissionAsked(): Promise<void> {
+  await AsyncStorage.setItem(ASKED_KEY, '1');
+}
+
 /** Vraie boîte de dialogue système. Renvoie true si l'utilisateur accepte. */
 export async function requestNotificationPermission(): Promise<boolean> {
+  await markNotificationPermissionAsked();
   if (isExpoGoAndroid()) {
     // Avant Android 13, la permission est accordée d'office.
     if (Number(Platform.Version) < 33) return true;
@@ -107,6 +117,8 @@ export async function registerPushToken(): Promise<void> {
   const projectId = easProjectId();
   if (!projectId || isExpoGoAndroid()) return;
   const Notifications = await loadNotifications();
+  // Permission accordée depuis les réglages du téléphone : le canal n'existe pas encore.
+  await ensureChannel(Notifications);
   const { data } = await Notifications.getExpoPushTokenAsync({ projectId });
   await api('/me/push-token', {
     method: 'POST',
@@ -115,10 +127,45 @@ export async function registerPushToken(): Promise<void> {
   await AsyncStorage.setItem(TOKEN_KEY, data);
 }
 
-/** Au démarrage, connecté : jeton et fuseau tenus à jour si la permission est accordée. */
-export async function refreshPushToken(): Promise<void> {
-  if (isExpoGoAndroid() || (await notificationPermission()) !== 'granted') return;
-  await registerPushToken();
+/**
+ * Demande système si elle n'a encore jamais eu de réponse (cloche d'une fiche, démarrage) ;
+ * acceptée, le jeton est enregistré.
+ */
+export async function askNotificationPermission(): Promise<void> {
+  if ((await notificationPermission()) !== 'undetermined') return;
+  if (await requestNotificationPermission()) await registerPushToken();
+}
+
+/**
+ * Au démarrage, connecté : jeton et fuseau tenus à jour si la permission est accordée.
+ * Une installation dont le compte a déjà fait l'onboarding (APK installé après coup,
+ * réinstallation) n'a jamais affiché la demande système : sans elle, Android 13+ bloque
+ * les notifications et aucun jeton n'est enregistré. Elle est donc faite une fois, si
+ * `wanted` (au moins une notification activée dans le profil).
+ */
+export async function refreshPushToken(wanted: () => Promise<boolean>): Promise<void> {
+  if (isExpoGoAndroid()) return;
+  if ((await notificationPermission()) === 'granted') {
+    await registerPushToken();
+    return;
+  }
+  if ((await AsyncStorage.getItem(ASKED_KEY)) || !(await wanted())) return;
+  await askNotificationPermission();
+}
+
+/** Notification reçue l'app ouverte : affichée comme en arrière-plan. */
+export async function showNotificationsInForeground(): Promise<void> {
+  if (isExpoGoAndroid()) return;
+  const Notifications = await loadNotifications();
+  Notifications.setNotificationHandler({
+    handleNotification: () =>
+      Promise.resolve({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+  });
 }
 
 /** Déconnexion : ce téléphone ne reçoit plus les notifications du compte. */

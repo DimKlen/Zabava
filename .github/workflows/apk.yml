@@ -1,5 +1,7 @@
 # APK Android : à chaque fusion sur main qui touche l'app, ou à la main depuis l'onglet
-# Actions. Construit l'APK « preview » sur EAS, puis le publie dans une release GitHub.
+# Actions. Construit l'APK « preview » sur le runner (`eas build --local` : gratuit, hors
+# quota EAS ; même clé de signature, téléchargée depuis EAS), puis le publie dans une
+# release GitHub.
 name: APK Android
 
 on:
@@ -18,8 +20,9 @@ permissions:
 
 jobs:
   apk:
-    name: Build EAS et release
+    name: Build local et release
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: mobile
@@ -32,6 +35,11 @@ jobs:
           cache: npm
           cache-dependency-path: mobile/package-lock.json
 
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
       - uses: expo/expo-github-action@v8
         with:
           eas-version: latest
@@ -40,11 +48,34 @@ jobs:
       - name: Installer les dépendances
         run: npm ci
 
-      - name: Build EAS (preview, Android)
-        run: eas build --profile preview --platform android --non-interactive --wait --json > build.json
+      # Le secret EAS n'est lisible que sur les serveurs d'EAS : copie en secret GitHub,
+      # écrite hors du projet (le build local ne copie que les fichiers versionnés).
+      - name: google-services.json
+        env:
+          CONTENT: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$CONTENT" ]; then
+            echo "::error::Secret GOOGLE_SERVICES_JSON manquant : gh secret set GOOGLE_SERVICES_JSON < mobile/google-services.json"
+            exit 1
+          fi
+          printf '%s' "$CONTENT" > "$RUNNER_TEMP/google-services.json"
 
-      - name: Télécharger l'APK
-        run: curl -fsSL -o zabava.apk "$(jq -r '.[0].artifacts.applicationArchiveUrl' build.json)"
+      # Dépendances Gradle et caches de compilation, réutilisés d'un build à l'autre.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('mobile/package-lock.json') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Build local (preview, Android)
+        env:
+          GOOGLE_SERVICES_JSON: ${{ runner.temp }}/google-services.json
+          # Téléphone en arm64 seulement : environ deux fois moins de code natif à compiler
+          # (cet APK ne s'installe plus dans un émulateur x86_64).
+          ORG_GRADLE_PROJECT_reactNativeArchitectures: arm64-v8a
+        run: eas build --profile preview --platform android --local --non-interactive --output zabava.apk
 
       - name: Publier la release
         env:

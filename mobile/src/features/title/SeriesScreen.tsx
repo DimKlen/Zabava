@@ -3,7 +3,6 @@ import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { useEpisodes } from '@/api/episodes';
-import { setTitleAlerts } from '@/api/libraryActions';
 import { useProfile } from '@/api/profile';
 import type { TitleDetail } from '@/api/titles';
 import { useSeriesWatchlist } from '@/api/watchlist';
@@ -31,6 +30,7 @@ import { openSeriesMenu } from './seriesMenu';
 import { Synopsis } from './Synopsis';
 import { TitleHeader } from './TitleHeader';
 import { TitleBodySkeleton } from './TitleSkeleton';
+import { toggleTitleAlerts } from './toggleTitleAlerts';
 import { TrailerButton } from './TrailerButton';
 import { WhereToWatch } from './WhereToWatch';
 
@@ -111,7 +111,7 @@ export function SeriesScreen({
           genres={series?.genres ?? []}
           loading={!series}
           alertsOn={alertsOn}
-          onToggleAlerts={series ? () => setTitleAlerts(series, !alertsOn) : undefined}
+          onToggleAlerts={series ? () => toggleTitleAlerts(series, !alertsOn) : undefined}
           extraActions={
             openMenu ? (
               <RoundIconButton

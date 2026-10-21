@@ -1,5 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 
+import { anyNotificationEnabled } from '@/domain/onboarding';
+
 import { api } from './http';
 import { queryClient } from './queryClient';
 import type { components } from './types';
@@ -16,6 +18,13 @@ export function fetchProfile(): Promise<Profile> {
 /** Profil de l'utilisateur : jamais périmé, invalidé à chaque modification. */
 export function useProfile(enabled = true) {
   return useQuery({ queryKey: profileKey, queryFn: fetchProfile, staleTime: Infinity, enabled });
+}
+
+/** Au moins une notification activée dans le profil (celui du cache, sinon chargé). */
+export function notificationsWanted(): Promise<boolean> {
+  return queryClient
+    .fetchQuery({ queryKey: profileKey, queryFn: fetchProfile, staleTime: Infinity })
+    .then((profile) => anyNotificationEnabled(profile.notificationPrefs));
 }
 
 export function updateProfile(update: ProfileUpdate): Promise<Profile> {
