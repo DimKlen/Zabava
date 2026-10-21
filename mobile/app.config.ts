@@ -3,6 +3,7 @@ import type { ExpoConfig } from 'expo/config';
 // Valeurs du thème Nocturne (specs/docs/02-design-tokens.md) : la config native
 // ne peut pas importer src/theme, d'où la répétition ici.
 const BG = '#161826';
+const ACCENT = '#9184d9';
 
 const config: ExpoConfig = {
   name: 'Zabava',
@@ -41,7 +42,8 @@ const config: ExpoConfig = {
     'expo-web-browser',
     'expo-font',
     'expo-apple-authentication',
-    'expo-notifications',
+    // Petite icône de la barre d'état (blanche sur transparent), teintée en accent.
+    ['expo-notifications', { icon: './assets/notification-icon.png', color: ACCENT }],
     ['expo-status-bar', { style: 'light' }],
     [
       'expo-splash-screen',
