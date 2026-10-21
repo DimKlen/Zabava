@@ -61,6 +61,9 @@ public final class CatalogDtos {
             List<Integer> creatorIds,
             List<String> networks) {}
 
+    /** Société de production (pour un animé : le studio d'animation). */
+    public record Studio(int id, String name) {}
+
     public record Collection(int id, String name, List<TitleLite> parts) {}
 
     public record UserTitle(
@@ -86,6 +89,7 @@ public final class CatalogDtos {
             String originalLanguage,
             String country,
             String studio,
+            List<Studio> studios,
             LocalDate releaseTheatrical,
             LocalDate releaseDigital,
             Integer collectionId,

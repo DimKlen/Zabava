@@ -22,9 +22,13 @@ export function seriesCrew(
   creators: string[],
   networks: string[],
   creatorIds: number[] = [],
+  studios: { id: number; name: string }[] = [],
 ): InfoRow[] {
   return [
     ...personRow('Création', creators, creatorIds),
+    ...(studios.length > 0
+      ? [{ key: 'Studio', value: studios.map((s) => s.name).join(', '), studios }]
+      : []),
     ...rows([['Diffusion', networks.join(', ')]]),
   ];
 }

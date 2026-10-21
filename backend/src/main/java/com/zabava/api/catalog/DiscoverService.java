@@ -56,6 +56,7 @@ public class DiscoverService {
             String providers,
             String lang,
             Integer maxRuntime,
+            Integer studio,
             String sort,
             int page) {}
 
@@ -209,6 +210,7 @@ public class DiscoverService {
             p.put("vote_count.gte", "50");
         }
         if (q.lang() != null) p.put("with_original_language", q.lang());
+        if (q.studio() != null) p.put("with_companies", String.valueOf(q.studio()));
         if (q.maxRuntime() != null) p.put("with_runtime.lte", String.valueOf(q.maxRuntime()));
 
         if (q.providers() != null) {

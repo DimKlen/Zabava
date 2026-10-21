@@ -35,6 +35,8 @@ export type TitleDetail = {
   originalLanguage?: string;
   country?: string;
   studio?: string;
+  /** Sociétés de production avec identifiant (pour un animé : les studios). */
+  studios: { id: number; name: string }[];
   releaseTheatrical?: string;
   releaseDigital?: string;
   network?: string;
@@ -112,6 +114,9 @@ export function toTitleDetail(
     originalLanguage: detail.originalLanguage,
     country: detail.country,
     studio: detail.studio,
+    studios: (detail.studios ?? []).flatMap((s) =>
+      s.id === undefined || !s.name ? [] : [{ id: s.id, name: s.name }],
+    ),
     releaseTheatrical: detail.releaseTheatrical,
     releaseDigital: detail.releaseDigital,
     network: detail.network,

@@ -28,6 +28,7 @@ const base: TitleDetail = {
   type: 'movie',
   title: 'Dune : Troisième partie',
   year: 2026,
+  studios: [],
   genres: ['Science-fiction', 'Aventure'],
   certification: '13+',
   releaseTheatrical: '2026-12-18',

@@ -114,6 +114,11 @@ export function useGenreTitles(type: MediaType, genre: GenreKey, filters: GenreF
   return useDiscoverPages(genreQuery(type, genre, filters), type);
 }
 
+/** Animés d'un studio, par pertinence (popularité), chargement infini. */
+export function useStudioTitles(studioId: number) {
+  return useDiscoverPages({ type: 'anime', studio: studioId, sort: 'pop' }, 'anime');
+}
+
 /** Résultats de la recherche avancée appliquée. */
 export function useAdvancedResults(filters: AdvancedFilters, enabled: boolean) {
   return useDiscoverPages({ ...advancedQuery(filters) }, 'movie', enabled);

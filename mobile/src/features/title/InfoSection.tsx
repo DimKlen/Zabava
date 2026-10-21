@@ -6,6 +6,7 @@ import type { InfoRow } from '@/domain/movieDetail';
 import { colors } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 import { openPerson, pressPerson } from '../person/openPerson';
+import { openStudio } from '../studio/openStudio';
 
 type SectionProps = {
   title: string;
@@ -46,7 +47,21 @@ export function InfoRows({ rows }: { rows: InfoRow[] }) {
       {rows.map((row) => (
         <View key={row.key} style={styles.row}>
           <Text style={styles.key}>{row.key}</Text>
-          {row.people ? (
+          {row.studios ? (
+            <View style={styles.people}>
+              {row.studios.map((studio) => (
+                <Pressable
+                  key={studio.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={studio.name}
+                  onPress={() => openStudio(studio)}
+                  style={styles.person}
+                >
+                  <Text style={styles.link}>{studio.name}</Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : row.people ? (
             <View style={styles.people}>
               {row.people.map((person) => (
                 <Pressable

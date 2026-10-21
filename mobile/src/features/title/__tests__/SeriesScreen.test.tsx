@@ -53,6 +53,7 @@ const bear: TitleDetail & { type: 'tv' } = {
   type: 'tv',
   title: 'The Bear',
   year: 2022,
+  studios: [],
   genres: ['Drame', 'Comédie'],
   status: 'En cours',
   network: 'FX',

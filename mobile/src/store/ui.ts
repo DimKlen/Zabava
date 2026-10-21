@@ -55,6 +55,8 @@ type UiState = {
   filmSegment: FilmSegment;
   filmFilter: FilmFilter;
   filmSort: FilmSort;
+  /** Sens inverse du tri (par défaut : récents, plus proches, A → Z, mieux notés). */
+  filmSortReversed: boolean;
   /** Cloche d'un titre hors liste : préférence locale (true = alertes coupées). */
   alertsOff: Record<string, boolean>;
   /** Sections repliées de Séries / Animés, gardées pendant la session. */
@@ -75,6 +77,7 @@ type UiState = {
   setWatchlistTab: (tab: MediaType) => void;
   setFilmSegment: (segment: FilmSegment) => void;
   setFilmFilter: (filter: FilmFilter) => void;
+  /** Même tri : inverse le sens ; autre tri : repart du sens par défaut. */
   setFilmSort: (sort: FilmSort) => void;
   setAlertsOff: (titleId: string, off: boolean) => void;
   toggleSection: (section: SeriesSection) => void;
@@ -101,6 +104,7 @@ export const useUiStore = create<UiState>()((set, get) => ({
   filmSegment: 'towatch',
   filmFilter: 'all',
   filmSort: 'added',
+  filmSortReversed: false,
   alertsOff: {},
   collapsedSections: { ...DEFAULT_COLLAPSED },
   discoverTab: 'movie',
@@ -138,7 +142,11 @@ export const useUiStore = create<UiState>()((set, get) => ({
   setWatchlistTab: (watchlistTab) => set({ watchlistTab, swipedCardId: null }),
   setFilmSegment: (filmSegment) => set({ filmSegment }),
   setFilmFilter: (filmFilter) => set({ filmFilter }),
-  setFilmSort: (filmSort) => set({ filmSort }),
+  setFilmSort: (filmSort) =>
+    set((s) => ({
+      filmSort,
+      filmSortReversed: s.filmSort === filmSort ? !s.filmSortReversed : false,
+    })),
   setAlertsOff: (titleId, off) => set((s) => ({ alertsOff: { ...s.alertsOff, [titleId]: off } })),
   toggleSection: (section) =>
     set((s) => ({

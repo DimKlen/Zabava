@@ -188,7 +188,12 @@ function SeriesInfos({
   /** Liste des épisodes, entre les infos et les titres similaires. */
   episodesSection: ReactNode;
 }) {
-  const crew = seriesCrew(series.creators, series.networks, series.creatorIds);
+  const crew = seriesCrew(
+    series.creators,
+    series.networks,
+    series.creatorIds,
+    series.type === 'anime' ? series.studios : [],
+  );
   const infos = seriesInfos(series);
   const belowFold = useAfterFirstFrame();
   return (
