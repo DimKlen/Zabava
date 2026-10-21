@@ -32,10 +32,12 @@ export function deviceTimezone(): string | undefined {
 
 async function ensureChannel(Notifications: typeof import('expo-notifications')): Promise<void> {
   // Android 13+ : un canal doit exister avant la demande, sinon elle n'apparaît pas.
+  // Importance haute : la notification s'affiche en bannière (au plus une par titre et par
+  // jour). Android garde l'importance d'un canal déjà créé.
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'Zabava',
-      importance: Notifications.AndroidImportance.DEFAULT,
+      importance: Notifications.AndroidImportance.HIGH,
     });
   }
 }
@@ -115,6 +117,8 @@ export async function registerPushToken(): Promise<void> {
   const projectId = easProjectId();
   if (!projectId || isExpoGoAndroid()) return;
   const Notifications = await loadNotifications();
+  // Permission accordée depuis les réglages du téléphone : le canal n'existe pas encore.
+  await ensureChannel(Notifications);
   const { data } = await Notifications.getExpoPushTokenAsync({ projectId });
   await api('/me/push-token', {
     method: 'POST',
