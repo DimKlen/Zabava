@@ -95,16 +95,18 @@ describe('MovieScreen', () => {
       releaseTheatrical: '2024-03-01',
       availability: {
         sub: [{ id: 230, name: 'Crave', short: 'C', countries: ['FR', 'CA'] }],
-        rent: [{ id: 350, name: 'Apple TV+', short: 'tv' }],
+        rent: [{ id: 350, name: 'Apple TV+', short: 'tv', countries: ['FR', 'US'] }],
         buy: [],
       },
     });
     expect(screen.getByText('8,5/10')).toBeTruthy();
     expect(screen.getByText('Rotten Tomatoes')).toBeTruthy();
-    // Abonnement et location, sans libellé, avec les pays entre parenthèses.
-    expect(screen.getByLabelText('Apple TV+')).toBeTruthy();
-    expect(screen.getByLabelText('Crave (CAN, FRA)')).toBeTruthy();
-    expect(screen.getByText('Crave (CAN, FRA)')).toBeTruthy();
+    // Abonnement et location, sans libellé. Profil au Canada : pas de pays pour Crave, proposé
+    // au Canada ; pour Apple TV+, seulement le pays le plus proche.
+    expect(screen.getByLabelText('Crave')).toBeTruthy();
+    expect(screen.getByText('Crave')).toBeTruthy();
+    expect(screen.getByLabelText('Apple TV+ (USA)')).toBeTruthy();
+    expect(screen.getByText('Apple TV+ (USA)')).toBeTruthy();
     expect(screen.queryByText('Abonnement')).toBeNull();
     expect(screen.queryByText('Location')).toBeNull();
     expect(screen.queryByText('Achat')).toBeNull();

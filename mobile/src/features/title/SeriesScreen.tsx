@@ -140,6 +140,7 @@ export function SeriesScreen({
             <SeriesInfos
               series={series}
               myProviderIds={myProviderIds}
+              region={profile?.region}
               libraryIds={libraryIds}
               episodesSection={
                 episodes && season !== undefined ? (
@@ -179,11 +180,13 @@ export function SeriesScreen({
 function SeriesInfos({
   series,
   myProviderIds,
+  region,
   libraryIds,
   episodesSection,
 }: {
   series: TitleDetail;
   myProviderIds: number[];
+  region: string | undefined;
   libraryIds: Set<string>;
   /** Liste des épisodes, entre les infos et les titres similaires. */
   episodesSection: ReactNode;
@@ -198,7 +201,11 @@ function SeriesInfos({
   const belowFold = useAfterFirstFrame();
   return (
     <View>
-      <WhereToWatch availability={series.availability} myProviderIds={myProviderIds} />
+      <WhereToWatch
+        availability={series.availability}
+        myProviderIds={myProviderIds}
+        region={region}
+      />
       {series.overview ? <Synopsis text={series.overview} /> : null}
       {/* Sous la ligne de flottaison : montés à l'image suivante, sans figer l'écran. */}
       {belowFold ? (

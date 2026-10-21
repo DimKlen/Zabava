@@ -89,8 +89,42 @@ const COUNTRY_CODES: Record<string, string> = {
   IT: 'ITA',
 };
 
-/** « (USA, FRA) » : pays où la plateforme propose le titre, ou rien si on ne le sait pas. */
-export function countriesLabel(countries: readonly string[] | undefined): string | undefined {
-  if (!countries || countries.length === 0) return undefined;
-  return `(${countries.map((code) => COUNTRY_CODES[code] ?? code).join(', ')})`;
+/** Centre approximatif des pays proposés par le serveur (latitude, longitude en degrés). */
+const COUNTRY_CENTERS: Record<string, readonly [number, number]> = {
+  CA: [56.1, -106.3],
+  US: [39.8, -98.6],
+  FR: [46.6, 2.2],
+  BE: [50.6, 4.6],
+  CH: [46.8, 8.2],
+  GB: [54.0, -2.0],
+  DE: [51.2, 10.4],
+  ES: [40.4, -3.7],
+  IT: [42.8, 12.6],
+};
+
+/** Distance angulaire entre deux pays (loi des cosinus sphérique), Infinity si l'un est inconnu. */
+function distance(from: string, to: string): number {
+  const a = COUNTRY_CENTERS[from];
+  const b = COUNTRY_CENTERS[to];
+  if (!a || !b) return Infinity;
+  const rad = Math.PI / 180;
+  const cos =
+    Math.sin(a[0] * rad) * Math.sin(b[0] * rad) +
+    Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.cos((a[1] - b[1]) * rad);
+  return Math.acos(Math.min(1, Math.max(-1, cos)));
+}
+
+/**
+ * Pays affiché à côté d'une plateforme : rien si elle propose le titre dans ma région, sinon
+ * le pays le plus proche de ma région (« Netflix (USA) »), le catalogue changeant selon le pays.
+ */
+export function countryLabel(
+  countries: readonly string[] | undefined,
+  region: string | undefined,
+): string | undefined {
+  if (!countries || countries.length === 0 || !region || countries.includes(region)) {
+    return undefined;
+  }
+  const [closest] = [...countries].sort((a, b) => distance(region, a) - distance(region, b));
+  return closest ? `(${COUNTRY_CODES[closest] ?? closest})` : undefined;
 }
