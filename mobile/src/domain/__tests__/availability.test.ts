@@ -1,4 +1,4 @@
-import { countriesLabel, whereToWatch } from '../availability';
+import { countryLabel, whereToWatch } from '../availability';
 
 const netflix = { id: 8, name: 'Netflix', short: 'N', countries: ['FR'] };
 const crave = { id: 230, name: 'Crave', short: 'C' };
@@ -40,18 +40,26 @@ describe('whereToWatch : pays', () => {
   });
 });
 
-describe('countriesLabel', () => {
-  it('codes des pays entre parenthèses (« Netflix (USA, FRA) »)', () => {
-    expect(countriesLabel(['US', 'FR'])).toBe('(USA, FRA)');
-    expect(countriesLabel(['CA', 'BE', 'CH'])).toBe('(CAN, BEL, CHE)');
+describe('countryLabel', () => {
+  it('disponible dans ma région : aucun pays affiché', () => {
+    expect(countryLabel(['BE', 'CA', 'FR', 'US'], 'CA')).toBeUndefined();
   });
 
-  it('pays sans code connu : son code ISO à deux lettres', () => {
-    expect(countriesLabel(['JP'])).toBe('(JP)');
+  it('sinon, un seul pays : le plus proche de ma région', () => {
+    expect(countryLabel(['FR', 'GB', 'US'], 'CA')).toBe('(USA)');
+    expect(countryLabel(['BE', 'ES', 'US'], 'FR')).toBe('(BEL)');
+    expect(countryLabel(['DE', 'GB', 'IT'], 'CH')).toBe('(DEU)');
+    expect(countryLabel(['ES', 'FR', 'GB'], 'US')).toBe('(GBR)');
   });
 
-  it('ne dit rien sans pays', () => {
-    expect(countriesLabel(undefined)).toBeUndefined();
-    expect(countriesLabel([])).toBeUndefined();
+  it('pays sans position connue : après les autres, code ISO à deux lettres', () => {
+    expect(countryLabel(['JP', 'FR'], 'CA')).toBe('(FRA)');
+    expect(countryLabel(['JP'], 'CA')).toBe('(JP)');
+  });
+
+  it('ne dit rien sans pays ni région', () => {
+    expect(countryLabel(undefined, 'CA')).toBeUndefined();
+    expect(countryLabel([], 'CA')).toBeUndefined();
+    expect(countryLabel(['FR'], undefined)).toBeUndefined();
   });
 });

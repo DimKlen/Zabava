@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { countriesLabel } from '@/domain/availability';
+import { countryLabel } from '@/domain/availability';
 import type { Provider } from '@/domain/types';
 import { tmdbImage } from '@/lib/tmdb';
 import { colors } from '@/theme/tokens';
@@ -13,6 +13,8 @@ type Props = {
   provider: Provider;
   /** Une de mes plateformes : anneau accent, sinon neutral700. */
   mine: boolean;
+  /** Ma région : son pays n'est pas affiché, sinon le pays le plus proche. */
+  region?: string;
   onPress: () => void;
 };
 
@@ -22,11 +24,11 @@ const SIZE = 40;
  * Pastille de plateforme des fiches (« Où regarder »).
  * L'appelant ouvre le lien et affiche le toast « Ouverture de {plateforme}… ».
  */
-export function ProviderLogo({ provider, mine, onPress }: Props) {
+export function ProviderLogo({ provider, mine, region, onPress }: Props) {
   const uri = tmdbImage(provider.logoPath, 'w92');
   // « Netflix (USA) » : le catalogue d'une plateforme change selon le pays.
-  const countries = countriesLabel(provider.countries);
-  const label = countries ? `${provider.name} ${countries}` : provider.name;
+  const country = countryLabel(provider.countries, region);
+  const label = country ? `${provider.name} ${country}` : provider.name;
   return (
     <Pressable
       accessibilityRole="link"

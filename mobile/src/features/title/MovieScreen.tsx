@@ -82,7 +82,11 @@ function MovieBody({ movie }: { movie: TitleDetail }) {
       <MovieActions movie={movie} userTitle={movie.userTitle} />
       <StatusBanner status={movieStatus(movie, new Date())} />
 
-      <WhereToWatch availability={movie.availability} myProviderIds={myProviderIds} />
+      <WhereToWatch
+        availability={movie.availability}
+        myProviderIds={myProviderIds}
+        region={profile?.region}
+      />
       {movie.overview ? <Synopsis text={movie.overview} /> : null}
       {/* Sous la ligne de flottaison : montés à l'image suivante, sans figer l'écran. */}
       {belowFold && movie.trailerKey ? (

@@ -11,7 +11,12 @@ import { typography } from '@/theme/typography';
 
 import { InfoSection } from './InfoSection';
 
-type Props = { availability: Availability; myProviderIds: readonly number[] };
+type Props = {
+  availability: Availability;
+  myProviderIds: readonly number[];
+  /** Région du profil (« Netflix » chez moi, « Netflix (USA) » ailleurs). */
+  region: string | undefined;
+};
 
 function open(provider: Provider, fallbackLink: string | undefined) {
   const link = provider.link ?? fallbackLink;
@@ -19,8 +24,11 @@ function open(provider: Provider, fallbackLink: string | undefined) {
   showToast(`Ouverture de ${baseProviderName(provider.name)}…`);
 }
 
-/** « Où regarder » : toutes les plateformes, avec leurs pays ; les miennes en premier et cerclées. */
-export function WhereToWatch({ availability, myProviderIds }: Props) {
+/**
+ * « Où regarder » : toutes les plateformes, avec le pays le plus proche quand elles ne proposent
+ * pas le titre dans ma région ; les miennes en premier et cerclées.
+ */
+export function WhereToWatch({ availability, myProviderIds, region }: Props) {
   const providers = whereToWatch(availability, myProviderIds);
 
   return (
@@ -32,6 +40,7 @@ export function WhereToWatch({ availability, myProviderIds }: Props) {
               key={provider.id}
               provider={provider}
               mine={isGroupSelected(provider, myProviderIds)}
+              region={region}
               onPress={() => open(provider, availability.link)}
             />
           ))}
