@@ -24,11 +24,13 @@ const SIZE = 40;
  */
 export function ProviderLogo({ provider, mine, onPress }: Props) {
   const uri = tmdbImage(provider.logoPath, 'w92');
+  // « Netflix (USA) » : le catalogue d'une plateforme change selon le pays.
   const countries = countriesLabel(provider.countries);
+  const label = countries ? `${provider.name} ${countries}` : provider.name;
   return (
     <Pressable
       accessibilityRole="link"
-      accessibilityLabel={provider.name}
+      accessibilityLabel={label}
       onPress={onPress}
       style={styles.button}
     >
@@ -39,8 +41,7 @@ export function ProviderLogo({ provider, mine, onPress }: Props) {
           <Text style={styles.short}>{provider.short}</Text>
         )}
       </View>
-      <Text style={styles.name}>{provider.name}</Text>
-      {countries ? <Text style={styles.name}>{countries}</Text> : null}
+      <Text style={styles.name}>{label}</Text>
     </Pressable>
   );
 }

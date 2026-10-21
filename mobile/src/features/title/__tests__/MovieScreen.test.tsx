@@ -103,8 +103,8 @@ describe('MovieScreen', () => {
     expect(screen.getByText('Rotten Tomatoes')).toBeTruthy();
     // Abonnement et location, sans libellé, avec les pays entre parenthèses.
     expect(screen.getByLabelText('Apple TV+')).toBeTruthy();
-    expect(screen.getByLabelText('Crave')).toBeTruthy();
-    expect(screen.getByText('(France, Canada)')).toBeTruthy();
+    expect(screen.getByLabelText('Crave (CAN, FRA)')).toBeTruthy();
+    expect(screen.getByText('Crave (CAN, FRA)')).toBeTruthy();
     expect(screen.queryByText('Abonnement')).toBeNull();
     expect(screen.queryByText('Location')).toBeNull();
     expect(screen.queryByText('Achat')).toBeNull();
