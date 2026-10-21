@@ -5,9 +5,7 @@ import {
   groupUpcoming,
   itemLine,
   itemTag,
-  jumpTarget,
   noDateLine,
-  weekDays,
   type UpcomingEvent,
 } from '../upcoming';
 
@@ -96,23 +94,5 @@ describe('groupUpcoming', () => {
       'Abbott Elementary',
       'The Bear',
     ]);
-  });
-});
-
-describe('bande de la semaine', () => {
-  it('7 jours à partir d’aujourd’hui, point les jours avec un événement', () => {
-    const groups = groupUpcoming([episode(bear, 2, 21)], NOW);
-    const days = weekDays(groups, NOW);
-    expect(days.map((d) => d.weekday)).toEqual(['Sam', 'Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven']);
-    expect(days.map((d) => d.day)).toEqual([10, 11, 12, 13, 14, 15, 16]);
-    expect(days.map((d) => d.hasEvents)).toEqual([false, false, true, false, false, false, false]);
-    expect(days[0]?.isToday).toBe(true);
-  });
-
-  it('saut : premier groupe dont le jour est ≥ au jour touché', () => {
-    const groups = groupUpcoming([episode(bear, 2, 21), episode(bear, 5, 21, 4)], NOW);
-    expect(jumpTarget(groups, new Date(2026, 9, 11))?.label).toBe('Lun. 12 oct.');
-    expect(jumpTarget(groups, new Date(2026, 9, 13))?.label).toBe('Jeu. 15 oct.');
-    expect(jumpTarget(groups, new Date(2026, 9, 16))).toBeNull();
   });
 });

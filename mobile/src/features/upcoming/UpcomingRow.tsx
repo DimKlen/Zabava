@@ -15,10 +15,12 @@ type Props = {
   title: UpcomingTitle;
   line: string;
   tag?: string;
+  /** Style grisé (pas encore daté) : la ligne reste cliquable. */
+  dimmed?: boolean;
 };
 
 /** Élément d'À venir : mini-affiche, titre, ligne, tag de plateforme ; tap → fiche. */
-export function UpcomingRow({ title, line, tag }: Props) {
+export function UpcomingRow({ title, line, tag, dimmed }: Props) {
   const poster = tmdbImage(title.posterPath, 'w92');
   return (
     <PressableScale
@@ -27,7 +29,7 @@ export function UpcomingRow({ title, line, tag }: Props) {
       accessibilityLabel={`${title.title}, ${line}`}
       onPress={() => openTitle(previewOf(title, 'w92'))}
       onPressIn={() => pressTitle(previewOf(title, 'w92'))}
-      style={styles.row}
+      style={[styles.row, dimmed && styles.dimmed]}
     >
       <View style={styles.poster}>
         <GradientFill gradientKey={title.id} />
@@ -61,6 +63,9 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: radii.rLg,
     backgroundColor: colors.surface,
+  },
+  dimmed: {
+    opacity: 0.5,
   },
   poster: {
     width: 40,

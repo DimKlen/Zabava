@@ -32,7 +32,7 @@ describe('Ma liste › Films : mêmes résultats que le prototype', () => {
       ['obaa', 'hailmary', 'odyssey', 'f1', 'monte', 'sinners', 'wicked2', 'dune3', 'avengers'],
     ],
   ])('tri « %s »', (sort, expected) => {
-    expect(ids(sortFilms(towatch, sort, TODAY))).toEqual(expected);
+    expect(ids(sortFilms(towatch, sort))).toEqual(expected);
   });
 
   it.each<[FilmFilter, string[]]>([
@@ -58,7 +58,30 @@ describe('sortFilms', () => {
     const [first, second] = towatch;
     if (!first || !second) throw new Error('données manquantes');
     const undated = { ...first, releaseTheatrical: undefined };
-    expect(ids(sortFilms([undated, second], 'release', TODAY))).toEqual([second.id, first.id]);
+    expect(ids(sortFilms([undated, second], 'release'))).toEqual([second.id, first.id]);
+  });
+
+  it("replie sur la sortie numérique puis l'année quand la sortie en salle manque", () => {
+    const [base] = towatch;
+    if (!base) throw new Error('données manquantes');
+    const film = (id: string, extra: object) => ({
+      ...base,
+      id,
+      releaseTheatrical: undefined,
+      releaseDigital: undefined,
+      year: undefined,
+      ...extra,
+    });
+    const none = film('none', {});
+    const byYear = film('year', { year: 2016 });
+    const digital = film('digital', { releaseDigital: '2025-03-01' });
+    const theatrical = film('theatrical', { releaseTheatrical: '2024-11-29' });
+    expect(ids(sortFilms([none, digital, theatrical, byYear], 'release'))).toEqual([
+      'year',
+      'theatrical',
+      'digital',
+      'none',
+    ]);
   });
 });
 

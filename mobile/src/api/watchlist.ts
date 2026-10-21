@@ -27,6 +27,8 @@ export function toLibraryMovie(item: WatchlistItem): LibraryMovie | null {
     posterPath: item.posterPath,
     imdbRating: item.imdbRating,
     releaseTheatrical: item.releaseTheatrical,
+    releaseDigital: item.releaseDigital,
+    year: item.year,
     availability: toAvailability(item.availability),
     userTitle,
   };

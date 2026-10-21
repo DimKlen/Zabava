@@ -5,7 +5,6 @@ import type { MediaType } from './types';
 
 /** Fenêtre affichée : aujourd'hui et les 90 jours suivants. */
 export const UPCOMING_DAYS = 90;
-export const WEEK_DAYS = 7;
 
 export type UpcomingKind = 'episode' | 'theatrical' | 'streaming' | 'digital';
 
@@ -127,41 +126,6 @@ export function groupUpcoming(events: readonly UpcomingEvent[], now: Date): Upco
     });
   }
   return [...groups.values()].sort((a, b) => a.date.getTime() - b.date.getTime());
-}
-
-export type WeekDay = {
-  key: string;
-  date: Date;
-  /** « Sam », « Dim », « Lun »… */
-  weekday: string;
-  day: number;
-  isToday: boolean;
-  hasEvents: boolean;
-};
-
-/** Bande de la semaine : aujourd'hui et les 6 jours suivants, point si un événement. */
-export function weekDays(groups: readonly UpcomingGroup[], now: Date): WeekDay[] {
-  const withEvents = new Set(groups.map((group) => group.key));
-  const today = startOfDay(now);
-  return Array.from({ length: WEEK_DAYS }, (_, offset) => {
-    const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
-    const key = dayKey(date);
-    const weekday = date.toLocaleDateString('fr-CA', { weekday: 'short' }).replace('.', '');
-    return {
-      key,
-      date,
-      weekday: capitalize(weekday),
-      day: date.getDate(),
-      isToday: offset === 0,
-      hasEvents: withEvents.has(key),
-    };
-  });
-}
-
-/** Saut au jour : premier groupe dont le jour est ≥ au jour touché, sinon null. */
-export function jumpTarget(groups: readonly UpcomingGroup[], day: Date): UpcomingGroup | null {
-  const start = startOfDay(day).getTime();
-  return groups.find((group) => group.date.getTime() >= start) ?? null;
 }
 
 /** « Saison 4 annoncée, date à venir ». */

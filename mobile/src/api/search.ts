@@ -81,10 +81,15 @@ export function useSearch(q: string, tab: SearchTab) {
   });
 }
 
-/** Rangées d'une recherche : personnes d'abord (page 1 seulement), puis titres, sans doublon. */
+/**
+ * Rangées d'une recherche : films, puis séries, puis animés (ordre de pertinence du serveur
+ * conservé dans chaque type), puis les personnes (page 1 seulement), sans doublon.
+ */
 export type SearchRow =
   | { kind: 'person'; key: string; person: PersonResult }
   | { kind: 'title'; key: string; title: TitleResult };
+
+const TYPE_ORDER: Record<TitleResult['type'], number> = { movie: 0, tv: 1, anime: 2 };
 
 export function searchRows(pages: readonly SearchPage[] | undefined): SearchRow[] {
   const rows: SearchRow[] = [];
@@ -94,12 +99,14 @@ export function searchRows(pages: readonly SearchPage[] | undefined): SearchRow[
     seen.add(row.key);
     rows.push(row);
   };
+  // Tri stable : à type égal, on garde l'ordre de pertinence du serveur.
+  const titles = (pages ?? [])
+    .flatMap((page) => page.titles)
+    .sort((a, b) => TYPE_ORDER[a.type] - TYPE_ORDER[b.type]);
+  titles.forEach((title) => push({ kind: 'title', key: title.id, title }));
   for (const page of pages ?? []) {
     page.people.forEach((person) => push({ kind: 'person', key: `person-${person.id}`, person }));
   }
-  // Ordre de pertinence du serveur (titre exact, puis le plus populaire) : on ne le retrie pas.
-  const titles = (pages ?? []).flatMap((page) => page.titles);
-  titles.forEach((title) => push({ kind: 'title', key: title.id, title }));
   return rows;
 }
 

@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
-import { ScrollView } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { api } from '@/api/http';
@@ -67,7 +66,7 @@ afterAll(() => jest.useRealTimers());
 beforeEach(async () => {
   jest.clearAllMocks();
   mockApi.mockResolvedValue(UPCOMING);
-  await act(() => useUiStore.setState({ upcomingFilter: 'all', noDateOpen: false, toast: null }));
+  await act(() => useUiStore.setState({ upcomingFilter: 'all', toast: null }));
 });
 
 describe('UpcomingScreen', () => {
@@ -84,40 +83,20 @@ describe('UpcomingScreen', () => {
     });
   });
 
-  it('bande de la semaine : point le jour de l’épisode, saut au jour', async () => {
+  it('plus de bande de la semaine', async () => {
     await renderUpcoming();
     await screen.findByText('Lun. 12 oct.');
-    expect(screen.getByLabelText('Lun 12, événements')).toBeTruthy();
-    expect(screen.getByLabelText('Dim 11')).toBeTruthy();
-
-    // Position pas encore mesurée : pas de toast trompeur.
-    await fireEvent.press(screen.getByLabelText('Dim 11'));
-    expect(useUiStore.getState().toast).toBeNull();
-
-    const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo');
-    await fireEvent(screen.getByTestId('group-2026-10-12'), 'layout', {
-      nativeEvent: { layout: { x: 0, y: 500, width: 390, height: 120 } },
-    });
-    await fireEvent.press(screen.getByLabelText('Dim 11'));
-    // Premier groupe dont le jour est ≥ dimanche : lundi 12, sous la bande (− 72).
-    expect(scrollTo).toHaveBeenCalledWith({ y: 428, animated: true });
-    scrollTo.mockRestore();
+    expect(screen.queryByLabelText('Lun 12, événements')).toBeNull();
   });
 
-  it('aucun événement à partir du jour touché : toast', async () => {
-    mockApi.mockResolvedValue({ events: [UPCOMING.events[0]], noDate: [] });
+  it('Sans date toujours dépliée, éléments grisés mais cliquables', async () => {
     await renderUpcoming();
-    await screen.findByText('Lun. 12 oct.');
-    await fireEvent.press(screen.getByLabelText('Mar 13'));
-    expect(useUiStore.getState().toast?.message).toBe('Rien de prévu à partir de ce jour');
-  });
-
-  it('Sans date repliée par défaut, dépliée au tap', async () => {
-    await renderUpcoming();
-    await screen.findByText('Sans date');
-    expect(screen.queryByText('Saison 2 annoncée, date à venir')).toBeNull();
-    await fireEvent.press(screen.getByText('Sans date'));
+    expect(await screen.findByText('Sans date')).toBeTruthy();
     expect(screen.getByText('Saison 2 annoncée, date à venir')).toBeTruthy();
+    const row = screen.getByLabelText('Frieren, Saison 2 annoncée, date à venir');
+    expect(row.props.accessibilityState?.disabled).toBeFalsy();
+    await fireEvent.press(row);
+    expect(router.push).toHaveBeenCalled();
   });
 
   it('vide : « Rien de prévu » et lien vers Découvrir › Séries', async () => {

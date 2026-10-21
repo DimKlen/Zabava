@@ -1,7 +1,7 @@
 import { useScrollToTop } from 'expo-router';
-import { CalendarBlankIcon, CaretDownIcon, CaretUpIcon } from 'phosphor-react-native';
-import { useRef, useState, type ReactElement } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { CalendarBlankIcon } from 'phosphor-react-native';
+import { useRef, type ReactElement } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useUpcoming, type UpcomingData, type UpcomingFilter } from '@/api/upcoming';
@@ -12,21 +12,13 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SkeletonBox } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
-import {
-  groupUpcoming,
-  jumpTarget,
-  noDateLine,
-  weekDays,
-  type UpcomingGroup,
-  type WeekDay,
-} from '@/domain/upcoming';
+import { groupUpcoming, noDateLine, type UpcomingGroup } from '@/domain/upcoming';
 import { openDiscover } from '@/lib/discover';
-import { showToast, useUiStore } from '@/store/ui';
+import { useUiStore } from '@/store/ui';
 import { colors, radii, spacing } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
 import { UpcomingRow } from './UpcomingRow';
-import { WeekStrip } from './WeekStrip';
 
 const FILTERS: readonly { key: UpcomingFilter; label: string }[] = [
   { key: 'all', label: 'Tout' },
@@ -35,11 +27,9 @@ const FILTERS: readonly { key: UpcomingFilter; label: string }[] = [
   { key: 'anime', label: 'Animés' },
 ];
 
-/** Le groupe touché s'arrête sous la bande collante. */
-const JUMP_OFFSET = 72;
 const SKELETONS = 4;
 
-/** À venir (specs/docs/09 §9.1) : bande de la semaine, groupes par jour, Sans date. */
+/** À venir (specs/docs/09 §9.1) : groupes par jour, puis Sans date (toujours visible, grisée). */
 export function UpcomingScreen() {
   const insets = useSafeAreaInsets();
   const filter = useUiStore((s) => s.upcomingFilter);
@@ -47,32 +37,10 @@ export function UpcomingScreen() {
   const query = useUpcoming(filter);
   const scrollRef = useRef<ScrollView>(null);
   useScrollToTop(scrollRef);
-  // Position de chaque groupe dans le défilement (saut au jour) : lue et écrite hors rendu.
-  const [offsets] = useState(() => new Map<string, number>());
 
   const now = new Date();
   const groups = query.data ? groupUpcoming(query.data.events, now) : [];
-  const days = weekDays(groups, now);
 
-  // Gestionnaire onLayout : appelé après le rendu, jamais pendant.
-  function recordOffset(key: string, y: number) {
-    offsets.set(key, y);
-  }
-
-  const jump = (day: WeekDay) => {
-    const target = jumpTarget(groups, day.date);
-    if (!target) {
-      showToast('Rien de prévu à partir de ce jour');
-      return;
-    }
-    // Position pas encore mesurée (premier rendu) : rien à faire.
-    const y = offsets.get(target.key);
-    if (y !== undefined) {
-      scrollRef.current?.scrollTo({ y: Math.max(0, y - JUMP_OFFSET), animated: true });
-    }
-  };
-
-  // Enfants directs du ScrollView : la bande (index 2) reste collée en haut.
   const children: ReactElement[] = [
     <ScreenHeader key="header" title="À venir" />,
     <View key="chips" style={styles.chips}>
@@ -86,11 +54,10 @@ export function UpcomingScreen() {
         />
       ))}
     </View>,
-    <WeekStrip key="week" days={days} onSelect={jump} />,
   ];
 
   if (query.data) {
-    children.push(...content(query.data, groups, recordOffset));
+    children.push(...content(query.data, groups));
   } else if (showsLoadError(query)) {
     children.push(<LoadError key="error" onRetry={() => void query.refetch()} />);
   } else {
@@ -106,18 +73,14 @@ export function UpcomingScreen() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <OfflineBanner />
-      <ScrollView ref={scrollRef} stickyHeaderIndices={[2]} contentContainerStyle={styles.content}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
         {children}
       </ScrollView>
     </View>
   );
 }
 
-function content(
-  data: UpcomingData,
-  groups: UpcomingGroup[],
-  onGroupLayout: (key: string, y: number) => void,
-): ReactElement[] {
+function content(data: UpcomingData, groups: UpcomingGroup[]): ReactElement[] {
   if (groups.length === 0 && data.noDate.length === 0) {
     return [
       <EmptyState
@@ -130,12 +93,7 @@ function content(
     ];
   }
   const blocks: ReactElement[] = groups.map((group) => (
-    <View
-      key={group.key}
-      testID={`group-${group.key}`}
-      onLayout={(e) => onGroupLayout(group.key, e.nativeEvent.layout.y)}
-      style={styles.group}
-    >
+    <View key={group.key} testID={`group-${group.key}`} style={styles.group}>
       <Text accessibilityRole="header" style={styles.groupLabel}>
         {group.label}
       </Text>
@@ -150,33 +108,23 @@ function content(
   return blocks;
 }
 
-/** « Sans date » : séries en production sans épisode daté, repliée par défaut. */
+/** « Sans date » : séries en production sans épisode daté, toujours dépliée et grisée. */
 function NoDateSection({ data }: { data: UpcomingData }) {
-  const open = useUiStore((s) => s.noDateOpen);
-  const toggle = useUiStore((s) => s.toggleNoDate);
-  const Caret = open ? CaretUpIcon : CaretDownIcon;
   return (
     <View style={styles.noDate}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
-        onPress={toggle}
-        style={styles.noDateHeader}
-      >
-        <Text style={styles.noDateTitle}>Sans date</Text>
-        <Caret size={16} color={colors.neutral500} />
-      </Pressable>
-      {open ? (
-        <View style={styles.items}>
-          {data.noDate.map((item) => (
-            <UpcomingRow
-              key={item.title.id}
-              title={item.title}
-              line={noDateLine(item.nextSeason)}
-            />
-          ))}
-        </View>
-      ) : null}
+      <Text accessibilityRole="header" style={styles.noDateTitle}>
+        Sans date
+      </Text>
+      <View style={styles.items}>
+        {data.noDate.map((item) => (
+          <UpcomingRow
+            key={item.title.id}
+            title={item.title}
+            line={noDateLine(item.nextSeason)}
+            dimmed
+          />
+        ))}
+      </View>
     </View>
   );
 }
@@ -218,16 +166,11 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingHorizontal: spacing.screenX,
   },
-  noDateHeader: {
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   noDateTitle: {
     fontFamily: fonts.medium,
     fontSize: 15,
     lineHeight: 15 * 1.3,
     color: colors.text,
+    marginBottom: 6,
   },
 });
