@@ -105,8 +105,8 @@ describe('MovieScreen', () => {
     // au Canada ; pour Apple TV+, seulement le pays le plus proche.
     expect(screen.getByLabelText('Crave')).toBeTruthy();
     expect(screen.getByText('Crave')).toBeTruthy();
-    expect(screen.getByLabelText('Apple TV+ (USA)')).toBeTruthy();
-    expect(screen.getByText('Apple TV+ (USA)')).toBeTruthy();
+    expect(screen.getByLabelText('Apple TV+ (États-Unis)')).toBeTruthy();
+    expect(screen.getByText('Apple TV+ (États-Unis)')).toBeTruthy();
     expect(screen.queryByText('Abonnement')).toBeNull();
     expect(screen.queryByText('Location')).toBeNull();
     expect(screen.queryByText('Achat')).toBeNull();

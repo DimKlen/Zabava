@@ -44,18 +44,18 @@ describe('movieState', () => {
   });
 });
 
-describe('posterBadge (même texte que le prototype)', () => {
+describe('posterBadge (pas de plateforme sur les films)', () => {
   it.each([
     ['dune3', { text: '18 déc.' }],
     ['odyssey', { text: 'Au cinéma', highlight: true }],
-    ['wicked2', { text: 'Prime Video' }],
-    ['obaa', { text: 'Prime Video' }],
-    ['sinners', { text: 'Crave' }],
-    ['f1', { text: 'Apple TV+' }],
-    ['hailmary', { text: 'Prime Video' }],
-    ['monte', { text: 'Netflix' }],
-    ['spider', { text: 'Prime Video' }],
-    ['kpop', { text: 'Netflix' }],
+    ['wicked2', null],
+    ['obaa', null],
+    ['sinners', null],
+    ['f1', null],
+    ['hailmary', null],
+    ['monte', null],
+    ['spider', null],
+    ['kpop', null],
   ])('%s → %j', (id, badge) => {
     expect(posterBadge(film(id), MY_PROVIDER_IDS, TODAY)).toEqual(badge);
   });
