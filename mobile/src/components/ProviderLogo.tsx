@@ -26,7 +26,7 @@ const SIZE = 40;
  */
 export function ProviderLogo({ provider, mine, region, onPress }: Props) {
   const uri = tmdbImage(provider.logoPath, 'w92');
-  // « Netflix (USA) » : le catalogue d'une plateforme change selon le pays.
+  // « Netflix (États-Unis) » : le catalogue d'une plateforme change selon le pays.
   const country = countryLabel(provider.countries, region);
   const label = country ? `${provider.name} ${country}` : provider.name;
   return (

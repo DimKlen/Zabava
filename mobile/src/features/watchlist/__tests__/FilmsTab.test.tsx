@@ -73,7 +73,7 @@ describe('FilmsTab', () => {
     // Dune 3 et Avengers sortent le même jour ; « Au cinéma » est aussi un filtre.
     expect(screen.getAllByText('18 déc.')).toHaveLength(2);
     expect(screen.getAllByText('Au cinéma')).toHaveLength(2);
-    expect(screen.getByText('Netflix')).toBeTruthy();
+    expect(screen.queryByText('Netflix')).toBeNull();
   });
 
   it('le filtre « Sur mes plateformes » garde les films en abonnement ou en location chez moi', async () => {

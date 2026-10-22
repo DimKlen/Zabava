@@ -1,6 +1,12 @@
 /** Disponibilité d'un film dans la région — specs/docs/01 §5 (`A.mState`, `A.bestPlat`). */
 import { daysFromToday } from './dates';
-import { groupProviders, isGroupSelected, mergedCountries, type ProviderGroup } from './providers';
+import {
+  groupProviders,
+  isGroupSelected,
+  isListedProvider,
+  mergedCountries,
+  type ProviderGroup,
+} from './providers';
 import type { Availability, Provider } from './types';
 
 export type MovieState = 'upcoming' | 'avail' | 'cinema' | 'unknown';
@@ -56,8 +62,8 @@ export function mineFirst(providers: readonly Provider[], myProviderIds: readonl
 
 /**
  * « Où regarder » : abonnement, location puis achat, une seule entrée par service (« Netflix
- * Standard with Ads » et « Amazon Video » rejoignent leur service, Cosmo Go est masqué), les
- * miennes en premier.
+ * Standard with Ads » et « Amazon Video » rejoignent leur service, Cosmo Go est masqué), limité
+ * aux plateformes de « Mes plateformes » du profil, les miennes en premier.
  */
 export function whereToWatch(
   { sub, rent, buy }: Availability,
@@ -71,22 +77,22 @@ export function whereToWatch(
   const unique = [...offers.values()].flatMap(([first, ...others]) =>
     first ? [{ ...first, countries: mergedCountries([first, ...others]) }] : [],
   );
-  const groups = groupProviders(unique);
+  const groups = groupProviders(unique).filter((group) => isListedProvider(group, myProviderIds));
   const mine = groups.filter((group) => isGroupSelected(group, myProviderIds));
   return [...mine, ...groups.filter((group) => !mine.includes(group))];
 }
 
-/** Codes ISO 3166-1 alpha-3 : le catalogue d'une plateforme change selon le pays. */
-const COUNTRY_CODES: Record<string, string> = {
-  CA: 'CAN',
-  FR: 'FRA',
-  BE: 'BEL',
-  CH: 'CHE',
-  US: 'USA',
-  GB: 'GBR',
-  DE: 'DEU',
-  ES: 'ESP',
-  IT: 'ITA',
+/** Noms des pays proposés par le serveur. */
+const COUNTRY_NAMES: Record<string, string> = {
+  CA: 'Canada',
+  FR: 'France',
+  BE: 'Belgique',
+  CH: 'Suisse',
+  US: 'États-Unis',
+  GB: 'Royaume-Uni',
+  DE: 'Allemagne',
+  ES: 'Espagne',
+  IT: 'Italie',
 };
 
 /** Centre approximatif des pays proposés par le serveur (latitude, longitude en degrés). */
@@ -116,7 +122,7 @@ function distance(from: string, to: string): number {
 
 /**
  * Pays affiché à côté d'une plateforme : rien si elle propose le titre dans ma région, sinon
- * le pays le plus proche de ma région (« Netflix (USA) »), le catalogue changeant selon le pays.
+ * le pays le plus proche de ma région (« Netflix (États-Unis) »), le catalogue changeant selon le pays.
  */
 export function countryLabel(
   countries: readonly string[] | undefined,
@@ -126,5 +132,5 @@ export function countryLabel(
     return undefined;
   }
   const [closest] = [...countries].sort((a, b) => distance(region, a) - distance(region, b));
-  return closest ? `(${COUNTRY_CODES[closest] ?? closest})` : undefined;
+  return closest ? `(${COUNTRY_NAMES[closest] ?? closest})` : undefined;
 }

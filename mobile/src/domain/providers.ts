@@ -21,18 +21,17 @@ const FEATURED = [
   'peacock',
   'crunchyroll',
   'animation digital network',
-  'icitoutv',
   'm6 plus',
-  'arte',
   'youtube',
   'google play movies',
-  'fandango at home',
-  'mubi',
   'rakuten tv',
-  'tubi tv',
   'pluto tv',
-  'cbc gem',
 ];
+
+/** Une plateforme de la liste « Mes plateformes » du profil (ou déjà cochée). */
+export function isListedProvider(group: ProviderGroup, selectedIds: readonly number[]): boolean {
+  return FEATURED.includes(groupKey(group.name)) || isGroupSelected(group, selectedIds);
+}
 
 /** Formule avec publicités (« Amazon Prime Video with Ads ») et services masqués (Cosmo Go). */
 const HIDDEN = /\bwith ads$|^cosmo ?go$/i;

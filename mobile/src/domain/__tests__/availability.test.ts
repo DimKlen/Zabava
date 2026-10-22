@@ -32,6 +32,14 @@ describe('whereToWatch', () => {
   });
 });
 
+describe('whereToWatch : liste du profil', () => {
+  it('écarte les plateformes absentes de « Mes plateformes »', () => {
+    const fandango = { id: 7, name: 'Fandango At Home', short: 'F' };
+    const result = whereToWatch({ sub: [], rent: [fandango, netflix], buy: [] }, []);
+    expect(result.map((p) => p.name)).toEqual(['Netflix']);
+  });
+});
+
 describe('whereToWatch : pays', () => {
   it('une plateforme en abonnement et en location garde les pays des deux', () => {
     const rentUs = { ...netflix, countries: ['US'] };
@@ -46,14 +54,14 @@ describe('countryLabel', () => {
   });
 
   it('sinon, un seul pays : le plus proche de ma région', () => {
-    expect(countryLabel(['FR', 'GB', 'US'], 'CA')).toBe('(USA)');
-    expect(countryLabel(['BE', 'ES', 'US'], 'FR')).toBe('(BEL)');
-    expect(countryLabel(['DE', 'GB', 'IT'], 'CH')).toBe('(DEU)');
-    expect(countryLabel(['ES', 'FR', 'GB'], 'US')).toBe('(GBR)');
+    expect(countryLabel(['FR', 'GB', 'US'], 'CA')).toBe('(États-Unis)');
+    expect(countryLabel(['BE', 'ES', 'US'], 'FR')).toBe('(Belgique)');
+    expect(countryLabel(['DE', 'GB', 'IT'], 'CH')).toBe('(Allemagne)');
+    expect(countryLabel(['ES', 'FR', 'GB'], 'US')).toBe('(Royaume-Uni)');
   });
 
-  it('pays sans position connue : après les autres, code ISO à deux lettres', () => {
-    expect(countryLabel(['JP', 'FR'], 'CA')).toBe('(FRA)');
+  it('pays sans position connue : après les autres, code ISO', () => {
+    expect(countryLabel(['JP', 'FR'], 'CA')).toBe('(France)');
     expect(countryLabel(['JP'], 'CA')).toBe('(JP)');
   });
 

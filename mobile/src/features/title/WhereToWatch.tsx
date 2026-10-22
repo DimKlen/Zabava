@@ -14,7 +14,7 @@ import { InfoSection } from './InfoSection';
 type Props = {
   availability: Availability;
   myProviderIds: readonly number[];
-  /** Région du profil (« Netflix » chez moi, « Netflix (USA) » ailleurs). */
+  /** Région du profil (« Netflix » chez moi, « Netflix (États-Unis) » ailleurs). */
   region: string | undefined;
 };
 
