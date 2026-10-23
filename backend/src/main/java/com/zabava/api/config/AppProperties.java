@@ -4,7 +4,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /** Configuration externe (variables d'environnement de specs/docs/11 §6). */
 @ConfigurationProperties(prefix = "zabava")
-public record AppProperties(Supabase supabase, Tmdb tmdb, Omdb omdb, Tvmaze tvmaze, Expo expo, Jobs jobs) {
+public record AppProperties(
+        Supabase supabase, Tmdb tmdb, Omdb omdb, Tvmaze tvmaze, Expo expo, Jobs jobs, App app) {
 
     /**
      * @param url URL du projet Supabase (Admin API pour DELETE /me)
@@ -26,4 +27,13 @@ public record AppProperties(Supabase supabase, Tmdb tmdb, Omdb omdb, Tvmaze tvma
 
     /** @param enabled tâches planifiées actives (coupées dans les tests) */
     public record Jobs(boolean enabled) {}
+
+    /**
+     * App Android, pour les liens d'invitation https://{domaine}/u/{pseudo} (App Links).
+     *
+     * @param packageName identifiant de l'app
+     * @param scheme schéma des liens profonds (zabava://)
+     * @param certSha256 empreintes SHA-256 des certificats de signature (publiques)
+     */
+    public record App(String packageName, String scheme, java.util.List<String> certSha256) {}
 }
