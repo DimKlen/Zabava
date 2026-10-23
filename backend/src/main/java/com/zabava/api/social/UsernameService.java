@@ -48,7 +48,8 @@ public class UsernameService {
     }
 
     /**
-     * Change mon pseudo. Le premier choix est libre ; ensuite un changement tous les 30 jours,
+     * Change mon pseudo. Le premier choix, et tout changement avant la fin de l'onboarding (retour
+     * à l'étape du pseudo), sont libres ; ensuite un changement tous les 30 jours,
      * l'ancien pseudo restant réservé 30 jours. Erreurs : {@code 422 username_invalid},
      * {@code 409 username_taken}, {@code 429 username_change_too_soon}.
      */
@@ -56,11 +57,15 @@ public class UsernameService {
         if (!Usernames.isWellFormed(username) || Usernames.isReserved(username)) {
             throw new ApiException(HttpStatus.UNPROCESSABLE_CONTENT, "username_invalid", "Pseudo invalide");
         }
-        record Current(String username, Instant changedAt) {}
-        Current current = db.sql("select username, username_changed_at from profiles where id = :me")
+        record Current(String username, Instant changedAt, boolean onboarded) {}
+        Current current = db.sql("select username, username_changed_at, onboarded_at is not null as onboarded from profiles where id = :me")
                 .param("me", me)
-                .query((rs, n) -> new Current(rs.getString("username"), SocialStore.instant(rs.getTimestamp("username_changed_at"))))
+                .query((rs, n) -> new Current(
+                        rs.getString("username"),
+                        SocialStore.instant(rs.getTimestamp("username_changed_at")),
+                        rs.getBoolean("onboarded")))
                 .single();
+        boolean counted = current.username() != null && current.onboarded();
         if (username.equals(current.username())) return;
         Instant now = clock.instant();
         if (current.username() != null && current.changedAt() != null && current.changedAt().plus(CHANGE_DELAY).isAfter(now)) {
@@ -72,10 +77,11 @@ public class UsernameService {
         try {
             db.sql("""
                     update profiles set username = :u,
-                      username_changed_at = case when username is null then username_changed_at else :now end
+                      username_changed_at = case when cast(:counted as boolean) then :now else username_changed_at end
                     where id = :me
                     """)
                     .param("u", username)
+                    .param("counted", counted)
                     .param("now", Timestamp.from(now))
                     .param("me", me)
                     .update();
@@ -86,7 +92,7 @@ public class UsernameService {
                 .param("u", username)
                 .param("me", me)
                 .update();
-        if (current.username() != null) {
+        if (counted) {
             db.sql("""
                     insert into username_history (username, user_id, released_at) values (:old, :me, :until)
                     on conflict (username) do update set user_id = excluded.user_id, released_at = excluded.released_at
