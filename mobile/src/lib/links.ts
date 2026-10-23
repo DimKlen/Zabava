@@ -1,4 +1,5 @@
 import * as WebBrowser from 'expo-web-browser';
+
 import { config } from '@/api/config';
 import { inviteLink } from '@/domain/social/links';
 
