@@ -1,4 +1,5 @@
 import { MagnifyingGlassIcon } from 'phosphor-react-native';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { colors } from '@/theme/tokens';
@@ -11,15 +12,18 @@ type Props = {
   title: string;
   /** Ma liste et Découvrir : bouton recherche. À venir et Profil : aucun. */
   onSearch?: () => void;
+  /** Boutons icône à droite (Profil : Inviter et Réglages). */
+  actions?: ReactNode;
 };
 
-/** Titre d'écran 28/500, avec la loupe à droite si besoin. */
-export function ScreenHeader({ title, onSearch }: Props) {
+/** Titre d'écran 28/500, avec la loupe (ou d'autres boutons) à droite si besoin. */
+export function ScreenHeader({ title, onSearch, actions }: Props) {
   return (
-    <View style={onSearch ? styles.withSearch : styles.plain}>
+    <View style={onSearch || actions ? styles.withSearch : styles.plain}>
       <Text accessibilityRole="header" style={styles.title}>
         {title}
       </Text>
+      {actions ? <View style={styles.actions}>{actions}</View> : null}
       {onSearch ? (
         <Button
           variant="icon"
@@ -50,6 +54,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 8,
     paddingHorizontal: 16,
+  },
+  actions: {
+    flexDirection: 'row',
   },
   title: {
     ...typography.screenTitle,

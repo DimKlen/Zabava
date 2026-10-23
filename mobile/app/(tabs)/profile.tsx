@@ -1,5 +1,5 @@
-import { ProfileScreen } from '@/features/profile/ProfileScreen';
+import { MyProfileScreen } from '@/features/social/MyProfileScreen';
 
 export default function Profile() {
-  return <ProfileScreen />;
+  return <MyProfileScreen />;
 }
