@@ -1,3 +1,4 @@
+import { router, type Href } from 'expo-router';
 import { Tabs } from 'expo-router/tabs';
 import { useEffect } from 'react';
 
@@ -9,6 +10,8 @@ import {
   refreshPushToken,
   showNotificationsInForeground,
 } from '@/lib/notifications';
+import { isProfilePath } from '@/domain/social/links';
+import { takePendingDeepLink } from '@/lib/pendingDeepLink';
 import { useUiStore } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 
@@ -22,6 +25,13 @@ export default function TabsLayout() {
     void showNotificationsInForeground().catch(() => undefined);
     void refreshPushToken(notificationsWanted).catch(() => undefined);
     return listenToNotificationTaps();
+  }, []);
+
+  // Lien d'invitation ouvert avant la connexion : le profil s'ouvre une fois dans l'app.
+  useEffect(() => {
+    void takePendingDeepLink().then((path) => {
+      if (path && isProfilePath(path)) router.push(path as Href);
+    });
   }, []);
 
   // Découvrir préparé en arrière-plan, après le premier affichage de Ma liste.
