@@ -21,6 +21,7 @@ import com.zabava.api.me.LibraryStore.UserTitleRow;
 import com.zabava.api.me.ProfileService.Prefs;
 import com.zabava.api.me.dto.MeDtos.AddTitleRequest;
 import com.zabava.api.me.dto.MeDtos.PatchTitleRequest;
+import com.zabava.api.social.ActivityService;
 
 /** Ajout, statut, retrait d'un titre et cochage des épisodes (specs/docs/01 §3–4). */
 @Service
@@ -32,12 +33,15 @@ public class LibraryService {
     private final TitleService titles;
     private final TitleStore store;
     private final LibraryStore library;
+    private final ActivityService activities;
     private final Clock clock;
 
-    public LibraryService(TitleService titles, TitleStore store, LibraryStore library, Clock clock) {
+    public LibraryService(
+            TitleService titles, TitleStore store, LibraryStore library, ActivityService activities, Clock clock) {
         this.titles = titles;
         this.store = store;
         this.library = library;
+        this.activities = activities;
         this.clock = clock;
     }
 
@@ -58,6 +62,7 @@ public class LibraryService {
                 watchedAt,
                 request.addedAt() == null ? null : notAfter(request.addedAt(), now),
                 request.notificationsEnabled());
+        activities.syncTitle(prefs.userId(), row.id());
         return current(prefs.userId(), row);
     }
 
@@ -76,12 +81,15 @@ public class LibraryService {
             }
         }
         library.update(userId, row.id(), request.status(), watchedAt, request.notificationsEnabled());
+        if (request.status() != null) activities.syncTitle(userId, row.id());
         return current(userId, row);
     }
 
     @Transactional
     public void remove(UUID userId, String titleId) {
-        library.delete(userId, row(titleId).id());
+        long id = row(titleId).id();
+        library.delete(userId, id);
+        activities.syncTitle(userId, id);
     }
 
     /**
@@ -93,12 +101,14 @@ public class LibraryService {
         List<EpisodeRow> episodes = existing(episodeIds);
         episodes.stream().map(EpisodeRow::titleId).distinct().forEach(t -> library.followIfAbsent(userId, t));
         library.markWatched(userId, episodeIds, watchedAt != null ? watchedAt : clock.instant());
+        activities.syncTitles(userId, episodes.stream().map(EpisodeRow::titleId).toList());
     }
 
     @Transactional
     public void unmark(UUID userId, List<Long> episodeIds) {
-        existing(episodeIds);
+        List<EpisodeRow> episodes = existing(episodeIds);
         library.unmark(userId, episodeIds);
+        activities.syncTitles(userId, episodes.stream().map(EpisodeRow::titleId).toList());
     }
 
     private List<EpisodeRow> existing(List<Long> episodeIds) {

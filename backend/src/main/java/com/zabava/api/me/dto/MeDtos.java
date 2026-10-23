@@ -22,8 +22,15 @@ public final class MeDtos {
 
     private MeDtos() {}
 
+    /** {@code newFollower} et {@code followRequests} : notifications sociales (specs/social/docs/05 §5). */
     public record NotificationPrefs(
-            boolean episodes, boolean cinema, boolean streaming, boolean seasons, int digestHour) {}
+            boolean episodes,
+            boolean cinema,
+            boolean streaming,
+            boolean seasons,
+            int digestHour,
+            boolean newFollower,
+            boolean followRequests) {}
 
     public record Profile(
             String id,
@@ -37,22 +44,37 @@ public final class MeDtos {
             NotificationPrefs notificationPrefs,
             String timezone,
             Instant onboardedAt,
-            List<Integer> providerIds) {}
+            List<Integer> providerIds,
+            String username,
+            Instant usernameChangedAt,
+            boolean isPrivate,
+            int followersCount,
+            int followingCount,
+            int followRequestsCount) {}
 
-    /** Champs absents = inchangés. Valeurs permises : specs/docs/05 et 09. */
+    /**
+     * Champs absents = inchangés. Valeurs permises : specs/docs/05 et 09, specs/social/docs/04 §4.3.
+     * {@code avatarUrl} vide : retour à la photo du compte OAuth.
+     */
     public record ProfileUpdate(
             @Pattern(regexp = "CA|FR|BE|CH|US") String region,
             @Pattern(regexp = "fr-CA|fr-FR|en-CA|en-US") String language,
             Boolean spoilerProtection,
             @Valid NotificationPrefsUpdate notificationPrefs,
-            Instant onboardedAt) {}
+            Instant onboardedAt,
+            String username,
+            @Size(max = 200) String displayName,
+            Boolean isPrivate,
+            @Size(max = 1000) String avatarUrl) {}
 
     public record NotificationPrefsUpdate(
             Boolean episodes,
             Boolean cinema,
             Boolean streaming,
             Boolean seasons,
-            @Min(0) @Max(23) Integer digestHour) {}
+            @Min(0) @Max(23) Integer digestHour,
+            Boolean newFollower,
+            Boolean followRequests) {}
 
     public record ProvidersUpdate(@NotNull @Size(max = 50) List<Integer> providerIds) {}
 

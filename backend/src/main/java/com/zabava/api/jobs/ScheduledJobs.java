@@ -16,6 +16,8 @@ import com.zabava.api.common.MediaType;
 import com.zabava.api.common.TitleRef;
 import com.zabava.api.me.ProfileService;
 import com.zabava.api.notifications.NotificationService;
+import com.zabava.api.social.ActivityService;
+import com.zabava.api.social.UsernameService;
 
 /**
  * Tâches planifiées (specs/docs/11 §4), en UTC. Actives seulement si
@@ -42,14 +44,18 @@ public class ScheduledJobs {
     private final TitleStore store;
     private final ProfileService profiles;
     private final NotificationService notifications;
+    private final ActivityService activities;
+    private final UsernameService usernames;
 
     public ScheduledJobs(JdbcClient db, TitleService titles, TitleStore store, ProfileService profiles,
-            NotificationService notifications) {
+            NotificationService notifications, ActivityService activities, UsernameService usernames) {
         this.db = db;
         this.titles = titles;
         this.store = store;
         this.profiles = profiles;
         this.notifications = notifications;
+        this.activities = activities;
+        this.usernames = usernames;
     }
 
     /** SyncEpisodesJob : saisons et épisodes (heures TVmaze comprises) des séries suivies. */
@@ -78,6 +84,15 @@ public class ScheduledJobs {
                 .list();
         store.findByIds(ids).forEach(titles::refreshRatings);
         return ids.size();
+    }
+
+    /** Rétention du social : activités de plus de 180 jours, pseudos libérés, compteurs du jour. */
+    @Scheduled(cron = "0 30 3 * * *", zone = "UTC")
+    public int purgeSocial() {
+        int purged = activities.purge() + usernames.purge();
+        db.sql("delete from follow_quota where day < current_date - 1").update();
+        db.sql("delete from follow_removals where removed_at < now() - interval '1 day'").update();
+        return purged;
     }
 
     /** DispatchNotificationsJob : toutes les 15 minutes. */

@@ -62,7 +62,7 @@ public class MeController {
 
     @PutMapping("/profile")
     public Profile updateProfile(CurrentUser user, @Valid @RequestBody ProfileUpdate update) {
-        return profiles.update(user.id(), update);
+        return profiles.update(user.id(), update, user.avatarUrl());
     }
 
     @PutMapping("/providers")
