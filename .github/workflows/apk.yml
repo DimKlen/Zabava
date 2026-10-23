@@ -1,14 +1,10 @@
-# APK Android : à chaque fusion sur main qui touche l'app, ou à la main depuis l'onglet
-# Actions. Construit l'APK « preview » sur le runner (`eas build --local` : gratuit, hors
-# quota EAS ; même clé de signature, téléchargée depuis EAS), puis le publie dans une
-# release GitHub.
+# APK Android : à la main seulement, depuis l'onglet Actions (Run workflow) ; une fusion sur
+# main n'en construit pas. Construit l'APK « preview » sur le runner (`eas build --local` :
+# gratuit, hors quota EAS ; même clé de signature, téléchargée depuis EAS), puis le publie
+# dans une release GitHub.
 name: APK Android
 
 on:
-  push:
-    branches: [main]
-    # Une fusion seulement backend ne change pas l'APK : pas de build EAS gaspillé.
-    paths: ['mobile/**']
   workflow_dispatch:
 
 concurrency:
