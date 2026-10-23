@@ -21,7 +21,8 @@ export function languageLabel(code: string | undefined): string {
 
 export const DEFAULT_LANGUAGE: LanguageCode = 'fr-CA';
 
-export const ONBOARDING_STEPS = ['region', 'platforms', 'titles'] as const;
+/** Le pseudo vient en premier (specs/social/docs/04 §4.1). */
+export const ONBOARDING_STEPS = ['username', 'region', 'platforms', 'titles'] as const;
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
 
 /** Étape d'un chemin `/onboarding/…`, ou null (écran des notifications). */
@@ -35,12 +36,17 @@ export function nextStep(step: OnboardingStep): OnboardingStep | 'notifications'
   return ONBOARDING_STEPS[ONBOARDING_STEPS.indexOf(step) + 1] ?? 'notifications';
 }
 
-/** Étape précédente (retour aux étapes 2 et 3 seulement). */
+/** Étape précédente (pas de retour depuis le pseudo). */
 export function previousStep(step: OnboardingStep): OnboardingStep | null {
   return ONBOARDING_STEPS[ONBOARDING_STEPS.indexOf(step) - 1] ?? null;
 }
 
-/** Compteur de l'étape 3 (titres ajoutés pendant l'onboarding). */
+/** « Passer » : jamais sur l'étape du pseudo, obligatoire. */
+export function canSkip(step: OnboardingStep): boolean {
+  return step !== 'username';
+}
+
+/** Compteur de l'étape des titres (titres ajoutés pendant l'onboarding). */
 export function addedCountLabel(count: number): string {
   if (count === 0) return "Touche une affiche pour l'ajouter";
   if (count === 1) return '1 titre ajouté';

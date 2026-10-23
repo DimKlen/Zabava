@@ -74,6 +74,7 @@ export default function RootLayout() {
             <Stack.Screen name="login" options={{ animation: 'fade' }} />
             <Stack.Screen name="auth/callback" options={{ animation: 'none' }} />
             <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
+            <Stack.Screen name="username-required" options={{ animation: 'fade' }} />
             <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
             <Stack.Screen name="title/[type]/[id]" options={pushOptions} />
             <Stack.Screen name="person/[id]" options={pushOptions} />
@@ -84,6 +85,7 @@ export default function RootLayout() {
               options={{ animation: 'fade', animationDuration: durations.fadeSearch }}
             />
             <Stack.Screen name="dev/kitchen-sink" options={pushOptions} />
+            <Stack.Screen name="dev/session" options={{ animation: 'none' }} />
           </Stack>
           {/* Empilement : écran < Toast < ActionSheet / sheets < Dialog. */}
           <ToastHost />

@@ -51,7 +51,8 @@ class UserIT extends SocialTest {
     void changerDePseudoUneFoisTousLes30Jours() throws Exception {
         UUID nouveau = createUser("nouveau@example.com");
         // Premier choix (onboarding) : ne compte pas comme un changement.
-        mvc.perform(json(nouveau, put("/api/v1/me/profile"), "{\"username\": \"eloise\", \"isPrivate\": true}"))
+        mvc.perform(json(nouveau, put("/api/v1/me/profile"),
+                        "{\"username\": \"eloise\", \"isPrivate\": true, \"onboardedAt\": \"" + NOW + "\"}"))
                 .andExpect(jsonPath("$.username").value("eloise"))
                 .andExpect(jsonPath("$.isPrivate").value(true))
                 .andExpect(jsonPath("$.usernameChangedAt").doesNotExist());
@@ -68,6 +69,18 @@ class UserIT extends SocialTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code").value("username_taken"));
         mvc.perform(as(dim, get("/api/v1/users/eloise"))).andExpect(jsonPath("$.username").value("eloise.b"));
+    }
+
+    @Test
+    void pendantLOnboardingChangerDePseudoEstLibre() throws Exception {
+        UUID nouveau = createUser("nouveau@example.com");
+        mvc.perform(json(nouveau, put("/api/v1/me/profile"), "{\"username\": \"eloise\"}"));
+        // Retour à l'étape du pseudo : ni délai de 30 jours ni ancien pseudo réservé.
+        mvc.perform(json(nouveau, put("/api/v1/me/profile"), "{\"username\": \"eloise.b\"}"))
+                .andExpect(jsonPath("$.usernameChangedAt").doesNotExist());
+        mvc.perform(json(nouveau, put("/api/v1/me/profile"), "{\"username\": \"eloise.c\"}"))
+                .andExpect(status().isOk());
+        mvc.perform(as(dim, get("/api/v1/users/username-available?u=eloise"))).andExpect(jsonPath("$.available").value(true));
     }
 
     @Test

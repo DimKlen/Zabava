@@ -41,9 +41,15 @@ describe('OnboardingHeader', () => {
     expect(router.push).toHaveBeenCalledWith(target);
   });
 
-  it("n'affiche pas de retour à l'étape 1", async () => {
-    await renderHeader('region');
+  it("ni retour ni « Passer » à l'étape du pseudo", async () => {
+    await renderHeader('username');
     expect(screen.queryByLabelText('Retour')).toBeNull();
+    expect(screen.queryByText('Passer')).toBeNull();
+  });
+
+  it('la langue revient au pseudo', async () => {
+    await renderHeader('region');
+    expect(screen.getByLabelText('Retour')).toBeTruthy();
   });
 
   it('revient en arrière aux étapes 2 et 3', async () => {
