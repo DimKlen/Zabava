@@ -81,6 +81,7 @@ export function ScanScreen() {
               barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
               onBarcodeScanned={scanned}
             />
+            <View style={styles.scanLine} />
           </View>
         </View>
         <Text style={styles.text}>Vise le code Zabava d&apos;un ami pour ouvrir son profil.</Text>
@@ -144,6 +145,16 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.accent,
     backgroundColor: colors.bg,
+  },
+  // Ligne de visée du prototype : 2 px accent à mi-hauteur, 16 de marge.
+  scanLine: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    top: (FRAME - 2) / 2,
+    height: 2,
+    backgroundColor: colors.accent,
+    opacity: 0.7,
   },
   text: {
     marginBottom: 16,
