@@ -26,7 +26,10 @@ jest.mock('@/api/queryClient', () => {
     jest.requireActual<typeof import('@tanstack/react-query')>('@tanstack/react-query');
   return {
     queryClient: new QueryClient({
-      defaultOptions: { queries: { gcTime: Infinity, retry: false } },
+      defaultOptions: {
+        queries: { gcTime: Infinity, retry: false },
+        mutations: { gcTime: Infinity },
+      },
     }),
   };
 });
