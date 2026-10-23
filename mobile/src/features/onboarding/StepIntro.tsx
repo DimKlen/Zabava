@@ -7,8 +7,8 @@ import { typography } from '@/theme/typography';
 type Props = {
   title: string;
   text: string;
-  /** Marge sous le texte : 24 (étapes 1 et 2) ou 8 (étape 3). */
-  textMarginBottom: 8 | 24;
+  /** Marge sous le texte : 24 (langue, plateformes), 20 (pseudo) ou 8 (titres). */
+  textMarginBottom: 8 | 20 | 24;
 };
 
 /** Titre 28/500 et texte 15 neutral400 d'une étape. */

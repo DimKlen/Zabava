@@ -11,13 +11,19 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
-import { nextStep, ONBOARDING_STEPS, previousStep, type OnboardingStep } from '@/domain/onboarding';
+import {
+  canSkip,
+  nextStep,
+  ONBOARDING_STEPS,
+  previousStep,
+  type OnboardingStep,
+} from '@/domain/onboarding';
 import { easeTiming } from '@/lib/animation';
 import { colors, durations } from '@/theme/tokens';
 
 type Props = { step: OnboardingStep };
 
-/** Barre du haut : retour (étapes 2 et 3), progression en 3 segments, « Passer ». */
+/** Barre du haut : retour (sauf au pseudo), progression en 4 segments, « Passer » (sauf au pseudo). */
 export function OnboardingHeader({ step }: Props) {
   const insets = useSafeAreaInsets();
   const current = ONBOARDING_STEPS.indexOf(step);
@@ -51,14 +57,22 @@ export function OnboardingHeader({ step }: Props) {
           <Segment key={key} filled={index <= current} />
         ))}
       </View>
-      <Button
-        variant="ghost"
-        height={44}
-        label="Passer"
-        color={colors.neutral400}
-        onPress={skip}
-        style={styles.skip}
-      />
+      {/* Masqué sans être retiré : la barre de progression garde sa largeur d'une étape à l'autre. */}
+      <View
+        style={!canSkip(step) && styles.hidden}
+        pointerEvents={canSkip(step) ? 'auto' : 'none'}
+        accessibilityElementsHidden={!canSkip(step)}
+        importantForAccessibility={canSkip(step) ? 'auto' : 'no-hide-descendants'}
+      >
+        <Button
+          variant="ghost"
+          height={44}
+          label="Passer"
+          color={colors.neutral400}
+          onPress={skip}
+          style={styles.skip}
+        />
+      </View>
     </View>
   );
 }
@@ -100,5 +114,8 @@ const styles = StyleSheet.create({
   },
   skip: {
     paddingHorizontal: 12,
+  },
+  hidden: {
+    opacity: 0,
   },
 });

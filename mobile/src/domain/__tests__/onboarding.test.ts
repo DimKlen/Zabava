@@ -1,5 +1,6 @@
 import {
   addedCountLabel,
+  canSkip,
   anyNotificationEnabled,
   LANGUAGES,
   languageChoice,
@@ -7,24 +8,34 @@ import {
   NOTIFICATIONS_OFF,
   initialStatus,
   nextStep,
+  ONBOARDING_STEPS,
   previousStep,
   stepFromPath,
 } from '../onboarding';
 
 describe('étapes', () => {
   it('« Passer » mène à l’étape suivante, puis aux notifications', () => {
+    expect(nextStep('username')).toBe('region');
     expect(nextStep('region')).toBe('platforms');
     expect(nextStep('platforms')).toBe('titles');
     expect(nextStep('titles')).toBe('notifications');
   });
 
-  it('le retour n’existe qu’aux étapes 2 et 3', () => {
-    expect(previousStep('region')).toBeNull();
+  it('pas de retour depuis le pseudo, la 1re étape', () => {
+    expect(ONBOARDING_STEPS).toEqual(['username', 'region', 'platforms', 'titles']);
+    expect(previousStep('username')).toBeNull();
+    expect(previousStep('region')).toBe('username');
     expect(previousStep('platforms')).toBe('region');
     expect(previousStep('titles')).toBe('platforms');
   });
 
+  it('« Passer » n’existe pas sur l’étape du pseudo', () => {
+    expect(canSkip('username')).toBe(false);
+    expect(canSkip('region')).toBe(true);
+  });
+
   it('déduit l’étape du chemin', () => {
+    expect(stepFromPath('/onboarding/username')).toBe('username');
     expect(stepFromPath('/onboarding/region')).toBe('region');
     expect(stepFromPath('/onboarding/titles')).toBe('titles');
     expect(stepFromPath('/onboarding/notifications')).toBeNull();
