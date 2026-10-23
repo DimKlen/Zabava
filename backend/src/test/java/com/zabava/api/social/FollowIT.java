@@ -307,6 +307,34 @@ class FollowIT extends SocialTest {
         assertThat(count("select count(*) from activities")).isZero();
     }
 
+    /**
+     * Supabase supprime un compte avec son propre rôle (supabase_auth_admin), qui n'a aucun droit
+     * sur public : la cascade et les triggers sociaux doivent passer quand même.
+     */
+    @Test
+    void laSuppressionParSupabaseAuthPasseLaCascadeSociale() throws Exception {
+        follow(dim, "lea.m");
+        follow(lea, "dim.k");
+        mvc.perform(as(lea, delete("/api/v1/me/followers/dim.k")));
+        follow(dim, "max.dubois");
+        TransactionTemplate tx = new TransactionTemplate(transactionManager);
+        tx.executeWithoutResult(s -> {
+            db.sql("""
+                    do $$ begin
+                      if not exists (select 1 from pg_roles where rolname = 'auth_admin_test') then
+                        create role auth_admin_test nologin;
+                      end if;
+                    end $$
+                    """).update();
+            db.sql("grant usage on schema auth to auth_admin_test").update();
+            db.sql("grant select, delete on auth.users to auth_admin_test").update();
+            db.sql("set local role auth_admin_test").update();
+            db.sql("delete from auth.users where id = :id").param("id", dim).update();
+        });
+        assertThat(followers(lea)).isZero();
+        assertThat(following(lea)).isZero();
+    }
+
     /** Clients directs (clé Supabase) : lecture de leurs lignes seulement, aucune écriture. */
     @Test
     void laRlsInterditDeSAbonnerSansPasserParLeBackend() throws Exception {
