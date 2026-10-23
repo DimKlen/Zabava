@@ -37,7 +37,18 @@ Le nom du fichier de référence `App Suivi.dc.html` reste tel quel.
 7. **Logique métier** : `specs/reference/app.js` fait foi pour les algorithmes (sections de la watchlist, prochain épisode, badges, filtres). Porte-les dans `src/domain/` en TypeScript pur, avec des tests unitaires.
 8. **Hors ligne** : cocher un épisode, marquer un film comme vu, ajouter ou retirer un titre doivent marcher sans réseau (file de mutations persistée) et afficher le résultat tout de suite (mise à jour optimiste).
 9. **Annulation** : toute action qui modifie la liste ou le suivi affiche un toast de 5 s avec « Annuler », sauf exceptions listées dans `specs/docs/10`.
-10. **Pas de fonctionnalités hors périmètre** : ni statistiques, ni social, ni lecture vidéo dans l'app. Seule exception, demandée le 2026-10-18 : la bande-annonce YouTube lue dans la fiche (`react-native-webview`, arrêtée quand on quitte l'écran).
+10. **Pas de fonctionnalités hors périmètre** : ni statistiques, ni lecture vidéo dans l'app. Exceptions : la bande-annonce YouTube lue dans la fiche (demandée le 2026-10-18, `react-native-webview`, arrêtée quand on quitte l'écran) et la V1 sociale « Suivre des utilisateurs » (demandée le 2026-10-23, voir « Partie sociale »). Commentaires, réactions, messages et partage vers les réseaux sociaux restent exclus.
+
+## Partie sociale (V1 « Suivre des utilisateurs »)
+- Spec dans `specs/social/` : `README.md`, `docs/01` à `07`, `etapes/01` à `07`, `captures/` (15), `reference/` (`social.js`, PDF, prototype `App Zabava.dc.html`). Ses chemins `docs/…`, `etapes/…`, `reference/…` et `captures/…` se lisent sous `specs/social/`.
+- Pour le social, **cette spec fait foi** ; le reste de l'app suit toujours `specs/docs/`. Correspondance rôles ↔ tokens, composants à réutiliser et écarts assumés : `specs/social/MAPPING.md`.
+- Réalise `specs/social/etapes/` dans l'ordre, une PR par étape (branche `feat/social-0N-…`), avec la même définition de « terminé ».
+- Réutilise les composants existants ; aucun hex en dur. Textes mot pour mot de `docs/04` et `docs/05`.
+- Actions sociales **optimistes**, mais **refusées hors ligne** (toast « Connexion requise ») : pas de file de mutations. Échec → retour en arrière + « Impossible d'enregistrer, réessaie ».
+- Visibilité (`docs/01` §3 et §5) appliquée **par le backend** : le client ne reçoit jamais ce qu'il n'a pas le droit d'afficher.
+- Anti-spoiler : c'est **mon** réglage qui s'applique à l'activité des autres.
+- Domaine des liens d'invitation : `151-145-50-138.sslip.io` (`EXPO_PUBLIC_INVITE_DOMAIN`). Pas de stores : la page de repli n'a pas de liens App Store / Google Play.
+- Comptes de démonstration (@lea.m, @max.dubois… de `reference/social.js`) : gardés dans la base de développement pour les démos.
 
 ## Arborescence cible
 ```

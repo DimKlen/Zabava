@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+</helmet>
+<div onClick="{{ item.open }}" style="display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 8px 8px 16px;cursor:pointer;color:var(--color-text);font-family:var(--font-body)" style-hover="background:var(--color-surface)">
+  <div style="flex:none;width:44px;height:44px;border-radius:50%;background:{{ item.bg }};display:grid;place-items:center;font-size:16px;font-weight:500;color:var(--color-text)">{{ item.initial }}</div>
+  <div style="flex:1;min-width:0">
+    <div style="font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ item.name }}</div>
+    <div style="font-size:13px;color:var(--color-neutral-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ item.sub }}</div>
+  </div>
+  <sc-if value="{{ item.hasFollow }}" hint-placeholder-val="{{ true }}">
+    <button class="{{ item.follow.cls }}" onClick="{{ item.follow.tap }}" style="flex:none;height:32px;padding:0 12px;font-size:13px;white-space:nowrap"><i class="{{ item.follow.icon }}" style="font-size:15px"></i>{{ item.follow.label }}</button>
+  </sc-if>
+  <sc-if value="{{ item.hasMore }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ item.more }}" aria-label="Plus d'options" style="flex:none;width:40px;height:40px;border:0;background:none;color:var(--color-neutral-400);cursor:pointer;display:grid;place-items:center"><i class="ph ph-dots-three" style="font-size:20px"></i></button>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:64},&quot;item&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}"></script>
+</body>
+</html>
