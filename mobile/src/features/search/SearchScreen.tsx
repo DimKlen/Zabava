@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { MagnifyingGlassIcon, SlidersHorizontalIcon } from 'phosphor-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, type TextInput } from 'react-native';
@@ -9,7 +9,7 @@ import type { PersonResult, TitleResult } from '@/api/search';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 import { defaultFilters, type AdvancedFilters } from '@/domain/advancedSearch';
-import { SEARCH_DEBOUNCE_MS, type SearchTab } from '@/domain/search';
+import { SEARCH_DEBOUNCE_MS, tabForInput, type SearchTab } from '@/domain/search';
 import { useRecentSearches } from '@/store/recentSearches';
 import { colors } from '@/theme/tokens';
 
@@ -22,15 +22,21 @@ import { SearchResults } from './SearchResults';
 import { openTitle, previewOf } from '../title/openTitle';
 import { openPerson } from '../person/openPerson';
 
+/** Champ d'une recherche de membres (specs/social/docs/04 §4.6). */
+const MEMBER_PREFIX = '@';
+
 /**
  * Recherche (specs/docs/08 §8.1). Requête, onglet et filtres avancés vivent le temps
- * de l'écran ; seules les recherches récentes sont persistées.
+ * de l'écran ; seules les recherches récentes sont persistées. `?tab=members` ouvre
+ * directement sur les membres (« Trouver des membres »).
  */
 export function SearchScreen() {
   const insets = useSafeAreaInsets();
-  const [text, setText] = useState('');
-  const [query, setQuery] = useState('');
-  const [tab, setTab] = useState<SearchTab>('all');
+  const params = useLocalSearchParams<{ tab?: string }>();
+  const startOnMembers = params.tab === 'members';
+  const [text, setText] = useState(startOnMembers ? MEMBER_PREFIX : '');
+  const [query, setQuery] = useState(startOnMembers ? MEMBER_PREFIX : '');
+  const [tab, setTab] = useState<SearchTab>(startOnMembers ? 'members' : 'all');
   const [filters, setFilters] = useState<AdvancedFilters>(() => defaultFilters(new Date()));
   const [appliedFilters, setAppliedFilters] = useState<AdvancedFilters | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -43,6 +49,7 @@ export function SearchScreen() {
 
   const changeText = (value: string) => {
     setText(value);
+    setTab((current) => tabForInput(current, value));
     clearTimeout(debounce.current);
     debounce.current = setTimeout(() => setQuery(value.trim()), SEARCH_DEBOUNCE_MS);
   };
@@ -54,7 +61,19 @@ export function SearchScreen() {
     setQuery(value.trim());
   };
 
-  const remember = () => addRecent(text);
+  // Les recherches de membres ne vont pas dans les recherches récentes (titres et personnes).
+  const remember = () => {
+    if (tab !== 'members') addRecent(text);
+  };
+
+  /** « Chercher un membre » : le champ vaut « @ » et l'onglet Membres est actif. */
+  const searchMembers = () => {
+    clearTimeout(debounce.current);
+    setText(MEMBER_PREFIX);
+    setQuery(MEMBER_PREFIX);
+    setTab('members');
+    field.current?.focus();
+  };
 
   const showTitle = (title: TitleResult) => {
     remember();
@@ -88,6 +107,7 @@ export function SearchScreen() {
   } else if (!text.trim()) {
     body = (
       <SearchIdle
+        onSearchMembers={searchMembers}
         onPickRecent={searchNow}
         onOpenTitle={showTitle}
         onToggleTitle={toggleTitle}

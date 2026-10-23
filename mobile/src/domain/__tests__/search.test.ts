@@ -1,4 +1,23 @@
-import { addRecentSearch, personRowSubtitle, resultsCountLabel, titleRowSubtitle } from '../search';
+import {
+  addRecentSearch,
+  personRowSubtitle,
+  resultsCountLabel,
+  tabForInput,
+  titleRowSubtitle,
+} from '../search';
+
+describe('tabForInput', () => {
+  it('« @ » en premier caractère passe sur Membres', () => {
+    expect(tabForInput('all', '@le')).toBe('members');
+    expect(tabForInput('movie', '@')).toBe('members');
+  });
+
+  it('sinon garde l’onglet choisi', () => {
+    expect(tabForInput('movie', 'lea')).toBe('movie');
+    expect(tabForInput('members', 'lea')).toBe('members');
+    expect(tabForInput('all', 'a@b')).toBe('all');
+  });
+});
 
 describe('addRecentSearch', () => {
   it('ajoute en tête, sans espaces autour', () => {

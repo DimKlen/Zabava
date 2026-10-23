@@ -1,7 +1,10 @@
 /** Recherche — specs/docs/08 §8.1 et docs/04 (recherches récentes). */
 import type { MediaType } from './types';
 
-export type SearchTab = 'all' | MediaType | 'person';
+/** `members` : membres de Zabava (specs/social/docs/04 §4.6) ; « Tout » n'en contient pas. */
+export type SearchTab = 'all' | MediaType | 'person' | 'members';
+/** Onglets de la recherche du catalogue (`GET /search`). */
+export type CatalogTab = Exclude<SearchTab, 'members'>;
 
 export const SEARCH_TABS: readonly { key: SearchTab; label: string }[] = [
   { key: 'all', label: 'Tout' },
@@ -9,7 +12,13 @@ export const SEARCH_TABS: readonly { key: SearchTab; label: string }[] = [
   { key: 'tv', label: 'Séries' },
   { key: 'anime', label: 'Animés' },
   { key: 'person', label: 'Personnes' },
+  { key: 'members', label: 'Membres' },
 ];
+
+/** « @ » en premier caractère : la recherche passe sur Membres. */
+export function tabForInput(tab: SearchTab, text: string): SearchTab {
+  return text.startsWith('@') ? 'members' : tab;
+}
 
 export const MAX_RECENT_SEARCHES = 6;
 /** Délai entre la dernière frappe et la recherche. */

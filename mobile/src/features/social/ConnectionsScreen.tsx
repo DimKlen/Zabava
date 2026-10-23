@@ -25,7 +25,7 @@ import type { Member } from '@/domain/social/members';
 import { stripAccents } from '@/domain/social/username';
 import { goBack } from '@/lib/navigation';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
-import { openActionSheet } from '@/store/ui';
+import { openActionSheet, openInviteSheet } from '@/store/ui';
 import { colors, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
@@ -171,8 +171,15 @@ function Empty({
 }) {
   if (filtered) return <EmptyState icon={UsersThreeIcon} title="Aucun membre ne correspond" />;
   if (!isMine) return <EmptyState icon={UsersThreeIcon} title="Rien ici pour l'instant" />;
-  if (kind === 'followers')
-    return <EmptyState icon={UsersThreeIcon} title="Personne ne te suit encore" />;
+  if (kind === 'followers') {
+    return (
+      <EmptyState
+        icon={UsersThreeIcon}
+        title="Personne ne te suit encore"
+        action={{ label: 'Inviter', onPress: openInviteSheet }}
+      />
+    );
+  }
   return (
     <EmptyState
       icon={UsersThreeIcon}

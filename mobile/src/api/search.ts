@@ -1,7 +1,7 @@
 /** Recherche (`GET /search`) et tendances du jour — specs/docs/08 §8.1. */
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
-import type { SearchTab } from '@/domain/search';
+import type { CatalogTab } from '@/domain/search';
 
 import { toPosterTitle, type PosterTitle } from './catalog';
 import { api } from './http';
@@ -53,7 +53,7 @@ function isDefined<T>(value: T | null): value is T {
 
 export async function fetchSearchPage(
   q: string,
-  tab: SearchTab,
+  tab: CatalogTab,
   page: number,
   signal?: AbortSignal,
 ): Promise<SearchPage> {
@@ -70,7 +70,7 @@ export async function fetchSearchPage(
  * Résultats d'une requête pour un onglet, page par page. Une nouvelle requête annule
  * la précédente (signal passé à fetch).
  */
-export function useSearch(q: string, tab: SearchTab) {
+export function useSearch(q: string, tab: CatalogTab) {
   return useInfiniteQuery({
     queryKey: ['search', q, tab],
     queryFn: ({ pageParam, signal }) => fetchSearchPage(q, tab, pageParam, signal),

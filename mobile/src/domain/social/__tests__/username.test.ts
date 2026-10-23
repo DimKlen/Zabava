@@ -5,8 +5,17 @@ import {
   isWellFormedUsername,
   proposeUsername,
   RESERVED_USERNAMES,
+  searchQuery,
   usernameStatus,
 } from '../username';
+
+describe('searchQuery', () => {
+  it('sans « @ », accents, majuscules ni espaces autour', () => {
+    expect(searchQuery(' @Léa ')).toBe('lea');
+    expect(searchQuery('@')).toBe('');
+    expect(searchQuery('Élodie M')).toBe('elodie m');
+  });
+});
 
 describe('cleanUsername', () => {
   it('passe en minuscules et retire les accents', () => {

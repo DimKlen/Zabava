@@ -10,8 +10,10 @@ import { useRecentSearches } from '@/store/recentSearches';
 
 import { SearchScreen } from '../SearchScreen';
 
+let mockParams: { tab?: string } = {};
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn() },
+  useLocalSearchParams: () => mockParams,
 }));
 jest.mock('@/api/http', () => ({ api: jest.fn() }));
 jest.mock('@/api/libraryActions', () => ({
@@ -42,6 +44,10 @@ function route(path: string, query: Query): unknown {
   if (path === '/discover/count') return { total: 2 };
   if (path === '/discover') return { results: [DUNE], total: 1, page: 1 };
   if (path === '/titles/badges') return [];
+  if (path === '/me/recent-profiles') return [];
+  if (path === '/users/search') {
+    return { items: [{ username: 'lea.m', displayName: 'Léa Martin', followState: 'none' }] };
+  }
   if (path === '/search') {
     const q = String(query?.q ?? '');
     const type = String(query?.type ?? 'all');
@@ -70,6 +76,7 @@ const searchCalls = () => mockApi.mock.calls.filter(([path]) => path === '/searc
 
 beforeEach(async () => {
   jest.clearAllMocks();
+  mockParams = {};
   mockApi.mockImplementation(async (path, options) => route(path, options?.query));
   await act(() => useRecentSearches.setState({ recents: [] }));
 });
@@ -193,5 +200,37 @@ describe('SearchScreen', () => {
 
     await fireEvent.press(screen.getByText('Effacer'));
     expect(await screen.findByText('Zendaya')).toBeTruthy();
+  });
+
+  it('« @ » en premier passe sur Membres et cherche le pseudo sans « @ »', async () => {
+    await renderSearch();
+    await fireEvent.changeText(screen.getByLabelText('Rechercher'), '@le');
+    expect(await screen.findByText('Léa Martin')).toBeTruthy();
+    expect(mockApi).toHaveBeenCalledWith(
+      '/users/search',
+      expect.objectContaining({ query: { q: 'le', cursor: undefined } }),
+    );
+    expect(searchCalls()).toHaveLength(0);
+    // Ouvrir un membre ne l'ajoute pas aux recherches récentes.
+    await fireEvent.press(screen.getByText('Léa Martin'));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/u/[username]',
+      params: { username: 'lea.m' },
+    });
+    expect(useRecentSearches.getState().recents).toEqual([]);
+  });
+
+  it('« Chercher un membre » remplit « @ » et ouvre Membres', async () => {
+    await renderSearch();
+    await fireEvent.press(screen.getByText('Chercher un membre'));
+    expect(screen.getByLabelText('Rechercher').props.value).toBe('@');
+    expect(await screen.findByText('Tape au moins 2 caractères du pseudo ou du nom.')).toBeTruthy();
+  });
+
+  it('?tab=members ouvre directement sur Membres', async () => {
+    mockParams = { tab: 'members' };
+    await renderSearch();
+    expect(screen.getByLabelText('Rechercher').props.value).toBe('@');
+    expect(screen.getByText('Membres')).toBeTruthy();
   });
 });

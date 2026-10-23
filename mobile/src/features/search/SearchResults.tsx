@@ -8,10 +8,12 @@ import { SkeletonSearchRow } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { UnderlineTabs } from '@/components/UnderlineTabs';
 import { SEARCH_TABS, type SearchTab } from '@/domain/search';
+import { searchQuery } from '@/domain/social/username';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
 import type { Membership } from '../catalog/useLibraryMembership';
+import { MemberResults } from './MemberResults';
 import { PersonRow, TitleRow } from './ResultRows';
 import { pressTitle, previewOf } from '../title/openTitle';
 import { pressPerson } from '../person/openPerson';
@@ -44,11 +46,15 @@ export function SearchResults({
   onAdvanced,
   isInList,
 }: Props) {
-  const search = useSearch(query, tab);
+  const members = tab === 'members';
+  // Onglet Membres : pas de recherche du catalogue.
+  const search = useSearch(members ? '' : query, members ? 'all' : tab);
   const rows = searchRows(search.data?.pages);
 
   let body;
-  if (typing || (!search.data && !showsLoadError(search))) {
+  if (members) {
+    body = <MemberResults query={searchQuery(query)} typing={typing} />;
+  } else if (typing || (!search.data && !showsLoadError(search))) {
     body = (
       <View style={styles.skeletons}>
         {Array.from({ length: SKELETON_ROWS }, (_, i) => (
