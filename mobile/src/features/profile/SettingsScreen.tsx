@@ -2,6 +2,7 @@ import Constants from 'expo-constants';
 import { Image } from 'expo-image';
 import {
   CaretDownIcon,
+  CaretLeftIcon,
   CaretRightIcon,
   CheckIcon,
   ShieldCheckIcon,
@@ -18,7 +19,6 @@ import { useProfile, type Profile } from '@/api/profile';
 import { Button } from '@/components/Button';
 import { LoadError, showsLoadError } from '@/components/LoadError';
 import { OfflineBanner } from '@/components/OfflineBanner';
-import { ScreenHeader } from '@/components/ScreenHeader';
 import { SkeletonBox } from '@/components/Skeleton';
 import { Switch } from '@/components/Switch';
 import { Text } from '@/components/Text';
@@ -26,11 +26,11 @@ import { LANGUAGES, languageChoice, languageLabel } from '@/domain/onboarding';
 import {
   DIGEST_HOURS,
   NOTIFICATION_SWITCHES,
-  accountLine,
   digestLabel,
   platformsSummary,
   type NotificationSwitch,
 } from '@/domain/profile';
+import { goBack } from '@/lib/navigation';
 import { ensureNotificationPermission } from '@/lib/notifications';
 import { openActionSheet } from '@/store/ui';
 import { colors, radii, spacing } from '@/theme/tokens';
@@ -51,8 +51,11 @@ const TMDB_LOGO_RATIO = 273.42 / 35.52;
 const JUSTWATCH_LOGO = require('../../../assets/logos/justwatch.png');
 const JUSTWATCH_LOGO_RATIO = 505 / 76;
 
-/** Profil (specs/docs/09 §9.2) : compte, préférences, notifications, à propos. */
-export function ProfileScreen() {
+/**
+ * Réglages (specs/docs/09 §9.2, specs/social/docs/04 §4.13) : ancien onglet Profil sans le bloc
+ * compte, remplacé par Mon profil ; ouvert depuis l'engrenage.
+ */
+export function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const query = useProfile();
   const profile = query.data;
@@ -61,14 +64,26 @@ export function ProfileScreen() {
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <OfflineBanner />
       <ScrollView contentContainerStyle={styles.content}>
-        <ScreenHeader title="Profil" />
+        <View style={styles.bar}>
+          <Button
+            variant="icon"
+            height={44}
+            icon={CaretLeftIcon}
+            iconSize={22}
+            color={colors.text}
+            accessibilityLabel="Retour"
+            onPress={goBack}
+          />
+          <Text accessibilityRole="header" style={styles.title}>
+            Réglages
+          </Text>
+        </View>
         {profile ? (
-          <ProfileContent profile={profile} />
+          <SettingsContent profile={profile} />
         ) : showsLoadError(query) ? (
           <LoadError onRetry={() => void query.refetch()} />
         ) : (
           <View style={styles.loading}>
-            <SkeletonBox width={56} height={56} radius={28} />
             <SkeletonBox height={200} radius={radii.rLg} style={styles.loadingGroup} />
           </View>
         )}
@@ -77,7 +92,7 @@ export function ProfileScreen() {
   );
 }
 
-function ProfileContent({ profile }: { profile: Profile }) {
+function SettingsContent({ profile }: { profile: Profile }) {
   const [platformsOpen, setPlatformsOpen] = useState(false);
   // Pendant le chargement : rien plutôt qu'un « Aucune » trompeur.
   const providers = useProviders().data;
@@ -106,7 +121,6 @@ function ProfileContent({ profile }: { profile: Profile }) {
 
   return (
     <>
-      <Account profile={profile} />
       <View style={styles.groups}>
         <SettingsGroup label="Préférences">
           <SettingsRow
@@ -227,40 +241,24 @@ function Value({ text }: { text: string | undefined }) {
   );
 }
 
-/** Compte : photo OAuth ou initiale, nom, « email · Google ». */
-function Account({ profile }: { profile: Profile }) {
-  const name = profile.displayName || profile.email || '';
-  return (
-    <View style={styles.account}>
-      <View style={styles.avatar}>
-        {profile.avatarUrl ? (
-          <Image
-            source={{ uri: profile.avatarUrl }}
-            contentFit="cover"
-            style={StyleSheet.absoluteFill}
-          />
-        ) : (
-          <Text style={styles.initial}>{name.charAt(0).toUpperCase()}</Text>
-        )}
-      </View>
-      <View style={styles.accountText}>
-        <Text numberOfLines={1} style={styles.name}>
-          {name}
-        </Text>
-        <Text numberOfLines={1} style={styles.email}>
-          {accountLine(profile.email, profile.authProvider)}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-const AVATAR = 56;
-
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.bg,
+  },
+  bar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  title: {
+    flex: 1,
+    fontFamily: fonts.medium,
+    fontSize: 18,
+    lineHeight: 18 * 1.3,
+    color: colors.text,
   },
   content: {
     paddingBottom: 24,
@@ -272,44 +270,6 @@ const styles = StyleSheet.create({
   },
   loadingGroup: {
     marginTop: 8,
-  },
-  account: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingTop: 12,
-    paddingHorizontal: spacing.screenX,
-    paddingBottom: 4,
-  },
-  avatar: {
-    width: AVATAR,
-    height: AVATAR,
-    borderRadius: AVATAR / 2,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.accent800,
-  },
-  initial: {
-    fontFamily: fonts.medium,
-    fontSize: 20,
-    lineHeight: 20 * 1.2,
-    color: colors.accent100,
-  },
-  accountText: {
-    flex: 1,
-  },
-  name: {
-    fontFamily: fonts.medium,
-    fontSize: 17,
-    lineHeight: 17 * 1.3,
-    color: colors.text,
-  },
-  email: {
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    lineHeight: 13 * 1.4,
-    color: colors.neutral400,
   },
   groups: {
     gap: 20,

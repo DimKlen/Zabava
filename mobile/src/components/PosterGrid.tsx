@@ -27,10 +27,17 @@ export function useGridPosterWidth(): number {
 
 /**
  * Place d'une rangée sans la mesurer (`getItemLayout`) : `index` est celui de la rangée
- * (numColumns), `top` le padding haut plus la hauteur de l'en-tête.
+ * (numColumns), `top` le padding haut plus la hauteur de l'en-tête, `extra` ce qui suit
+ * l'affiche (progression des profils), `gap` l'écart vertical entre rangées.
  */
-export function gridRowLayout(index: number, posterWidth: number, top: number) {
-  const length = posterWidth * POSTER_RATIO + GAP;
+export function gridRowLayout(
+  index: number,
+  posterWidth: number,
+  top: number,
+  extra = 0,
+  gap: number = GAP,
+) {
+  const length = posterWidth * POSTER_RATIO + extra + gap;
   return { index, length, offset: top + length * index };
 }
 
@@ -45,6 +52,10 @@ type Props<T> = Omit<
   contentContainerStyle?: StyleProp<ViewStyle>;
   /** Pour remonter en haut au re-tap de l'onglet (useScrollToTop). */
   ref?: Ref<FlatList<T>>;
+  /** Écart vertical entre rangées : 8 par défaut, 12 sur les profils. */
+  rowGap?: number;
+  /** Hauteur fixe sous chaque affiche (progression des séries En cours d'un profil). */
+  rowExtra?: number;
 };
 
 /** Grille d'affiches 3 colonnes, gap 8, marges 16. */
@@ -54,6 +65,8 @@ export function PosterGrid<T>({
   paddingBottom = 0,
   contentContainerStyle,
   ListHeaderComponent,
+  rowGap = GAP,
+  rowExtra = 0,
   ...rest
 }: Props<T>) {
   const posterWidth = useGridPosterWidth();
@@ -74,10 +87,12 @@ export function PosterGrid<T>({
       windowSize={5}
       {...rest}
       ListHeaderComponent={header}
-      getItemLayout={(_data, index) => gridRowLayout(index, posterWidth, paddingTop + headerHeight)}
+      getItemLayout={(_data, index) =>
+        gridRowLayout(index, posterWidth, paddingTop + headerHeight, rowExtra, rowGap)
+      }
       numColumns={COLUMNS}
       columnWrapperStyle={styles.row}
-      ItemSeparatorComponent={RowGap}
+      ItemSeparatorComponent={rowGap === GAP ? RowGap : WideRowGap}
       contentContainerStyle={[styles.content, { paddingTop, paddingBottom }, contentContainerStyle]}
       renderItem={({ item }) => renderPoster(item, posterWidth)}
     />
@@ -86,6 +101,11 @@ export function PosterGrid<T>({
 
 function RowGap() {
   return <View style={styles.rowGap} />;
+}
+
+/** Écart des grilles de profil (specs/social/docs/03 › ProfileLists : 12). */
+function WideRowGap() {
+  return <View style={styles.wideRowGap} />;
 }
 
 const styles = StyleSheet.create({
@@ -97,5 +117,8 @@ const styles = StyleSheet.create({
   },
   rowGap: {
     height: GAP,
+  },
+  wideRowGap: {
+    height: 12,
   },
 });

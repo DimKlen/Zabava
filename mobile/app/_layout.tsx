@@ -80,6 +80,10 @@ export default function RootLayout() {
             <Stack.Screen name="person/[id]" options={pushOptions} />
             <Stack.Screen name="genre/[type]/[genre]" options={pushOptions} />
             <Stack.Screen name="studio/[id]" options={pushOptions} />
+            <Stack.Screen name="u/[username]/index" options={pushOptions} />
+            <Stack.Screen name="u/[username]/connections" options={pushOptions} />
+            <Stack.Screen name="settings/index" options={pushOptions} />
+            <Stack.Screen name="profile/edit" options={pushOptions} />
             <Stack.Screen
               name="search"
               options={{ animation: 'fade', animationDuration: durations.fadeSearch }}

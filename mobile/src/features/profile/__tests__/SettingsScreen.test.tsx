@@ -8,7 +8,7 @@ import { signOut } from '@/api/session';
 import { ensureNotificationPermission } from '@/lib/notifications';
 import { useUiStore } from '@/store/ui';
 
-import { ProfileScreen } from '../ProfileScreen';
+import { SettingsScreen } from '../SettingsScreen';
 
 jest.mock('@/api/http', () => ({ api: jest.fn() }));
 // Le client de l'app garde ses requêtes 7 jours : ses minuteurs empêcheraient Jest de finir.
@@ -79,11 +79,11 @@ async function renderProfile() {
   await render(
     <SafeAreaProvider initialMetrics={METRICS}>
       <QueryClientProvider client={queryClient}>
-        <ProfileScreen />
+        <SettingsScreen />
       </QueryClientProvider>
     </SafeAreaProvider>,
   );
-  await screen.findByText('Dim');
+  await screen.findByText('Français');
 }
 
 function pressDialogAction(label: string) {
@@ -99,10 +99,11 @@ beforeEach(async () => {
   await act(() => useUiStore.setState({ dialog: null, dialogOpen: false }));
 });
 
-describe('ProfileScreen', () => {
-  it('compte, préférences et à propos', async () => {
+describe('SettingsScreen', () => {
+  it('préférences et à propos ; le bloc compte est remplacé par Mon profil', async () => {
     await renderProfile();
-    expect(screen.getByText('dim@exemple.ca · Apple')).toBeTruthy();
+    expect(screen.getByText('Réglages')).toBeTruthy();
+    expect(screen.queryByText('dim@exemple.ca · Apple')).toBeNull();
     expect(screen.getByText('Français')).toBeTruthy();
     expect(await screen.findByText('Netflix, Crave')).toBeTruthy();
     expect(screen.getByText('9 h')).toBeTruthy();
