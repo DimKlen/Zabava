@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="styles.css">
+
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<script src="data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="social.js"></script>
+<script src="zabava.js"></script>
+<style>
+body{margin:0;background:var(--color-bg)}
+a{color:var(--color-accent)}a:hover{color:var(--color-accent-300)}
+select option{background:var(--color-surface);color:var(--color-text)}
+input[type=range]{accent-color:var(--color-accent)}
+@keyframes drift{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+@keyframes shimmer{0%{background-position:-300px 0}100%{background-position:300px 0}}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
+@keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes in1{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes in2{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes sheet{from{transform:translateY(100%)}to{transform:none}}
+@keyframes push{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+<div style="min-height:100vh;display:grid;place-items:center;padding:12px;background:radial-gradient(ellipse at 30% 20%,var(--color-neutral-900),var(--color-bg) 70%)">
+<div style="zoom:{{ zoom }};padding:10px;border-radius:56px;background:var(--color-neutral-900);box-shadow:var(--shadow-lg)">
+<div style="position:relative;width:390px;height:844px;border-radius:46px;overflow:hidden;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)">
+
+<div style="position:absolute;top:0;left:0;right:0;height:47px;z-index:60;display:flex;align-items:center;justify-content:space-between;padding:6px 30px 0 34px;pointer-events:none;font-size:15px;font-weight:600">
+  <span>9:41</span>
+  <div style="display:flex;gap:5px;font-size:16px"><i class="ph-fill ph-cell-signal-full"></i><i class="ph ph-wifi-high"></i><i class="ph-fill ph-battery-full"></i></div>
+</div>
+
+<sc-if value="{{ notReady }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;display:grid;place-items:center;color:var(--color-neutral-500);font-size:14px">Chargement…</div>
+</sc-if>
+
+<sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;inset:0;overflow:hidden">
+  <div style="position:absolute;inset:-60px -40px;display:flex;gap:10px;filter:blur(3px);opacity:.6;transform:rotate(-8deg)">
+    <sc-for list="{{ mosaic }}" as="col" hint-placeholder-count="3">
+      <div style="flex:1;display:flex;flex-direction:column;gap:10px;animation:{{ col.anim }}">
+        <sc-for list="{{ col.tiles }}" as="tl" hint-placeholder-count="6"><div style="flex:none;aspect-ratio:2/3;border-radius:8px;background:{{ tl.bg }}"></div></sc-for>
+      </div>
+    </sc-for>
+  </div>
+  <div style="position:absolute;inset:0;background:linear-gradient(to bottom,color-mix(in srgb,var(--color-bg) 20%,transparent) 0%,var(--color-bg) 60%)"></div>
+  <div style="position:absolute;left:24px;right:24px;bottom:44px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div style="width:44px;height:44px;border-radius:12px;border:1px solid var(--color-accent);display:grid;place-items:center;color:var(--color-accent);box-shadow:0 0 24px color-mix(in srgb,var(--color-accent) 35%,transparent)"><i class="ph ph-popcorn" style="font-size:24px"></i></div>
+      <span style="font-size:20px;font-weight:500">Zabava</span>
+    </div>
+    <h1 style="font-size:34px;line-height:1.1;margin:0;text-wrap:pretty">Tout ce que tu regardes, au même endroit</h1>
+    <p style="margin:0 0 10px;font-size:15px;color:var(--color-neutral-400)">Films, séries et animés : ta liste, tes épisodes et les sorties à venir.</p>
+    <button class="btn btn-primary" onClick="{{ login }}" style="height:50px;font-size:15px"><i class="ph-fill ph-apple-logo" style="font-size:20px"></i>Continuer avec Apple</button>
+    <button class="btn btn-secondary" onClick="{{ login }}" style="height:50px;font-size:15px"><i class="ph ph-google-logo" style="font-size:20px"></i>Continuer avec Google</button>
+    <sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}"><div style="text-align:center;font-size:13px;color:var(--color-accent-300)">Connexion en cours…</div></sc-if>
+    <p style="margin:4px 0 0;font-size:12px;line-height:1.5;color:var(--color-neutral-500)">En continuant, tu acceptes les <a href="#">conditions d'utilisation</a> et la <a href="#">politique de confidentialité</a>.</p>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isOnb }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding-top:47px;display:flex;flex-direction:column;animation:fade .3s ease">
+  <div style="display:flex;align-items:center;gap:12px;padding:8px 8px 8px 8px;height:52px">
+    <div style="width:44px">
+      <sc-if value="{{ hasOnbBack }}"><button class="btn btn-icon btn-ghost" onClick="{{ onbBack }}" aria-label="Retour" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-caret-left" style="font-size:22px"></i></button></sc-if>
+    </div>
+    <div style="flex:1;display:flex;gap:6px">
+      <sc-for list="{{ onbSteps }}" as="st" hint-placeholder-count="3"><div style="flex:1;height:4px;border-radius:4px;background:{{ st.bg }};transition:background .3s"></div></sc-for>
+    </div>
+    <div style="width:72px;display:flex;justify-content:flex-end"><sc-if value="{{ showSkip }}"><button class="btn btn-ghost" onClick="{{ onbNext }}" style="height:44px;padding:0 12px;color:var(--color-neutral-400)">Passer</button></sc-if></div>
+  </div>
+  <div style="flex:1;overflow-y:auto;scrollbar-width:none;padding:16px 16px 16px">
+    <sc-if value="{{ onb0 }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin:4px 0 24px"><div style="width:88px;height:88px;border-radius:50%;background:var(--color-accent-800);color:var(--color-accent-100);display:grid;place-items:center;font-size:32px;font-weight:500">{{ meInitial }}</div><div style="font-size:15px;color:var(--color-neutral-300)">{{ meName }}</div></div>
+      <h1 style="font-size:28px;margin:0 0 8px">Choisis ton pseudo</h1>
+      <p style="color:var(--color-neutral-400);font-size:15px;margin:0 0 20px">C'est ton identifiant sur Zabava. Tes amis te trouveront avec.</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:2px;height:48px;padding:0 12px;border-radius:8px;border:1px solid {{ uf.border }};background:var(--color-surface);transition:border-color .2s">
+<span style="font-size:16px;color:var(--color-neutral-500)">@</span>
+<input value="{{ uf.val }}" onChange="{{ uf.onU }}" aria-label="Pseudo" autoCapitalize="none" autoComplete="off" spellCheck="{{ false }}" style="flex:1;min-width:0;height:100%;background:transparent;border:0;outline:none;color:var(--color-text);font:inherit;font-size:16px">
+<sc-if value="{{ uf.checking }}"><span style="flex:none;width:16px;height:16px;border-radius:50%;border:2px solid var(--color-neutral-700);border-top-color:var(--color-accent);animation:spin .7s linear infinite"></span></sc-if>
+<sc-if value="{{ uf.ok }}"><i class="ph-fill ph-check-circle" style="font-size:20px;color:var(--color-accent)"></i></sc-if>
+</div>
+<sc-if value="{{ uf.ok }}"><div style="font-size:13px;color:var(--color-accent-300)">Disponible</div></sc-if>
+<sc-if value="{{ uf.checking }}"><div style="font-size:13px;color:var(--color-neutral-500)">Vérification…</div></sc-if>
+<sc-if value="{{ uf.invalid }}"><div style="font-size:13px;color:var(--color-neutral-400)">3 à 20 caractères : lettres minuscules, chiffres, point et tiret bas.</div></sc-if>
+<sc-if value="{{ uf.offline }}"><div style="font-size:13px;color:var(--color-neutral-300)">Vérification impossible, réessaie</div></sc-if>
+<sc-if value="{{ uf.taken }}"><div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--color-neutral-100)"><i class="ph ph-x-circle" style="font-size:16px"></i>Déjà pris. Essaie plutôt :</div><div style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ uf.sugg }}" as="g"><button onClick="{{ g.pick }}" style="height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--color-neutral-800);background:transparent;color:var(--color-neutral-300);font:inherit;font-size:13px;cursor:pointer">{{ g.label }}</button></sc-for></div></sc-if>
+</div>
+      <div style="margin-top:24px;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:var(--color-surface)"><div style="flex:1;min-width:0"><div style="font-size:15px">Profil privé</div><div style="font-size:13px;color:var(--color-neutral-400)">Seules les personnes que tu acceptes verront tes listes et ton activité.</div></div><button onClick="{{ onbPrivSw.toggle }}" role="switch" aria-label="{{ onbPrivSw.label }}" style="flex:none;position:relative;width:44px;height:26px;border-radius:999px;border:0;padding:0;background:{{ onbPrivSw.track }};cursor:pointer;transition:background .2s"><span style="position:absolute;top:2px;left:{{ onbPrivSw.knob }};width:22px;height:22px;border-radius:50%;background:{{ onbPrivSw.knobBg }};transition:left .2s"></span></button></div>
+    </sc-if>
+    <sc-if value="{{ onb1 }}" hint-placeholder-val="{{ false }}">
+      <h1 style="font-size:28px;margin:0 0 8px">Où regardes-tu ?</h1>
+      <p style="color:var(--color-neutral-400);font-size:15px;margin:0 0 24px">Ta région détermine les plateformes et les dates de sortie affichées. On l'a pré-remplie depuis ton téléphone.</p>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="field"><label>Région</label><select class="input" value="{{ region }}" onChange="{{ setRegion }}" style="height:48px"><sc-for list="{{ regions }}" as="o"><option value="{{ o }}">{{ o }}</option></sc-for></select></div>
+        <div class="field"><label>Langue</label><select class="input" value="{{ lang }}" onChange="{{ setLang }}" style="height:48px"><sc-for list="{{ langs }}" as="o"><option value="{{ o }}">{{ o }}</option></sc-for></select></div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ onb2 }}" hint-placeholder-val="{{ false }}">
+      <h1 style="font-size:28px;margin:0 0 8px">Tes plateformes</h1>
+      <p style="color:var(--color-neutral-400);font-size:15px;margin:0 0 24px">On les met en avant et on te prévient quand un film de ta liste y arrive.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+        <sc-for list="{{ platTiles }}" as="p" hint-placeholder-count="6">
+          <button onClick="{{ p.toggle }}" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 6px 12px;border-radius:12px;border:1px solid {{ p.border }};background:{{ p.bg }};color:var(--color-text);font:inherit;cursor:pointer">
+            <span style="width:44px;height:44px;border-radius:50%;background:var(--color-neutral-800);display:grid;place-items:center;font-size:13px;font-weight:600">{{ p.short }}</span>
+            <span style="font-size:12px;text-align:center">{{ p.name }}</span>
+            <sc-if value="{{ p.on }}"><span style="position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;background:var(--color-accent);color:var(--color-bg);display:grid;place-items:center"><i class="ph ph-check" style="font-size:12px;font-weight:700"></i></span></sc-if>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ onb3 }}" hint-placeholder-val="{{ false }}">
+      <h1 style="font-size:28px;margin:0 0 8px">Tes premiers titres</h1>
+      <p style="color:var(--color-neutral-400);font-size:15px;margin:0 0 8px">Touche ce que tu veux voir ou suivre.</p>
+      <div style="display:flex;gap:20px;margin-bottom:12px">
+        <sc-for list="{{ onbTabs }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.select }}" style="position:relative;background:none;border:0;padding:10px 0;font:inherit;font-size:15px;font-weight:500;color:{{ t.color }};cursor:pointer">{{ t.label }}<span style="position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:3px;background:{{ t.bar }}"></span></button></sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+        <sc-for list="{{ onbPosters }}" as="it" hint-placeholder-count="9"><dc-import name="Poster" item="{{ it }}" hint-size="100%,160px"></dc-import></sc-for>
+      </div>
+    </sc-if>
+  </div>
+  <div style="padding:12px 16px 34px;display:flex;flex-direction:column;gap:8px;background:linear-gradient(to top,var(--color-bg) 70%,transparent)">
+    <sc-if value="{{ onb3 }}"><div style="text-align:center;font-size:13px;color:var(--color-accent-300)">{{ onbCount }}</div></sc-if>
+    <button class="btn btn-primary" onClick="{{ onbNext }}" style="height:50px;font-size:15px;opacity:{{ onbNextOpacity }};pointer-events:{{ onbNextPe }}">{{ onbNextLabel }}</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isNotif }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:120px 24px 34px;display:flex;flex-direction:column;animation:fade .3s ease">
+  <div style="width:64px;height:64px;border-radius:18px;background:var(--color-accent-900);color:var(--color-accent);display:grid;place-items:center;margin-bottom:24px"><i class="ph ph-bell-ringing" style="font-size:32px"></i></div>
+  <h1 style="font-size:30px;margin:0 0 12px">Ne rate aucune sortie</h1>
+  <p style="color:var(--color-neutral-400);margin:0 0 28px;font-size:15px">On t'envoie au plus une alerte par titre et par jour, seulement pour ce que tu suis.</p>
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;gap:14px;align-items:flex-start"><i class="ph ph-television-simple" style="font-size:22px;color:var(--color-accent)"></i><div><div style="font-weight:500">Nouveaux épisodes</div><div style="font-size:13px;color:var(--color-neutral-400)">Le jour de diffusion, à l'heure locale.</div></div></div>
+    <div style="display:flex;gap:14px;align-items:flex-start"><i class="ph ph-film-slate" style="font-size:22px;color:var(--color-accent)"></i><div><div style="font-weight:500">Sorties en salle</div><div style="font-size:13px;color:var(--color-neutral-400)">Quand un film de ta liste sort au cinéma.</div></div></div>
+    <div style="display:flex;gap:14px;align-items:flex-start"><i class="ph ph-play-circle" style="font-size:22px;color:var(--color-accent)"></i><div><div style="font-weight:500">Disponibilité en streaming</div><div style="font-size:13px;color:var(--color-neutral-400)">Quand un film arrive sur tes plateformes.</div></div></div>
+  </div>
+  <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px">
+    <button class="btn btn-primary" onClick="{{ notifAllow }}" style="height:50px;font-size:15px">Activer les notifications</button>
+    <button class="btn btn-ghost" onClick="{{ notifLater }}" style="height:44px;color:var(--color-neutral-400)">Plus tard</button>
+  </div>
+  <sc-if value="{{ sysAlert }}">
+    <div style="position:absolute;inset:0;display:grid;place-items:center;background:color-mix(in srgb,var(--color-neutral-900) 60%,transparent);animation:fade .2s ease">
+      <div style="width:280px;border-radius:14px;background:var(--color-surface);box-shadow:var(--shadow-lg);text-align:center;overflow:hidden">
+        <div style="padding:18px 16px 14px"><div style="font-weight:600;font-size:16px;margin-bottom:4px">« Zabava » souhaite vous envoyer des notifications</div><div style="font-size:13px;color:var(--color-neutral-400)">Les notifications peuvent inclure des alertes, des sons et des pastilles.</div></div>
+        <div style="display:flex;border-top:1px solid var(--color-neutral-800)"><button onClick="{{ sysDeny }}" style="flex:1;height:46px;background:none;border:0;border-right:1px solid var(--color-neutral-800);color:var(--color-accent-300);font:inherit;cursor:pointer">Refuser</button><button onClick="{{ sysAllow }}" style="flex:1;height:46px;background:none;border:0;color:var(--color-accent-300);font:inherit;font-weight:600;cursor:pointer">Autoriser</button></div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isApp }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;padding-top:47px">
+  <sc-if value="{{ offline }}"><div style="flex:none;display:flex;align-items:center;justify-content:center;gap:6px;height:28px;font-size:12px;background:var(--color-neutral-900);color:var(--color-neutral-300)"><i class="ph ph-cloud-slash"></i>Hors ligne · affichage depuis le cache</div></sc-if>
+  <div ref="{{ mainRef }}" style="position:relative;flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding-bottom:24px">
+
+    <sc-if value="{{ isWatch }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 8px 0 16px">
+        <h1 style="font-size:28px;margin:0">Ma liste</h1>
+        <button class="btn btn-icon btn-ghost" onClick="{{ openSearch }}" aria-label="Rechercher" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-magnifying-glass" style="font-size:22px"></i></button>
+      </div>
+      <div style="display:flex;gap:22px;padding:0 16px">
+        <sc-for list="{{ wlTabs }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.select }}" style="position:relative;background:none;border:0;padding:10px 0;font:inherit;font-size:15px;font-weight:500;color:{{ t.color }};cursor:pointer">{{ t.label }}<span style="position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:3px;background:{{ t.bar }}"></span></button></sc-for>
+      </div>
+
+      <sc-if value="{{ wlFilms }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 0">
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="wlseg" checked="{{ segA }}" onChange="{{ setSegA }}">À voir</label>
+            <label class="seg-opt"><input type="radio" name="wlseg" checked="{{ segB }}" onChange="{{ setSegB }}">Vus</label>
+          </div>
+          <sc-if value="{{ segA }}"><button class="btn btn-ghost" onClick="{{ openSort }}" style="height:36px;color:var(--color-neutral-300);font-size:13px"><i class="ph ph-sort-ascending" style="font-size:16px"></i>{{ sortLabel }}</button></sc-if>
+        </div>
+        <sc-if value="{{ segA }}">
+          <div style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:12px 16px 0">
+            <sc-for list="{{ filmChips }}" as="ch" hint-placeholder-count="4"><button onClick="{{ ch.select }}" style="flex:none;height:32px;padding:0 12px;border-radius:999px;border:1px solid {{ ch.border }};background:{{ ch.bg }};color:{{ ch.color }};font:inherit;font-size:13px;cursor:pointer;white-space:nowrap">{{ ch.label }}</button></sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ loading }}">
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:14px 16px 0">
+            <sc-for list="{{ skel }}" as="k"><div style="aspect-ratio:2/3;border-radius:8px;background:linear-gradient(90deg,var(--color-neutral-900) 0,var(--color-neutral-800) 50%,var(--color-neutral-900) 100%);background-size:600px 100%;animation:shimmer 1.2s linear infinite"></div></sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ notLoading }}" hint-placeholder-val="{{ true }}">
+          <sc-if value="{{ filmHas }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:12px 16px 0;font-size:12px;color:var(--color-neutral-500)">{{ filmCount }} · appui long pour plus d'options</div>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:8px 16px 0">
+              <sc-for list="{{ filmGrid }}" as="it" hint-placeholder-count="9"><dc-import name="Poster" item="{{ it }}" hint-size="100%,160px"></dc-import></sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ filmEmpty }}">
+            <div style="padding:64px 24px;display:flex;flex-direction:column;align-items:flex-start;gap:8px">
+              <i class="ph ph-film-strip" style="font-size:40px;color:var(--color-neutral-600)"></i>
+              <div style="font-size:18px;font-weight:500">{{ emptyTitle }}</div>
+              <div style="font-size:14px;color:var(--color-neutral-400)">{{ emptyText }}</div>
+              <button class="btn btn-primary" onClick="{{ emptyAction }}" style="height:44px;margin-top:8px">{{ emptyCta }}</button>
+            </div>
+          </sc-if>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ wlSeries }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ loading }}">
+          <div style="display:flex;flex-direction:column;gap:8px;padding:20px 16px 0">
+            <sc-for list="{{ skelCards }}" as="k"><div style="height:80px;border-radius:12px;background:linear-gradient(90deg,var(--color-neutral-900) 0,var(--color-neutral-800) 50%,var(--color-neutral-900) 100%);background-size:600px 100%;animation:shimmer 1.2s linear infinite"></div></sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ notLoading }}">
+        <sc-if value="{{ swipeHint }}"><div style="padding:12px 16px 0;font-size:12px;color:var(--color-neutral-500)">Coche pour avancer · glisse une carte vers la gauche pour plus d'actions</div></sc-if>
+        <sc-for list="{{ serSections }}" as="sec" hint-placeholder-count="3">
+          <div style="margin-top:14px">
+            <button onClick="{{ sec.toggle }}" style="display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:0 16px;background:none;border:0;color:var(--color-text);font:inherit;cursor:pointer;text-align:left">
+              <span style="font-size:18px;font-weight:500">{{ sec.title }}</span><span style="font-size:13px;color:var(--color-neutral-500)">{{ sec.count }}</span><i class="{{ sec.caret }}" style="margin-left:auto;font-size:16px;color:var(--color-neutral-500)"></i>
+            </button>
+            <sc-if value="{{ sec.isCards }}">
+              <div style="display:flex;flex-direction:column;gap:8px;padding:4px 16px 0">
+                <sc-for list="{{ sec.items }}" as="c">
+                  <div style="position:relative;border-radius:12px;overflow:hidden;background:var(--color-neutral-900)">
+                    <div style="position:absolute;top:0;right:0;bottom:0;width:150px;display:flex">
+                      <button onClick="{{ c.abandon }}" style="flex:1;border:0;background:var(--color-neutral-800);color:var(--color-text);font:inherit;font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer"><i class="ph ph-pause-circle" style="font-size:20px"></i>Abandonner</button>
+                      <button onClick="{{ c.remove }}" style="flex:1;border:0;background:var(--color-neutral-700);color:var(--color-text);font:inherit;font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer"><i class="ph ph-trash" style="font-size:20px"></i>Retirer</button>
+                    </div>
+                    <div onPointerDown="{{ c.down }}" onPointerMove="{{ c.move }}" onPointerUp="{{ c.up }}" onPointerLeave="{{ c.up }}" onPointerCancel="{{ c.up }}" onClick="{{ c.click }}" style="position:relative;display:flex;align-items:center;gap:12px;padding:10px 4px 12px 10px;background:var(--color-surface);transform:translateX({{ c.tx }});transition:{{ c.tr }};touch-action:pan-y;cursor:pointer;user-select:none">
+                      <div style="flex:none;width:96px;height:58px;border-radius:6px;overflow:hidden"><div style="width:100%;height:100%;background:{{ c.thumbBg }};filter:{{ c.thumbFilter }};transform:scale(1.15)"></div></div>
+                      <div style="flex:1;min-width:0;animation:{{ c.anim }}">
+                        <div style="font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.name }}</div>
+                        <div style="font-size:13px;color:var(--color-neutral-300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.code }}</div>
+                        <div style="font-size:12px;color:var(--color-neutral-500);margin-top:2px">{{ c.remaining }}</div>
+                      </div>
+                      <button onPointerDown="{{ c.stop }}" onClick="{{ c.check }}" aria-label="Marquer comme vu" style="flex:none;width:48px;height:48px;display:grid;place-items:center;background:none;border:0;padding:0;cursor:pointer"><span style="width:32px;height:32px;border-radius:50%;border:1.5px solid var(--color-neutral-600);display:grid;place-items:center;color:var(--color-neutral-500)"><i class="ph ph-check" style="font-size:16px"></i></span></button>
+                      <div style="position:absolute;left:0;bottom:0;height:2px;width:{{ c.pct }};background:var(--color-accent);transition:width .3s"></div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ sec.isCarousel }}">
+              <div style="display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:4px 16px 0">
+                <sc-for list="{{ sec.items }}" as="it"><div style="flex:none;width:112px;display:flex;flex-direction:column;gap:6px"><dc-import name="Poster" item="{{ it.poster }}" hint-size="112px,168px"></dc-import><button class="btn btn-secondary" onClick="{{ it.start }}" style="height:34px;font-size:13px">Commencer</button></div></sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ sec.isRows }}">
+              <div style="display:flex;flex-direction:column;gap:4px;padding:4px 16px 0">
+                <sc-for list="{{ sec.items }}" as="r">
+                  <div onClick="{{ r.open }}" style="display:flex;align-items:center;gap:12px;padding:6px;margin:0 -6px;border-radius:8px;cursor:pointer" style-hover="background:var(--color-surface)">
+                    <div style="flex:none;width:44px"><dc-import name="Poster" item="{{ r.poster }}" hint-size="44px,66px"></dc-import></div>
+                    <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:500">{{ r.name }}</div><div style="font-size:13px;color:var(--color-neutral-400)">{{ r.label }}</div></div>
+                    <i class="ph ph-caret-right" style="color:var(--color-neutral-600)"></i>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+        <sc-if value="{{ serEmpty }}">
+          <div style="padding:64px 24px;display:flex;flex-direction:column;align-items:flex-start;gap:8px">
+            <i class="ph ph-television-simple" style="font-size:40px;color:var(--color-neutral-600)"></i>
+            <div style="font-size:18px;font-weight:500">{{ serEmptyTitle }}</div>
+            <button class="btn btn-primary" onClick="{{ serEmptyAction }}" style="height:44px;margin-top:8px">{{ serEmptyCta }}</button>
+          </div>
+        </sc-if>
+        </sc-if>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ isDiscover }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 8px 0 16px">
+        <h1 style="font-size:28px;margin:0">Découvrir</h1>
+        <button class="btn btn-icon btn-ghost" onClick="{{ openSearch }}" aria-label="Rechercher" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-magnifying-glass" style="font-size:22px"></i></button>
+      </div>
+      <div style="display:flex;gap:22px;padding:0 16px">
+        <sc-for list="{{ dTabs }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.select }}" style="position:relative;background:none;border:0;padding:10px 0;font:inherit;font-size:15px;font-weight:500;color:{{ t.color }};cursor:pointer">{{ t.label }}<span style="position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:3px;background:{{ t.bar }}"></span></button></sc-for>
+      </div>
+      <sc-if value="{{ discoverOff }}">
+        <div style="padding:64px 24px;display:flex;flex-direction:column;gap:8px"><i class="ph ph-cloud-slash" style="font-size:40px;color:var(--color-neutral-600)"></i><div style="font-size:18px;font-weight:500">Découvrir est indisponible hors ligne</div><div style="font-size:14px;color:var(--color-neutral-400)">Ta liste et À venir restent accessibles depuis le cache.</div></div>
+      </sc-if>
+      <sc-if value="{{ discoverOn }}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{ hasActCards }}">
+          <div style="margin-top:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 16px;margin-bottom:6px"><h3 style="font-size:18px;margin:0">Activité de tes abonnements</h3><button class="btn btn-ghost" onClick="{{ openFeed }}" style="height:36px;padding:0 8px">Tout voir</button></div>
+            <div style="display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:0 16px">
+              <sc-for list="{{ actCards }}" as="a" hint-placeholder-count="3">
+                <div onClick="{{ a.openRight }}" style="flex:none;width:256px;display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:12px;background:var(--color-surface);cursor:pointer">
+                  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+                    <div style="display:flex;align-items:center;gap:8px"><span onClick="{{ a.openUser }}" style="flex:none;width:24px;height:24px;border-radius:50%;background:{{ a.bg }};display:grid;place-items:center;font-size:11px;font-weight:500">{{ a.initial }}</span><span style="font-size:13px;font-weight:500">{{ a.name }}</span><span style="margin-left:auto;font-size:12px;color:var(--color-neutral-500)">{{ a.when }}</span></div>
+                    <div style="font-size:13px;line-height:1.35;color:var(--color-neutral-300);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden">{{ a.mid }} <span style="color:var(--color-text);font-weight:500">{{ a.title }}</span>{{ a.tail }}</div>
+                  </div>
+                  <sc-if value="{{ a.isPoster }}"><div onClick="{{ a.openRight }}" style="position:relative;flex:none;width:48px;height:72px;border-radius:6px;background:{{ a.posterBg }};cursor:pointer"><sc-if value="{{ a.inMine }}"><span style="position:absolute;right:-4px;bottom:-4px;width:20px;height:20px;border-radius:50%;background:var(--color-accent);color:var(--color-bg);border:2px solid var(--color-surface);display:grid;place-items:center"><i class="ph ph-check" style="font-size:10px;font-weight:700"></i></span></sc-if></div></sc-if>
+<sc-if value="{{ a.isStill }}"><div onClick="{{ a.openRight }}" style="flex:none;width:64px;height:36px;border-radius:6px;background:{{ a.stillBg }};cursor:pointer;margin-top:4px"></div></sc-if>
+<sc-if value="{{ a.isUser }}"><div onClick="{{ a.openRight }}" style="flex:none;width:48px;height:48px;border-radius:50%;background:{{ a.tBg }};display:grid;place-items:center;font-size:17px;font-weight:500;cursor:pointer">{{ a.tInitial }}</div></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+        <sc-for list="{{ dSections }}" as="sec" hint-placeholder-count="3">
+          <div style="margin-top:20px">
+            <h3 style="font-size:18px;margin:0 0 10px;padding:0 16px">{{ sec.title }}</h3>
+            <div style="display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:0 16px">
+              <sc-for list="{{ sec.items }}" as="it" hint-placeholder-count="4"><div style="flex:none;width:112px"><dc-import name="Poster" item="{{ it }}" hint-size="112px,168px"></dc-import></div></sc-for>
+            </div>
+          </div>
+        </sc-for>
+        <div style="margin-top:28px;padding:0 16px">
+          <h3 style="font-size:18px;margin:0 0 10px">Par genre</h3>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+            <sc-for list="{{ genreTiles }}" as="g" hint-placeholder-count="6"><button onClick="{{ g.open }}" style="height:60px;border-radius:12px;border:0;background:{{ g.bg }};color:var(--color-text);font:inherit;font-size:15px;font-weight:500;text-align:left;padding:0 14px;cursor:pointer" style-active="transform:scale(.98)">{{ g.label }}</button></sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ isUpcoming }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:8px 16px 0;height:52px;display:flex;align-items:center"><h1 style="font-size:28px;margin:0">À venir</h1></div>
+      <div style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:4px 16px 0">
+        <sc-for list="{{ upChips }}" as="ch" hint-placeholder-count="4"><button onClick="{{ ch.select }}" style="flex:none;height:32px;padding:0 14px;border-radius:999px;border:1px solid {{ ch.border }};background:{{ ch.bg }};color:{{ ch.color }};font:inherit;font-size:13px;cursor:pointer">{{ ch.label }}</button></sc-for>
+      </div>
+      <div style="position:sticky;top:0;z-index:5;background:var(--color-bg);padding:12px 12px 8px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px">
+        <sc-for list="{{ week }}" as="w" hint-placeholder-count="7">
+          <button onClick="{{ w.select }}" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;border-radius:10px;border:0;background:{{ w.bg }};color:{{ w.color }};font:inherit;cursor:pointer">
+            <span style="font-size:11px;color:var(--color-neutral-500);text-transform:capitalize">{{ w.wd }}</span><span style="font-size:16px;font-weight:500">{{ w.num }}</span><span style="width:5px;height:5px;border-radius:50%;background:{{ w.dot }}"></span>
+          </button>
+        </sc-for>
+      </div>
+      <sc-if value="{{ upHas }}" hint-placeholder-val="{{ true }}">
+        <sc-for list="{{ upGroups }}" as="g" hint-placeholder-count="3">
+          <div id="{{ g.id }}" style="padding:12px 16px 0">
+            <div style="font-size:13px;font-weight:500;color:var(--color-accent-300);text-transform:capitalize;margin-bottom:6px">{{ g.label }}</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ g.items }}" as="it">
+                <div onClick="{{ it.open }}" style="display:flex;align-items:center;gap:12px;padding:8px;border-radius:12px;background:var(--color-surface);cursor:pointer" style-active="transform:scale(.99)">
+                  <div style="flex:none;width:40px;height:60px;border-radius:6px;background:{{ it.bg }}"></div>
+                  <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.title }}</div><div style="font-size:13px;color:var(--color-neutral-400)">{{ it.line }}</div></div>
+                  <sc-if value="{{ it.hasPlat }}"><span class="tag tag-neutral">{{ it.plat }}</span></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ hasNoDate }}">
+          <div style="padding:16px 16px 0">
+            <button onClick="{{ toggleNoDate }}" style="display:flex;align-items:center;gap:8px;width:100%;min-height:44px;background:none;border:0;padding:0;color:var(--color-text);font:inherit;cursor:pointer"><span style="font-size:15px;font-weight:500">Sans date</span><i class="{{ noDateCaret }}" style="margin-left:auto;color:var(--color-neutral-500)"></i></button>
+            <sc-if value="{{ noDateOpen }}">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <sc-for list="{{ noDate }}" as="it"><div onClick="{{ it.open }}" style="display:flex;align-items:center;gap:12px;padding:8px;border-radius:12px;background:var(--color-surface);cursor:pointer"><div style="flex:none;width:40px;height:60px;border-radius:6px;background:{{ it.bg }}"></div><div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:500">{{ it.title }}</div><div style="font-size:13px;color:var(--color-neutral-400)">{{ it.line }}</div></div></div></sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </sc-if>
+      <sc-if value="{{ upEmpty }}">
+        <div style="padding:48px 24px;display:flex;flex-direction:column;align-items:flex-start;gap:8px"><i class="ph ph-calendar-blank" style="font-size:40px;color:var(--color-neutral-600)"></i><div style="font-size:18px;font-weight:500">Rien de prévu</div><button class="btn btn-primary" onClick="{{ upCta }}" style="height:44px;margin-top:8px">Suivre des séries</button></div>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:8px 8px 0 16px">
+        <h1 style="font-size:28px;margin:0">Profil</h1>
+        <div style="display:flex">
+          <button class="btn btn-icon btn-ghost" onClick="{{ openInvite }}" aria-label="Inviter" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-user-plus" style="font-size:22px"></i></button>
+          <button class="btn btn-icon btn-ghost" onClick="{{ openSettings }}" aria-label="Réglages" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-gear-six" style="font-size:22px"></i></button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;padding:12px 16px 0">
+  <div style="flex:none;width:88px;height:88px;border-radius:50%;background:{{ mp.bg }};display:grid;place-items:center;font-size:32px;font-weight:500;color:var(--color-text)">{{ mp.initial }}</div>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+    <h2 style="font-size:24px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ mp.name }}</h2>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px;color:var(--color-neutral-400)"><span>{{ mp.handle }}</span><sc-if value="{{ mp.lock }}"><i class="ph ph-lock-simple" style="font-size:14px"></i></sc-if><sc-if value="{{ mp.followsMe }}"><span class="tag tag-neutral">Te suit</span></sc-if></div>
+    <div style="display:flex;gap:18px;margin-top:4px">
+      <button onClick="{{ mp.openFollowers }}" style="display:flex;align-items:baseline;gap:5px;min-height:36px;background:none;border:0;padding:0;color:var(--color-text);font:inherit;cursor:pointer"><span style="font-size:18px;font-weight:500">{{ mp.fc }}</span><span style="font-size:13px;color:var(--color-neutral-400)">{{ mp.fcLabel }}</span></button>
+      <button onClick="{{ mp.openFollowing }}" style="display:flex;align-items:baseline;gap:5px;min-height:36px;background:none;border:0;padding:0;color:var(--color-text);font:inherit;cursor:pointer"><span style="font-size:18px;font-weight:500">{{ mp.gc }}</span><span style="font-size:13px;color:var(--color-neutral-400)">{{ mp.gcLabel }}</span></button>
+    </div>
+  </div>
+</div>
+<sc-if value="{{ mp.hasCommon }}"><div style="padding:10px 16px 0"><span style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;background:var(--color-neutral-800);font-size:13px;color:var(--color-neutral-100)"><i class="ph ph-cards" style="font-size:15px"></i>{{ mp.commonText }}</span></div></sc-if>
+      <div style="display:flex;gap:8px;padding:16px 16px 0">
+        <button class="btn btn-secondary" onClick="{{ openEdit }}" style="flex:1;height:44px">Modifier le profil</button>
+        <button class="btn btn-primary" onClick="{{ openInvite }}" style="flex:1;height:44px"><i class="ph ph-user-plus" style="font-size:18px"></i>Inviter</button>
+      </div>
+      <sc-if value="{{ mpHasReq }}"><div style="padding:12px 16px 0"><button onClick="{{ openRequests }}" style="display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:0 14px;border-radius:12px;border:0;background:var(--color-surface);color:var(--color-text);font:inherit;text-align:left;cursor:pointer"><i class="ph ph-user-circle-plus" style="font-size:20px;color:var(--color-neutral-400)"></i><span style="flex:1;font-size:15px">Demandes d'abonnement</span><span style="min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--color-accent);color:var(--color-bg);font-size:12px;font-weight:600;display:grid;place-items:center">{{ mpReqCount }}</span><i class="ph ph-caret-right" style="color:var(--color-neutral-600)"></i></button></div></sc-if>
+      <sc-if value="{{ mp.showContent }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;gap:22px;padding:14px 16px 0"><sc-for list="{{ mp.tabs }}" as="t"><button onClick="{{ t.select }}" style="position:relative;flex:none;background:none;border:0;padding:10px 0;font:inherit;font-size:15px;font-weight:500;color:{{ t.color }};cursor:pointer">{{ t.label }}<span style="position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:3px;background:{{ t.bar }}"></span></button></sc-for></div>
+  <div style="padding:12px 16px 0"><div class="seg"><sc-for list="{{ mp.segOpts }}" as="o"><label class="seg-opt"><input type="radio" name="{{ mp.segName }}" checked="{{ o.on }}" onChange="{{ o.select }}">{{ o.label }}</label></sc-for></div></div>
+  <sc-if value="{{ mp.gridHas }}" hint-placeholder-val="{{ true }}">
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 8px;padding:12px 16px 0">
+      <sc-for list="{{ mp.grid }}" as="g" hint-placeholder-count="6"><div style="display:flex;flex-direction:column;gap:6px;min-width:0"><dc-import name="Poster" item="{{ g.poster }}" hint-size="100%,160px"></dc-import><sc-if value="{{ g.hasProg }}"><div style="display:flex;flex-direction:column;gap:4px"><div style="height:3px;border-radius:3px;background:var(--color-neutral-800);overflow:hidden"><div style="height:100%;width:{{ g.pct }};background:var(--color-accent)"></div></div><span style="font-size:12px;color:var(--color-neutral-400)">{{ g.code }}</span></div></sc-if></div></sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ mp.gridEmpty }}"><div style="padding:40px 16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px"><i class="ph ph-film-strip" style="font-size:36px;color:var(--color-neutral-600)"></i><div style="font-size:16px;font-weight:500">Rien ici pour l'instant</div></div></sc-if>
+</sc-if>
+<sc-if value="{{ mp.showLocked }}"><div style="margin:20px 16px 0;padding:32px 20px;border-radius:12px;background:var(--color-surface);display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center"><span style="width:56px;height:56px;border-radius:50%;background:var(--color-neutral-800);display:grid;place-items:center"><i class="ph ph-lock-simple" style="font-size:26px"></i></span><div style="font-size:17px;font-weight:500">Ce profil est privé</div><div style="font-size:14px;color:var(--color-neutral-400)">{{ mp.lockText }}</div></div></sc-if>
+<sc-if value="{{ mp.showBlocked }}"><div style="margin:20px 16px 0;padding:32px 20px;border-radius:12px;background:var(--color-surface);display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center"><span style="width:56px;height:56px;border-radius:50%;background:var(--color-neutral-800);display:grid;place-items:center"><i class="ph ph-prohibit" style="font-size:26px"></i></span><div style="font-size:17px;font-weight:500">Tu as bloqué ce profil</div><div style="font-size:14px;color:var(--color-neutral-400)">Débloque-le pour voir ses listes et vous suivre à nouveau.</div></div></sc-if>
+    </sc-if>
+  </div>
+  <nav style="flex:none;height:84px;display:flex;padding:6px 8px 26px;background:var(--color-bg);box-shadow:0 -1px 0 var(--color-neutral-900)">
+    <sc-for list="{{ tabItems }}" as="t" hint-placeholder-count="4">
+      <button onClick="{{ t.select }}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:0;color:{{ t.color }};font:inherit;font-size:11px;cursor:pointer"><i class="{{ t.icon }}" style="font-size:24px"></i>{{ t.label }}</button>
+    </sc-for>
+  </nav>
+</div>
+</sc-if>
+
+<sc-if value="{{ ovTitle }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:20;background:var(--color-bg);animation:push .22s ease">
+  <div ref="{{ ovRef }}" style="position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding-bottom:48px">
+    <div style="position:relative;height:250px;background:{{ d.bg }}">
+      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,color-mix(in srgb,var(--color-bg) 25%,transparent),var(--color-bg))"></div>
+      <div style="position:absolute;top:50px;left:12px;right:12px;display:flex;justify-content:space-between">
+        <button onClick="{{ back }}" aria-label="Retour" style="width:40px;height:40px;border-radius:50%;border:0;background:color-mix(in srgb,var(--color-bg) 60%,transparent);color:var(--color-text);display:grid;place-items:center;cursor:pointer"><i class="ph ph-caret-left" style="font-size:20px"></i></button>
+        <div style="display:flex;gap:8px">
+          <button onClick="{{ d.toggleBell }}" aria-label="Alertes" style="width:40px;height:40px;border-radius:50%;border:0;background:color-mix(in srgb,var(--color-bg) 60%,transparent);color:var(--color-text);display:grid;place-items:center;cursor:pointer"><i class="{{ d.bellIcon }}" style="font-size:20px"></i></button>
+          <sc-if value="{{ d.isShow }}"><button onClick="{{ d.openMenu }}" aria-label="Plus" style="width:40px;height:40px;border-radius:50%;border:0;background:color-mix(in srgb,var(--color-bg) 60%,transparent);color:var(--color-text);display:grid;place-items:center;cursor:pointer"><i class="ph ph-dots-three" style="font-size:22px"></i></button></sc-if>
+        </div>
+      </div>
+    </div>
+    <div style="position:relative;display:flex;gap:14px;align-items:flex-end;padding:0 16px;margin-top:-120px">
+      <div style="flex:none;width:104px"><dc-import name="Poster" item="{{ d.poster }}" hint-size="104px,156px"></dc-import></div>
+      <div style="flex:1;min-width:0">
+        <h2 style="font-size:24px;margin:0 0 6px;text-wrap:pretty">{{ d.title }}</h2>
+        <div style="font-size:13px;color:var(--color-neutral-300)">{{ d.meta }}</div>
+        <div style="font-size:13px;color:var(--color-neutral-500);margin-top:2px">{{ d.genres }}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;padding:16px 16px 0">
+      <sc-if value="{{ d.hasImdb }}"><div style="display:flex;align-items:center;gap:8px;height:32px;padding:0 12px 0 5px;border-radius:999px;background:var(--color-surface)"><span style="padding:2px 5px;border-radius:4px;background:var(--color-neutral-200);color:var(--color-bg);font-size:11px;font-weight:700">IMDb</span><span style="font-size:13px;font-weight:500">{{ d.imdb }}</span><span style="font-size:12px;color:var(--color-neutral-500)">{{ d.votes }}</span></div></sc-if>
+      <sc-if value="{{ d.hasRt }}"><div style="display:flex;align-items:center;gap:6px;height:32px;padding:0 12px 0 8px;border-radius:999px;background:var(--color-surface)"><i class="{{ d.rtIcon }}" style="font-size:18px;color:var(--color-accent-300)"></i><span style="font-size:11px;color:var(--color-neutral-400)">Rotten Tomatoes</span><span style="font-size:13px;font-weight:500">{{ d.rt }}</span></div></sc-if>
+    </div>
+    <sc-if value="{{ d.hasNextEp }}"><div style="padding:12px 16px 0;font-size:14px;color:var(--color-accent-300)">{{ d.nextEp }}</div></sc-if>
+    <div style="display:flex;gap:8px;padding:16px 16px 0">
+      <sc-if value="{{ d.isMovie }}">
+        <button class="btn btn-primary" onClick="{{ d.toggleList }}" style="flex:1;height:46px"><i class="{{ d.addIcon }}" style="font-size:18px"></i>{{ d.addLabel }}</button>
+        <button class="btn btn-secondary" onClick="{{ d.toggleWatch }}" style="flex:1;height:46px"><i class="{{ d.watchIcon }}" style="font-size:18px"></i>{{ d.watchLabel }}</button>
+      </sc-if>
+      <sc-if value="{{ d.isShow }}"><button class="btn btn-primary" onClick="{{ d.toggleFollow }}" style="flex:1;height:46px"><i class="{{ d.followIcon }}" style="font-size:18px"></i>{{ d.followLabel }}</button></sc-if>
+    </div>
+    <sc-if value="{{ d.isMovie }}"><div style="margin:12px 16px 0;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--color-accent-900);color:var(--color-accent-200);font-size:14px"><i class="{{ d.statusIcon }}" style="font-size:18px"></i>{{ d.statusText }}</div></sc-if>
+    <sc-if value="{{ d.isShow }}">
+      <div style="display:flex;gap:22px;padding:12px 16px 0">
+        <sc-for list="{{ d.detailTabs }}" as="t"><button onClick="{{ t.select }}" style="position:relative;background:none;border:0;padding:10px 0;font:inherit;font-size:15px;font-weight:500;color:{{ t.color }};cursor:pointer">{{ t.label }}<span style="position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:3px;background:{{ t.bar }}"></span></button></sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ d.showEpisodes }}">
+      <div style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:14px 16px 0">
+        <sc-for list="{{ d.seasons }}" as="ch"><button onClick="{{ ch.select }}" style="flex:none;height:32px;padding:0 14px;border-radius:999px;border:1px solid {{ ch.border }};background:{{ ch.bg }};color:{{ ch.color }};font:inherit;font-size:13px;cursor:pointer;white-space:nowrap">{{ ch.label }}</button></sc-for>
+      </div>
+      <div style="margin:14px 16px 0;padding:12px 14px;border-radius:12px;background:var(--color-surface);display:flex;align-items:center;gap:12px">
+        <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:500">{{ d.seasonName }}</div><div style="font-size:13px;color:var(--color-neutral-400)">{{ d.seasonSeen }}</div><div style="height:3px;border-radius:3px;background:var(--color-neutral-800);margin-top:8px;overflow:hidden"><div style="height:100%;width:{{ d.seasonPct }};background:var(--color-accent);transition:width .3s"></div></div></div>
+        <sc-if value="{{ d.hasAired }}"><button onClick="{{ d.markAll }}" style="flex:none;display:flex;align-items:center;gap:6px;height:40px;padding:0 12px;border-radius:999px;border:1px solid var(--color-accent);background:{{ d.allBg }};color:{{ d.allColor }};font:inherit;font-size:13px;font-weight:500;cursor:pointer"><i class="ph ph-checks" style="font-size:18px"></i>{{ d.allLabel }}</button></sc-if>
+      </div>
+      <div style="display:flex;flex-direction:column;padding:6px 16px 0">
+        <sc-for list="{{ d.eps }}" as="e">
+          <div onClick="{{ e.open }}" style="display:flex;align-items:center;gap:12px;padding:8px 0;opacity:{{ e.opacity }};cursor:pointer">
+            <div style="flex:none;width:96px;height:54px;border-radius:6px;overflow:hidden"><div style="width:100%;height:100%;background:{{ e.thumbBg }};filter:{{ e.thumbFilter }};transform:scale(1.15)"></div></div>
+            <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.code }} · {{ e.name }}</div><div style="font-size:12px;color:var(--color-neutral-500);margin-top:2px">{{ e.meta }}</div></div>
+            <sc-if value="{{ e.aired }}">
+              <button onClick="{{ e.check }}" aria-label="Marquer comme vu" style="flex:none;width:44px;height:44px;display:grid;place-items:center;background:none;border:0;padding:0;cursor:pointer">
+                <sc-if value="{{ e.watched }}"><span style="width:32px;height:32px;border-radius:50%;background:var(--color-accent);display:grid;place-items:center;color:var(--color-bg);animation:{{ e.anim }}"><i class="ph ph-check" style="font-size:17px;font-weight:700"></i></span></sc-if>
+                <sc-if value="{{ e.unwatched }}"><span style="width:32px;height:32px;border-radius:50%;border:1.5px solid var(--color-neutral-600);display:grid;place-items:center;color:var(--color-neutral-600)"><i class="ph ph-check" style="font-size:16px"></i></span></sc-if>
+              </button>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ d.showInfo }}">
+      <div style="padding:24px 16px 0">
+        <h3 style="font-size:18px;margin:0 0 10px">Où regarder</h3>
+        <sc-if value="{{ d.hasProv }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <sc-for list="{{ d.provGroups }}" as="pg">
+              <div><div style="font-size:12px;color:var(--color-neutral-500);margin-bottom:6px">{{ pg.label }}</div>
+                <div style="display:flex;gap:14px;flex-wrap:wrap"><sc-for list="{{ pg.items }}" as="p"><button onClick="{{ p.open }}" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:0;padding:0;color:var(--color-text);font:inherit;cursor:pointer;width:64px"><span style="width:40px;height:40px;border-radius:50%;background:var(--color-neutral-800);box-shadow:0 0 0 1.5px {{ p.ring }};display:grid;place-items:center;font-size:12px;font-weight:600">{{ p.short }}</span><span style="font-size:11px;color:var(--color-neutral-400);text-align:center">{{ p.name }}</span></button></sc-for></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ d.noProv }}"><div style="font-size:14px;color:var(--color-neutral-400)">Disponibilité inconnue pour ta région.</div></sc-if>
+        <div style="font-size:11px;color:var(--color-neutral-500);margin-top:10px">Données JustWatch · tes plateformes sont cerclées</div>
+      </div>
+      <sc-if value="{{ ts.hasF }}">
+        <div style="padding:24px 16px 0">
+          <h3 style="font-size:18px;margin:0 0 10px">Tes abonnements</h3>
+          <button onClick="{{ ts.openSheet }}" style="display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:8px 12px 8px 22px;border-radius:12px;border:0;background:var(--color-surface);color:var(--color-text);font:inherit;text-align:left;cursor:pointer">
+            <div style="flex:none;display:flex"><sc-for list="{{ ts.stack }}" as="p"><span style="width:32px;height:32px;margin-left:-10px;border-radius:50%;border:2px solid var(--color-surface);background:{{ p.bg }};display:grid;place-items:center;font-size:12px;font-weight:500">{{ p.initial }}</span></sc-for></div>
+            <span style="flex:1;min-width:0;font-size:14px;color:var(--color-neutral-300)">{{ ts.text }}</span><i class="ph ph-caret-right" style="color:var(--color-neutral-600)"></i>
+          </button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ ts.hasSaw }}">
+        <div style="padding-top:24px">
+          <h3 style="font-size:18px;margin:0 0 10px;padding:0 16px">Ils l'ont vu</h3>
+          <div style="display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:0 16px">
+            <sc-for list="{{ ts.saw }}" as="m">
+              <div onClick="{{ m.open }}" style="flex:none;width:120px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 10px 10px;border-radius:12px;background:var(--color-surface);cursor:pointer">
+                <div style="width:56px;height:56px;border-radius:50%;background:{{ m.bg }};display:grid;place-items:center;font-size:20px;font-weight:500">{{ m.initial }}</div>
+                <div style="width:100%;font-size:13px;font-weight:500;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.handle }}</div>
+                <div style="font-size:12px;color:var(--color-neutral-400);text-align:center;line-height:1.25">{{ m.common }}</div>
+                <button class="{{ m.follow.cls }}" onClick="{{ m.follow.tap }}" style="width:100%;height:32px;font-size:13px;margin-top:2px">{{ m.follow.label }}</button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+      <div style="padding:24px 16px 0">
+        <h3 style="font-size:18px;margin:0 0 8px">Synopsis</h3>
+        <p style="margin:0;font-size:15px;color:var(--color-neutral-300);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:{{ d.clamp }};overflow:hidden">{{ d.syn }}</p>
+        <button class="btn btn-ghost" onClick="{{ d.toggleMore }}" style="height:32px;margin-top:2px;margin-left:-4px">{{ d.moreLabel }}</button>
+      </div>
+      <div style="padding:16px 16px 0">
+        <button onClick="{{ d.trailer }}" style="position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;border:0;background:{{ d.bg }};display:grid;place-items:center;cursor:pointer;overflow:hidden">
+          <span style="width:56px;height:56px;border-radius:50%;border:1px solid var(--color-accent);background:color-mix(in srgb,var(--color-bg) 60%,transparent);color:var(--color-accent);display:grid;place-items:center"><i class="ph-fill ph-play" style="font-size:22px"></i></span>
+          <span style="position:absolute;left:12px;bottom:10px;font-size:13px;color:var(--color-text)">Bande-annonce · YouTube</span>
+        </button>
+      </div>
+      <sc-if value="{{ d.hasCast }}">
+        <div style="padding-top:24px">
+          <h3 style="font-size:18px;margin:0 0 10px;padding:0 16px">Casting</h3>
+          <div style="display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding:0 16px">
+            <sc-for list="{{ d.cast }}" as="p"><button onClick="{{ p.open }}" style="flex:none;width:76px;display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;color:var(--color-text);font:inherit;cursor:pointer"><span style="width:64px;height:64px;border-radius:50%;background:{{ p.bg }};display:grid;place-items:center;font-size:18px;font-weight:500">{{ p.initials }}</span><span style="font-size:12px;font-weight:500;text-align:center;line-height:1.2">{{ p.name }}</span><span style="font-size:11px;color:var(--color-neutral-500);text-align:center;line-height:1.2">{{ p.role }}</span></button></sc-for>
+          </div>
+        </div>
+      </sc-if>
+      <div style="padding:24px 16px 0">
+        <h3 style="font-size:18px;margin:0 0 8px">{{ d.crewTitle }}</h3>
+        <sc-for list="{{ d.crew }}" as="r"><div style="display:flex;gap:12px;padding:6px 0;font-size:14px"><span style="width:120px;flex:none;color:var(--color-neutral-500)">{{ r.k }}</span><span>{{ r.v }}</span></div></sc-for>
+      </div>
+      <div style="padding:16px 16px 0">
+        <h3 style="font-size:18px;margin:0 0 8px">Infos</h3>
+        <sc-for list="{{ d.infos }}" as="r"><div style="display:flex;gap:12px;padding:6px 0;font-size:14px"><span style="width:120px;flex:none;color:var(--color-neutral-500)">{{ r.k }}</span><span>{{ r.v }}</span></div></sc-for>
+      </div>
+      <sc-if value="{{ d.hasSaga }}">
+        <div style="padding-top:24px"><h3 style="font-size:18px;margin:0 0 10px;padding:0 16px">Saga</h3>
+          <div style="display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:0 16px"><sc-for list="{{ d.saga }}" as="it"><div style="flex:none;width:104px"><dc-import name="Poster" item="{{ it }}" hint-size="104px,156px"></dc-import></div></sc-for></div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ d.hasSimilar }}">
+        <div style="padding-top:24px"><h3 style="font-size:18px;margin:0 0 10px;padding:0 16px">Titres similaires</h3>
+          <div style="display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:0 16px"><sc-for list="{{ d.similar }}" as="it"><div style="flex:none;width:104px"><dc-import name="Poster" item="{{ it }}" hint-size="104px,156px"></dc-import></div></sc-for></div>
+        </div>
+      </sc-if>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ ovActor }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:20;background:var(--color-bg);animation:push .22s ease;padding-top:47px;display:flex;flex-direction:column">
+  <div style="padding:4px 8px"><button class="btn btn-icon btn-ghost" onClick="{{ back }}" aria-label="Retour" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-caret-left" style="font-size:22px"></i></button></div>
+  <div ref="{{ ovRef }}" style="flex:1;overflow-y:auto;scrollbar-width:none;padding:0 16px 40px">
+    <div style="display:flex;gap:16px;align-items:center">
+      <div style="flex:none;width:96px;height:96px;border-radius:50%;background:{{ a.bg }};display:grid;place-items:center;font-size:30px;font-weight:500">{{ a.initials }}</div>
+      <div><h2 style="font-size:24px;margin:0 0 4px">{{ a.name }}</h2><div style="font-size:13px;color:var(--color-neutral-400)">{{ a.born }}</div></div>
+    </div>
+    <p style="margin:16px 0 0;font-size:14px;color:var(--color-neutral-300);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:{{ a.clamp }};overflow:hidden">{{ a.bio }}</p>
+    <button class="btn btn-ghost" onClick="{{ a.toggleMore }}" style="height:32px;margin-left:-4px">{{ a.moreLabel }}</button>
+    <h3 style="font-size:18px;margin:16px 0 0">Filmographie</h3>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;gap:22px"><sc-for list="{{ a.tabs }}" as="t"><button onClick="{{ t.select }}" style="position:relative;background:none;border:0;padding:10px 0;font:inherit;font-size:15px;font-weight:500;color:{{ t.color }};cursor:pointer">{{ t.label }}<span style="position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:3px;background:{{ t.bar }}"></span></button></sc-for></div>
+      <div style="display:flex;gap:6px"><sc-for list="{{ a.sorts }}" as="ch"><button onClick="{{ ch.select }}" style="height:28px;padding:0 10px;border-radius:999px;border:1px solid {{ ch.border }};background:{{ ch.bg }};color:{{ ch.color }};font:inherit;font-size:12px;cursor:pointer">{{ ch.label }}</button></sc-for></div>
+    </div>
+    <sc-if value="{{ a.has }}"><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px"><sc-for list="{{ a.grid }}" as="it"><dc-import name="Poster" item="{{ it }}" hint-size="100%,160px"></dc-import></sc-for></div></sc-if>
+    <sc-if value="{{ a.empty }}"><div style="padding:24px 0;font-size:14px;color:var(--color-neutral-400)">Aucun titre dans cette catégorie.</div></sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ ovList }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:20;background:var(--color-bg);animation:push .22s ease;padding-top:47px;display:flex;flex-direction:column">
+  <div style="display:flex;align-items:center;gap:4px;padding:4px 8px"><button class="btn btn-icon btn-ghost" onClick="{{ back }}" aria-label="Retour" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-caret-left" style="font-size:22px"></i></button><div><div style="font-size:18px;font-weight:500">{{ l.title }}</div><div style="font-size:12px;color:var(--color-neutral-500)">{{ l.count }}</div></div></div>
+  <div ref="{{ ovRef }}" style="flex:1;overflow-y:auto;scrollbar-width:none;padding:8px 16px 40px">
+    <sc-if value="{{ l.has }}"><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px"><sc-for list="{{ l.grid }}" as="it"><dc-import name="Poster" item="{{ it }}" hint-size="100%,160px"></dc-import></sc-for></div></sc-if>
+    <sc-if value="{{ l.empty }}"><div style="padding:48px 8px;display:flex;flex-direction:column;gap:8px"><i class="ph ph-film-strip" style="font-size:40px;color:var(--color-neutral-600)"></i><div style="font-size:16px;font-weight:500">Aucun titre dans ce genre pour l'instant</div></div></sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ ovSearch }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:20;background:var(--color-bg);animation:fade .18s ease;padding-top:47px;display:flex;flex-direction:column">
+  <div style="display:flex;align-items:center;gap:8px;padding:8px 8px 8px 16px">
+    <div style="flex:1;position:relative"><i class="ph ph-magnifying-glass" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--color-neutral-500);font-size:16px"></i><input class="input" autoFocus="{{ true }}" value="{{ q }}" onChange="{{ onQ }}" placeholder="Titre, acteur, actrice…" style="padding-left:34px;height:42px"></div>
+    <button class="btn btn-icon btn-secondary" onClick="{{ openAdv }}" aria-label="Filtres" style="width:42px;height:42px"><i class="ph ph-sliders-horizontal" style="font-size:18px"></i></button>
+    <button class="btn btn-ghost" onClick="{{ cancelSearch }}" style="height:42px;padding:0 8px">Annuler</button>
+  </div>
+  <div ref="{{ ovRef }}" style="flex:1;overflow-y:auto;scrollbar-width:none;padding-bottom:40px">
+    <sc-if value="{{ advMode }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px">
+        <div><div style="font-size:16px;font-weight:500">Recherche avancée</div><div style="font-size:12px;color:var(--color-neutral-500)">{{ advHeader }}</div></div>
+        <div style="display:flex;gap:4px"><button class="btn btn-ghost" onClick="{{ openAdv }}" style="height:36px">Modifier</button><button class="btn btn-ghost" onClick="{{ exitAdv }}" style="height:36px;color:var(--color-neutral-400)">Effacer</button></div>
+      </div>
+      <sc-if value="{{ advHas }}"><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:4px 16px 0"><sc-for list="{{ advGrid }}" as="it"><dc-import name="Poster" item="{{ it }}" hint-size="100%,160px"></dc-import></sc-for></div></sc-if>
+      <sc-if value="{{ advEmpty }}"><div style="padding:32px 16px;font-size:14px;color:var(--color-neutral-400)">Aucun titre ne correspond à ces filtres.</div></sc-if>
+    </sc-if>
+    <sc-if value="{{ qEmpty }}" hint-placeholder-val="{{ true }}">
+      <div onClick="{{ openMembersInSearch }}" style="display:flex;align-items:center;gap:12px;min-height:48px;margin:8px 16px 0;padding:0 14px;border-radius:12px;background:var(--color-surface);cursor:pointer"><i class="ph ph-users" style="font-size:20px;color:var(--color-accent)"></i><span style="flex:1;font-size:15px">Chercher un membre</span><span style="font-size:13px;color:var(--color-neutral-500)">tape @pseudo</span></div>
+      <sc-if value="{{ hasRecents }}">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px 6px"><h6 style="margin:0;color:var(--color-neutral-500)">Recherches récentes</h6><button class="btn btn-ghost" onClick="{{ clearRecents }}" style="height:32px;font-size:13px">Effacer</button></div>
+        <sc-for list="{{ recents }}" as="r"><div onClick="{{ r.pick }}" style="display:flex;align-items:center;gap:12px;min-height:44px;padding:0 8px 0 16px;cursor:pointer" style-hover="background:var(--color-surface)"><i class="ph ph-clock-counter-clockwise" style="color:var(--color-neutral-500)"></i><span style="flex:1;font-size:15px">{{ r.label }}</span><button onClick="{{ r.remove }}" aria-label="Retirer" style="width:40px;height:40px;border:0;background:none;color:var(--color-neutral-500);cursor:pointer"><i class="ph ph-x"></i></button></div></sc-for>
+      </sc-if>
+      <h6 style="margin:0;padding:18px 16px 6px;color:var(--color-neutral-500)">Tendances du moment</h6>
+      <sc-for list="{{ trends }}" as="r">
+        <div onClick="{{ r.open }}" style="display:flex;align-items:center;gap:12px;padding:6px 8px 6px 16px;cursor:pointer" style-hover="background:var(--color-surface)">
+          <div style="flex:none;width:40px;height:60px;border-radius:6px;background:{{ r.bg }}"></div>
+          <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:500">{{ r.title }}</div><div style="font-size:13px;color:var(--color-neutral-400)">{{ r.sub }}</div></div>
+          <button onClick="{{ r.add }}" aria-label="Ajouter" style="flex:none;width:44px;height:44px;display:grid;place-items:center;border:0;background:none;cursor:pointer"><span style="width:32px;height:32px;border-radius:50%;border:1px solid {{ r.addBorder }};background:{{ r.addBg }};color:{{ r.addColor }};display:grid;place-items:center"><i class="{{ r.addIcon }}" style="font-size:15px"></i></span></button>
+        </div>
+      </sc-for>
+    </sc-if>
+    <sc-if value="{{ qHas }}">
+      <div style="display:flex;gap:20px;overflow-x:auto;scrollbar-width:none;padding:0 16px">
+        <sc-for list="{{ sTabs }}" as="t"><button onClick="{{ t.select }}" style="position:relative;flex:none;background:none;border:0;padding:10px 0;font:inherit;font-size:14px;font-weight:500;color:{{ t.color }};cursor:pointer">{{ t.label }}<span style="position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:3px;background:{{ t.bar }}"></span></button></sc-for>
+      </div>
+      <sc-if value="{{ sPending }}">
+        <div style="display:flex;flex-direction:column;gap:10px;padding:12px 16px">
+          <sc-for list="{{ skelCards }}" as="k"><div style="display:flex;gap:12px;align-items:center"><div style="width:40px;height:60px;border-radius:6px;background:linear-gradient(90deg,var(--color-neutral-900) 0,var(--color-neutral-800) 50%,var(--color-neutral-900) 100%);background-size:600px 100%;animation:shimmer 1.2s linear infinite"></div><div style="flex:1;height:14px;border-radius:4px;background:linear-gradient(90deg,var(--color-neutral-900) 0,var(--color-neutral-800) 50%,var(--color-neutral-900) 100%);background-size:600px 100%;animation:shimmer 1.2s linear infinite"></div></div></sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ sShow }}">
+        <div style="padding-top:6px">
+          <sc-for list="{{ sResults }}" as="r">
+            <div onClick="{{ r.open }}" style="display:flex;align-items:center;gap:12px;padding:6px 8px 6px 16px;cursor:pointer" style-hover="background:var(--color-surface)">
+              <sc-if value="{{ r.isTitle }}"><div style="flex:none;width:40px;height:60px;border-radius:6px;background:{{ r.bg }}"></div></sc-if>
+              <sc-if value="{{ r.isPerson }}"><div style="flex:none;width:40px;height:40px;margin:10px 0;border-radius:50%;background:{{ r.bg }};display:grid;place-items:center;font-size:13px;font-weight:500">{{ r.initials }}</div></sc-if>
+              <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:500">{{ r.title }}</div><div style="font-size:13px;color:var(--color-neutral-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.sub }}</div></div>
+              <sc-if value="{{ r.isTitle }}"><button onClick="{{ r.add }}" aria-label="Ajouter" style="flex:none;width:44px;height:44px;display:grid;place-items:center;border:0;background:none;cursor:pointer"><span style="width:32px;height:32px;border-radius:50%;border:1px solid {{ r.addBorder }};background:{{ r.addBg }};color:{{ r.addColor }};display:grid;place-items:center"><i class="{{ r.addIcon }}" style="font-size:15px"></i></span></button></sc-if>
+              <sc-if value="{{ r.isPerson }}"><i class="ph ph-caret-right" style="color:var(--color-neutral-600);margin-right:12px"></i></sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ sNone }}">
+        <div style="padding:40px 16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px"><i class="ph ph-magnifying-glass" style="font-size:36px;color:var(--color-neutral-600)"></i><div style="font-size:16px;font-weight:500">{{ sNoneText }}</div><button class="btn btn-primary" onClick="{{ openAdv }}" style="height:44px;margin-top:6px">Essayer la recherche avancée</button></div>
+      </sc-if>
+      <sc-if value="{{ isMembers }}">
+        <sc-if value="{{ mShow }}"><div style="padding-top:6px"><sc-for list="{{ mResults }}" as="r"><dc-import name="MemberRow" item="{{ r }}" hint-size="100%,60px"></dc-import></sc-for></div></sc-if>
+        <sc-if value="{{ mShortShow }}">
+          <sc-if value="{{ mHasVisited }}"><h6 style="margin:0;padding:14px 16px 6px;color:var(--color-neutral-500)">Personnes suivies récemment</h6><sc-for list="{{ mVisited }}" as="r"><dc-import name="MemberRow" item="{{ r }}" hint-size="100%,60px"></dc-import></sc-for></sc-if>
+          <sc-if value="{{ mNoVisited }}"><div style="padding:24px 16px;font-size:14px;color:var(--color-neutral-400)">Tape au moins 2 caractères du pseudo ou du nom.</div></sc-if>
+        </sc-if>
+        <sc-if value="{{ mNone }}"><div style="padding:40px 16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px"><i class="ph ph-users-three" style="font-size:36px;color:var(--color-neutral-600)"></i><div style="font-size:16px;font-weight:500">Aucun membre trouvé</div><button class="btn btn-primary" onClick="{{ openInvite }}" style="height:44px;margin-top:6px"><i class="ph ph-user-plus" style="font-size:18px"></i>Inviter quelqu'un</button></div></sc-if>
+      </sc-if>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ ovUser }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:20;background:var(--color-bg);animation:push .22s ease;padding-top:47px;display:flex;flex-direction:column">
+<div style="display:flex;justify-content:space-between;padding:4px 8px"><button class="btn btn-icon btn-ghost" onClick="{{ back }}" aria-label="Retour" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-caret-left" style="font-size:22px"></i></button><button class="btn btn-icon btn-ghost" onClick="{{ opMenu }}" aria-label="Plus d'options" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-dots-three" style="font-size:22px"></i></button></div>
+<div ref="{{ ovRef }}" style="flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding-bottom:40px">
+<div style="display:flex;align-items:center;gap:16px;padding:12px 16px 0">
+  <div style="flex:none;width:88px;height:88px;border-radius:50%;background:{{ op.bg }};display:grid;place-items:center;font-size:32px;font-weight:500;color:var(--color-text)">{{ op.initial }}</div>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+    <h2 style="font-size:24px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ op.name }}</h2>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px;color:var(--color-neutral-400)"><span>{{ op.handle }}</span><sc-if value="{{ op.lock }}"><i class="ph ph-lock-simple" style="font-size:14px"></i></sc-if><sc-if value="{{ op.followsMe }}"><span class="tag tag-neutral">Te suit</span></sc-if></div>
+    <div style="display:flex;gap:18px;margin-top:4px">
+      <button onClick="{{ op.openFollowers }}" style="display:flex;align-items:baseline;gap:5px;min-height:36px;background:none;border:0;padding:0;color:var(--color-text);font:inherit;cursor:pointer"><span style="font-size:18px;font-weight:500">{{ op.fc }}</span><span style="font-size:13px;color:var(--color-neutral-400)">{{ op.fcLabel }}</span></button>
+      <button onClick="{{ op.openFollowing }}" style="display:flex;align-items:baseline;gap:5px;min-height:36px;background:none;border:0;padding:0;color:var(--color-text);font:inherit;cursor:pointer"><span style="font-size:18px;font-weight:500">{{ op.gc }}</span><span style="font-size:13px;color:var(--color-neutral-400)">{{ op.gcLabel }}</span></button>
+    </div>
+  </div>
+</div>
+<sc-if value="{{ op.hasCommon }}"><div style="padding:10px 16px 0"><span style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;background:var(--color-neutral-800);font-size:13px;color:var(--color-neutral-100)"><i class="ph ph-cards" style="font-size:15px"></i>{{ op.commonText }}</span></div></sc-if>
+<div style="padding:16px 16px 0"><button class="{{ op.fb.cls }}" onClick="{{ op.fb.tap }}" style="width:100%;height:44px"><i class="{{ op.fb.icon }}" style="font-size:18px"></i>{{ op.fb.label }}</button></div>
+<sc-if value="{{ op.showContent }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;gap:22px;padding:14px 16px 0"><sc-for list="{{ op.tabs }}" as="t"><button onClick="{{ t.select }}" style="position:relative;flex:none;background:none;border:0;padding:10px 0;font:inherit;font-size:15px;font-weight:500;color:{{ t.color }};cursor:pointer">{{ t.label }}<span style="position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:3px;background:{{ t.bar }}"></span></button></sc-for></div>
+  <div style="padding:12px 16px 0"><div class="seg"><sc-for list="{{ op.segOpts }}" as="o"><label class="seg-opt"><input type="radio" name="{{ op.segName }}" checked="{{ o.on }}" onChange="{{ o.select }}">{{ o.label }}</label></sc-for></div></div>
+  <sc-if value="{{ op.gridHas }}" hint-placeholder-val="{{ true }}">
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 8px;padding:12px 16px 0">
+      <sc-for list="{{ op.grid }}" as="g" hint-placeholder-count="6"><div style="display:flex;flex-direction:column;gap:6px;min-width:0"><dc-import name="Poster" item="{{ g.poster }}" hint-size="100%,160px"></dc-import><sc-if value="{{ g.hasProg }}"><div style="display:flex;flex-direction:column;gap:4px"><div style="height:3px;border-radius:3px;background:var(--color-neutral-800);overflow:hidden"><div style="height:100%;width:{{ g.pct }};background:var(--color-accent)"></div></div><span style="font-size:12px;color:var(--color-neutral-400)">{{ g.code }}</span></div></sc-if></div></sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ op.gridEmpty }}"><div style="padding:40px 16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px"><i class="ph ph-film-strip" style="font-size:36px;color:var(--color-neutral-600)"></i><div style="font-size:16px;font-weight:500">Rien ici pour l'instant</div></div></sc-if>
+</sc-if>
+<sc-if value="{{ op.showLocked }}"><div style="margin:20px 16px 0;padding:32px 20px;border-radius:12px;background:var(--color-surface);display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center"><span style="width:56px;height:56px;border-radius:50%;background:var(--color-neutral-800);display:grid;place-items:center"><i class="ph ph-lock-simple" style="font-size:26px"></i></span><div style="font-size:17px;font-weight:500">Ce profil est privé</div><div style="font-size:14px;color:var(--color-neutral-400)">{{ op.lockText }}</div></div></sc-if>
+<sc-if value="{{ op.showBlocked }}"><div style="margin:20px 16px 0;padding:32px 20px;border-radius:12px;background:var(--color-surface);display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center"><span style="width:56px;height:56px;border-radius:50%;background:var(--color-neutral-800);display:grid;place-items:center"><i class="ph ph-prohibit" style="font-size:26px"></i></span><div style="font-size:17px;font-weight:500">Tu as bloqué ce profil</div><div style="font-size:14px;color:var(--color-neutral-400)">Débloque-le pour voir ses listes et vous suivre à nouveau.</div></div></sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ ovFollows }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:20;background:var(--color-bg);animation:push .22s ease;padding-top:47px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:4px;padding:4px 8px"><button class="btn btn-icon btn-ghost" onClick="{{ back }}" aria-label="Retour" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-caret-left" style="font-size:22px"></i></button><div style="font-size:18px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fl.title }}</div></div>
+<div style="display:flex;gap:22px;padding:0 16px"><sc-for list="{{ fl.tabs }}" as="t"><button onClick="{{ t.select }}" style="position:relative;flex:none;background:none;border:0;padding:10px 0;font:inherit;font-size:15px;font-weight:500;color:{{ t.color }};cursor:pointer">{{ t.label }}<span style="position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:3px;background:{{ t.bar }}"></span></button></sc-for></div>
+<div style="padding:12px 16px 4px"><div style="position:relative"><i class="ph ph-magnifying-glass" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--color-neutral-500);font-size:16px"></i><input class="input" value="{{ fl.q }}" onChange="{{ fl.onQ }}" placeholder="Filtrer" style="width:100%;padding-left:34px;height:40px"></div></div>
+<div ref="{{ ovRef }}" style="flex:1;overflow-y:auto;scrollbar-width:none;padding-bottom:40px">
+<sc-for list="{{ fl.rows }}" as="r" hint-placeholder-count="5"><dc-import name="MemberRow" item="{{ r }}" hint-size="100%,60px"></dc-import></sc-for>
+<sc-if value="{{ fl.empty }}"><div style="padding:48px 24px;display:flex;flex-direction:column;align-items:flex-start;gap:8px"><i class="ph ph-users-three" style="font-size:40px;color:var(--color-neutral-600)"></i><div style="font-size:18px;font-weight:500">{{ fl.emptyTitle }}</div><sc-if value="{{ fl.hasCta }}"><button class="btn btn-primary" onClick="{{ fl.cta }}" style="height:44px;margin-top:8px">{{ fl.ctaLabel }}</button></sc-if></div></sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ ovFeed }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:20;background:var(--color-bg);animation:push .22s ease;padding-top:47px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:4px;padding:4px 8px"><button class="btn btn-icon btn-ghost" onClick="{{ back }}" aria-label="Retour" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-caret-left" style="font-size:22px"></i></button><div style="font-size:18px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Activité de tes abonnements</div></div>
+<div ref="{{ ovRef }}" style="flex:1;overflow-y:auto;scrollbar-width:none;padding-bottom:40px">
+<sc-if value="{{ feedHas }}" hint-placeholder-val="{{ true }}">
+<sc-for list="{{ feedGroups }}" as="g" hint-placeholder-count="2">
+<div style="padding:12px 16px 0">
+<div style="font-size:13px;font-weight:500;color:var(--color-accent-300);margin-bottom:2px">{{ g.label }}</div>
+<sc-for list="{{ g.items }}" as="a">
+<div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--color-neutral-900)">
+<div onClick="{{ a.openUser }}" style="flex:none;width:40px;height:40px;border-radius:50%;background:{{ a.bg }};display:grid;place-items:center;font-size:15px;font-weight:500;cursor:pointer">{{ a.initial }}</div>
+<div style="flex:1;min-width:0"><div style="font-size:15px;line-height:1.4;color:var(--color-neutral-300);text-wrap:pretty"><span onClick="{{ a.openUser }}" style="color:var(--color-text);font-weight:500;cursor:pointer">{{ a.name }}</span> {{ a.mid }} <span style="color:var(--color-text);font-weight:500">{{ a.title }}</span>{{ a.tail }}</div><div style="font-size:13px;color:var(--color-neutral-500);margin-top:2px">{{ a.time }}</div></div>
+<sc-if value="{{ a.isPoster }}"><div onClick="{{ a.openRight }}" style="position:relative;flex:none;width:48px;height:72px;border-radius:6px;background:{{ a.posterBg }};cursor:pointer"><sc-if value="{{ a.inMine }}"><span style="position:absolute;right:-4px;bottom:-4px;width:20px;height:20px;border-radius:50%;background:var(--color-accent);color:var(--color-bg);border:2px solid var(--color-bg);display:grid;place-items:center"><i class="ph ph-check" style="font-size:10px;font-weight:700"></i></span></sc-if></div></sc-if>
+<sc-if value="{{ a.isStill }}"><div onClick="{{ a.openRight }}" style="flex:none;width:64px;height:36px;border-radius:6px;background:{{ a.stillBg }};cursor:pointer;margin-top:4px"></div></sc-if>
+<sc-if value="{{ a.isUser }}"><div onClick="{{ a.openRight }}" style="flex:none;width:48px;height:48px;border-radius:50%;background:{{ a.tBg }};display:grid;place-items:center;font-size:17px;font-weight:500;cursor:pointer">{{ a.tInitial }}</div></sc-if>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</sc-if>
+<sc-if value="{{ feedEmpty }}"><div style="padding:56px 24px;display:flex;flex-direction:column;align-items:flex-start;gap:8px"><i class="ph ph-users-three" style="font-size:40px;color:var(--color-neutral-600)"></i><div style="font-size:18px;font-weight:500">Suis des membres pour voir ce qu'ils regardent</div><button class="btn btn-primary" onClick="{{ openMembers }}" style="height:44px;margin-top:8px">Trouver des membres</button></div></sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ ovRequests }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:20;background:var(--color-bg);animation:push .22s ease;padding-top:47px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:4px;padding:4px 8px"><button class="btn btn-icon btn-ghost" onClick="{{ back }}" aria-label="Retour" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-caret-left" style="font-size:22px"></i></button><div style="font-size:18px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Demandes d'abonnement</div></div>
+<div ref="{{ ovRef }}" style="flex:1;overflow-y:auto;scrollbar-width:none;padding-bottom:40px">
+<sc-if value="{{ reqAll }}"><div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px 4px 16px"><span style="font-size:13px;color:var(--color-neutral-400)">{{ reqCountLabel }}</span><button class="btn btn-ghost" onClick="{{ acceptAll }}" style="height:36px;padding:0 8px">Tout accepter</button></div></sc-if>
+<sc-for list="{{ reqRows }}" as="r"><div style="display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 16px"><div onClick="{{ r.open }}" style="flex:none;width:44px;height:44px;border-radius:50%;background:{{ r.bg }};display:grid;place-items:center;font-size:16px;font-weight:500;cursor:pointer">{{ r.initial }}</div><div onClick="{{ r.open }}" style="flex:1;min-width:0;cursor:pointer"><div style="font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</div><div style="font-size:13px;color:var(--color-neutral-400)">{{ r.handle }}</div></div><button class="btn btn-primary" onClick="{{ r.accept }}" style="flex:none;height:32px;padding:0 12px;font-size:13px">Accepter</button><button class="btn btn-secondary" onClick="{{ r.decline }}" style="flex:none;height:32px;padding:0 12px;font-size:13px">Refuser</button></div></sc-for>
+<sc-if value="{{ reqEmpty }}"><div style="padding:56px 24px;display:flex;flex-direction:column;align-items:flex-start;gap:8px"><i class="ph ph-user-circle-plus" style="font-size:40px;color:var(--color-neutral-600)"></i><div style="font-size:18px;font-weight:500">Aucune demande</div></div></sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ ovBlocked }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:20;background:var(--color-bg);animation:push .22s ease;padding-top:47px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:4px;padding:4px 8px"><button class="btn btn-icon btn-ghost" onClick="{{ back }}" aria-label="Retour" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-caret-left" style="font-size:22px"></i></button><div style="font-size:18px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Comptes bloqués</div></div>
+<div ref="{{ ovRef }}" style="flex:1;overflow-y:auto;scrollbar-width:none;padding-bottom:40px">
+<sc-for list="{{ blockedRows }}" as="r"><div style="display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 16px"><div style="flex:none;width:44px;height:44px;border-radius:50%;background:{{ r.bg }};display:grid;place-items:center;font-size:16px;font-weight:500">{{ r.initial }}</div><div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:500">{{ r.name }}</div><div style="font-size:13px;color:var(--color-neutral-400)">{{ r.handle }}</div></div><button class="btn btn-secondary" onClick="{{ r.unblock }}" style="flex:none;height:32px;padding:0 12px;font-size:13px">Débloquer</button></div></sc-for>
+<sc-if value="{{ blockedEmpty }}"><div style="padding:56px 24px;display:flex;flex-direction:column;align-items:flex-start;gap:8px"><i class="ph ph-prohibit" style="font-size:40px;color:var(--color-neutral-600)"></i><div style="font-size:18px;font-weight:500">Aucun compte bloqué</div></div></sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ ovSettings }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:20;background:var(--color-bg);animation:push .22s ease;padding-top:47px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:4px;padding:4px 8px"><button class="btn btn-icon btn-ghost" onClick="{{ back }}" aria-label="Retour" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-caret-left" style="font-size:22px"></i></button><div style="font-size:18px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Réglages</div></div>
+<div ref="{{ ovRef }}" style="flex:1;overflow-y:auto;scrollbar-width:none;padding:8px 16px 40px;display:flex;flex-direction:column;gap:20px">
+<div><h6 style="color:var(--color-neutral-500);margin:0 0 8px">Préférences</h6><div style="display:flex;flex-direction:column;gap:1px;background:var(--color-neutral-900);border-radius:12px;overflow:hidden"><div style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;background:var(--color-surface)"><i class="ph ph-globe" style="font-size:20px;color:var(--color-neutral-400)"></i><span style="flex:1;white-space:nowrap">Région</span><select value="{{ region }}" onChange="{{ setRegion }}" style="background:transparent;border:0;color:var(--color-neutral-300);font:inherit;font-size:14px;text-align:right;cursor:pointer"><sc-for list="{{ regions }}" as="o"><option value="{{ o }}">{{ o }}</option></sc-for></select></div><div style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;background:var(--color-surface)"><i class="ph ph-translate" style="font-size:20px;color:var(--color-neutral-400)"></i><span style="flex:1;white-space:nowrap">Langue</span><select value="{{ lang }}" onChange="{{ setLang }}" style="background:transparent;border:0;color:var(--color-neutral-300);font:inherit;font-size:14px;text-align:right;cursor:pointer"><sc-for list="{{ langs }}" as="o"><option value="{{ o }}">{{ o }}</option></sc-for></select></div><button onClick="{{ openPlats }}" style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;background:var(--color-surface);border:0;color:var(--color-text);font:inherit;text-align:left;cursor:pointer"><i class="ph ph-television-simple" style="font-size:20px;color:var(--color-neutral-400)"></i><span style="flex:1;white-space:nowrap">Mes plateformes</span><span style="font-size:13px;color:var(--color-neutral-400);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ platSummary }}</span><i class="ph ph-caret-right" style="color:var(--color-neutral-600)"></i></button></div></div>
+<div><h6 style="color:var(--color-neutral-500);margin:0 0 8px">Notifications</h6><div style="display:flex;flex-direction:column;gap:1px;background:var(--color-neutral-900);border-radius:12px;overflow:hidden"><sc-for list="{{ notifSwitches }}" as="n" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;background:var(--color-surface)"><span style="flex:1;white-space:nowrap">{{ n.label }}</span><button onClick="{{ n.toggle }}" role="switch" aria-label="{{ n.label }}" style="flex:none;position:relative;width:44px;height:26px;border-radius:999px;border:0;padding:0;background:{{ n.track }};cursor:pointer;transition:background .2s"><span style="position:absolute;top:2px;left:{{ n.knob }};width:22px;height:22px;border-radius:50%;background:{{ n.knobBg }};transition:left .2s"></span></button></div></sc-for><sc-for list="{{ socNotif }}" as="n" hint-placeholder-count="2"><div style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;background:var(--color-surface)"><span style="flex:1;white-space:nowrap">{{ n.label }}</span><button onClick="{{ n.toggle }}" role="switch" aria-label="{{ n.label }}" style="flex:none;position:relative;width:44px;height:26px;border-radius:999px;border:0;padding:0;background:{{ n.track }};cursor:pointer;transition:background .2s"><span style="position:absolute;top:2px;left:{{ n.knob }};width:22px;height:22px;border-radius:50%;background:{{ n.knobBg }};transition:left .2s"></span></button></div></sc-for><div style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;background:var(--color-surface)"><span style="flex:1;white-space:nowrap">Récapitulatif quotidien</span><select value="{{ recap }}" onChange="{{ setRecap }}" style="background:transparent;border:0;color:var(--color-neutral-300);font:inherit;font-size:14px;text-align:right;cursor:pointer"><sc-for list="{{ recaps }}" as="o"><option value="{{ o }}">{{ o }}</option></sc-for></select></div></div></div>
+<div><h6 style="color:var(--color-neutral-500);margin:0 0 8px">Confidentialité</h6><div style="display:flex;flex-direction:column;gap:1px;background:var(--color-neutral-900);border-radius:12px;overflow:hidden"><div style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;background:var(--color-surface)"><i class="ph ph-lock-simple" style="font-size:20px;color:var(--color-neutral-400)"></i><span style="flex:1;white-space:nowrap">Profil privé</span><button onClick="{{ privSw.toggle }}" role="switch" aria-label="{{ privSw.label }}" style="flex:none;position:relative;width:44px;height:26px;border-radius:999px;border:0;padding:0;background:{{ privSw.track }};cursor:pointer;transition:background .2s"><span style="position:absolute;top:2px;left:{{ privSw.knob }};width:22px;height:22px;border-radius:50%;background:{{ privSw.knobBg }};transition:left .2s"></span></button></div><button onClick="{{ openBlocked }}" style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;background:var(--color-surface);border:0;color:var(--color-text);font:inherit;text-align:left;cursor:pointer"><i class="ph ph-prohibit" style="font-size:20px;color:var(--color-neutral-400)"></i><span style="flex:1">Comptes bloqués</span><span style="font-size:13px;color:var(--color-neutral-400)">{{ blockedLabel }}</span><i class="ph ph-caret-right" style="color:var(--color-neutral-600)"></i></button></div><div style="font-size:12px;color:var(--color-neutral-500);margin-top:8px;padding:0 4px">En privé, seules les personnes que tu acceptes voient tes listes et ton activité.</div></div>
+<div><h6 style="color:var(--color-neutral-500);margin:0 0 8px">Anti-spoiler</h6><div style="display:flex;flex-direction:column;gap:1px;background:var(--color-neutral-900);border-radius:12px;overflow:hidden"><div style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;background:var(--color-surface)"><i class="ph ph-shield-check" style="font-size:20px;color:var(--color-neutral-400)"></i><span style="flex:1;white-space:nowrap">Protection anti-spoiler</span><button onClick="{{ spoilerSw.toggle }}" role="switch" aria-label="{{ spoilerSw.label }}" style="flex:none;position:relative;width:44px;height:26px;border-radius:999px;border:0;padding:0;background:{{ spoilerSw.track }};cursor:pointer;transition:background .2s"><span style="position:absolute;top:2px;left:{{ spoilerSw.knob }};width:22px;height:22px;border-radius:50%;background:{{ spoilerSw.knobBg }};transition:left .2s"></span></button></div></div></div>
+<div><h6 style="color:var(--color-neutral-500);margin:0 0 8px">À propos</h6><div style="padding:14px;border-radius:12px;background:var(--color-surface);display:flex;flex-direction:column;gap:10px"><div style="display:flex;gap:8px"><span class="tag tag-outline">TMDB</span><span class="tag tag-outline">JustWatch</span></div><div style="font-size:13px;color:var(--color-neutral-400)">Ce produit utilise l'API TMDB sans être approuvé ni certifié par TMDB. Plateformes de diffusion fournies par JustWatch. Notes via OMDb.</div><div style="font-size:12px;color:var(--color-neutral-500)">Version 1.1.0</div></div></div>
+<div style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-secondary" onClick="{{ logout }}" style="height:46px"><i class="ph ph-sign-out" style="font-size:18px"></i>Se déconnecter</button><button class="btn btn-ghost" onClick="{{ deleteAcc }}" style="height:44px;color:var(--color-neutral-400)">Supprimer mon compte</button></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ ovEdit }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:20;background:var(--color-bg);animation:push .22s ease;padding-top:47px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px"><div style="display:flex;align-items:center;gap:4px"><button class="btn btn-icon btn-ghost" onClick="{{ back }}" aria-label="Retour" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-caret-left" style="font-size:22px"></i></button><span style="font-size:18px;font-weight:500">Modifier le profil</span></div><button class="btn btn-ghost" onClick="{{ ed.save }}" style="height:40px;padding:0 10px;opacity:{{ ed.saveOpacity }};pointer-events:{{ ed.savePe }}">Enregistrer</button></div>
+<div ref="{{ ovRef }}" style="flex:1;overflow-y:auto;scrollbar-width:none;padding:8px 16px 40px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:88px;height:88px;border-radius:50%;background:var(--color-accent-800);color:var(--color-accent-100);display:grid;place-items:center;font-size:32px;font-weight:500">{{ meInitial }}</div><button class="btn btn-ghost" onClick="{{ ed.photo }}" style="height:36px">Changer la photo</button></div>
+<div class="field"><label>Pseudo</label><div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:2px;height:48px;padding:0 12px;border-radius:8px;border:1px solid {{ ed.uf.border }};background:var(--color-surface);transition:border-color .2s">
+<span style="font-size:16px;color:var(--color-neutral-500)">@</span>
+<input value="{{ ed.uf.val }}" onChange="{{ ed.uf.onU }}" aria-label="Pseudo" autoCapitalize="none" autoComplete="off" spellCheck="{{ false }}" style="flex:1;min-width:0;height:100%;background:transparent;border:0;outline:none;color:var(--color-text);font:inherit;font-size:16px">
+<sc-if value="{{ ed.uf.checking }}"><span style="flex:none;width:16px;height:16px;border-radius:50%;border:2px solid var(--color-neutral-700);border-top-color:var(--color-accent);animation:spin .7s linear infinite"></span></sc-if>
+<sc-if value="{{ ed.uf.ok }}"><i class="ph-fill ph-check-circle" style="font-size:20px;color:var(--color-accent)"></i></sc-if>
+</div>
+<sc-if value="{{ ed.uf.ok }}"><div style="font-size:13px;color:var(--color-accent-300)">Disponible</div></sc-if>
+<sc-if value="{{ ed.uf.checking }}"><div style="font-size:13px;color:var(--color-neutral-500)">Vérification…</div></sc-if>
+<sc-if value="{{ ed.uf.invalid }}"><div style="font-size:13px;color:var(--color-neutral-400)">3 à 20 caractères : lettres minuscules, chiffres, point et tiret bas.</div></sc-if>
+<sc-if value="{{ ed.uf.offline }}"><div style="font-size:13px;color:var(--color-neutral-300)">Vérification impossible, réessaie</div></sc-if>
+<sc-if value="{{ ed.uf.taken }}"><div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--color-neutral-100)"><i class="ph ph-x-circle" style="font-size:16px"></i>Déjà pris. Essaie plutôt :</div><div style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ ed.uf.sugg }}" as="g"><button onClick="{{ g.pick }}" style="height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--color-neutral-800);background:transparent;color:var(--color-neutral-300);font:inherit;font-size:13px;cursor:pointer">{{ g.label }}</button></sc-for></div></sc-if>
+</div><div style="font-size:12px;color:var(--color-neutral-500);margin-top:6px">Modifiable une fois tous les 30 jours. L'ancien pseudo reste réservé 30 jours.</div></div>
+<div class="field"><label>Nom affiché</label><input class="input" value="{{ ed.name }}" onChange="{{ ed.onName }}" style="height:48px"></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:var(--color-surface)"><div style="flex:1;min-width:0"><div style="font-size:15px">Profil privé</div><div style="font-size:13px;color:var(--color-neutral-400)">Seules les personnes que tu acceptes verront tes listes et ton activité.</div></div><button onClick="{{ ed.privSw.toggle }}" role="switch" aria-label="{{ ed.privSw.label }}" style="flex:none;position:relative;width:44px;height:26px;border-radius:999px;border:0;padding:0;background:{{ ed.privSw.track }};cursor:pointer;transition:background .2s"><span style="position:absolute;top:2px;left:{{ ed.privSw.knob }};width:22px;height:22px;border-radius:50%;background:{{ ed.privSw.knobBg }};transition:left .2s"></span></button></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ advOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:35;display:flex;flex-direction:column;justify-content:flex-end">
+  <div onClick="{{ closeAdv }}" style="position:absolute;inset:0;background:color-mix(in srgb,var(--color-neutral-900) 60%,transparent);animation:fade .2s ease"></div>
+  <div style="position:relative;height:calc(100% - 56px);display:flex;flex-direction:column;background:var(--color-surface);border-radius:14px 14px 0 0;box-shadow:var(--shadow-lg);animation:sheet .28s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 8px 6px 16px"><span style="font-size:18px;font-weight:500">Recherche avancée</span><div style="display:flex"><button class="btn btn-ghost" onClick="{{ resetAdv }}" style="height:40px;color:var(--color-neutral-400)">Réinitialiser</button><button class="btn btn-icon btn-ghost" onClick="{{ closeAdv }}" aria-label="Fermer" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-x" style="font-size:20px"></i></button></div></div>
+    <div style="flex:1;overflow-y:auto;scrollbar-width:none;padding:6px 16px 16px;display:flex;flex-direction:column;gap:20px">
+      <div><h6 style="margin:0 0 8px;color:var(--color-neutral-500)">Type</h6><div style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ advTypes }}" as="ch"><button onClick="{{ ch.select }}" style="height:34px;padding:0 14px;border-radius:999px;border:1px solid {{ ch.border }};background:{{ ch.bg }};color:{{ ch.color }};font:inherit;font-size:13px;cursor:pointer">{{ ch.label }}</button></sc-for></div></div>
+      <div><h6 style="margin:0 0 8px;color:var(--color-neutral-500)">Acteurs</h6>
+        <sc-if value="{{ hasActors }}"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><sc-for list="{{ actorChips }}" as="p"><button onClick="{{ p.remove }}" class="tag tag-accent" style="border:0;height:28px;gap:6px;cursor:pointer;font:inherit;font-size:12px">{{ p.name }}<i class="ph ph-x"></i></button></sc-for></div></sc-if>
+        <input class="input" value="{{ actorQ }}" onChange="{{ onActorQ }}" placeholder="Ajouter un acteur ou une actrice" style="height:42px">
+        <sc-if value="{{ hasSugg }}"><div style="margin-top:4px;border-radius:8px;background:var(--color-neutral-900);overflow:hidden"><sc-for list="{{ actorSugg }}" as="p"><button onClick="{{ p.pick }}" style="display:block;width:100%;min-height:40px;padding:0 12px;text-align:left;border:0;background:none;color:var(--color-text);font:inherit;font-size:14px;cursor:pointer" style-hover="background:var(--color-neutral-800)">{{ p.name }}</button></sc-for></div></sc-if>
+      </div>
+      <div><h6 style="margin:0 0 8px;color:var(--color-neutral-500)">Genres</h6><div style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ advGenres }}" as="ch"><button onClick="{{ ch.select }}" style="height:32px;padding:0 12px;border-radius:999px;border:1px solid {{ ch.border }};background:{{ ch.bg }};color:{{ ch.color }};font:inherit;font-size:13px;cursor:pointer">{{ ch.label }}</button></sc-for></div></div>
+      <div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><h6 style="margin:0;color:var(--color-neutral-500)">Années</h6><span style="font-size:13px;color:var(--color-neutral-300)">{{ yearsLabel }}</span></div>
+        <div style="display:flex;gap:12px"><input type="range" min="1950" max="2026" value="{{ yFrom }}" onChange="{{ setYFrom }}" style="flex:1"><input type="range" min="1950" max="2026" value="{{ yTo }}" onChange="{{ setYTo }}" style="flex:1"></div></div>
+      <div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><h6 style="margin:0;color:var(--color-neutral-500)">Note IMDb minimale</h6><span style="font-size:13px;color:var(--color-neutral-300)">{{ minRLabel }}</span></div><input type="range" min="0" max="10" step="0.5" value="{{ minR }}" onChange="{{ setMinR }}" style="width:100%"></div>
+      <div><h6 style="margin:0 0 8px;color:var(--color-neutral-500)">Disponible sur</h6><div style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ advAvail }}" as="ch"><button onClick="{{ ch.select }}" style="height:32px;padding:0 12px;border-radius:999px;border:1px solid {{ ch.border }};background:{{ ch.bg }};color:{{ ch.color }};font:inherit;font-size:13px;cursor:pointer">{{ ch.label }}</button></sc-for></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>Langue originale</label><select class="input" value="{{ advLang }}" onChange="{{ setAdvLang }}"><sc-for list="{{ advLangs }}" as="o"><option value="{{ o }}">{{ o }}</option></sc-for></select></div>
+        <div class="field"><label>Durée maximale</label><select class="input" value="{{ advRun }}" onChange="{{ setAdvRun }}"><sc-for list="{{ advRuns }}" as="o"><option value="{{ o }}">{{ o }}</option></sc-for></select></div>
+      </div>
+      <div><h6 style="margin:0 0 8px;color:var(--color-neutral-500)">Trier par</h6><div style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ advSorts }}" as="ch"><button onClick="{{ ch.select }}" style="height:32px;padding:0 12px;border-radius:999px;border:1px solid {{ ch.border }};background:{{ ch.bg }};color:{{ ch.color }};font:inherit;font-size:13px;cursor:pointer">{{ ch.label }}</button></sc-for></div></div>
+    </div>
+    <div style="padding:10px 16px 34px"><button class="btn btn-primary" onClick="{{ applyAdv }}" style="width:100%;height:50px;font-size:15px">{{ advCount }}</button></div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ platOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:35;display:flex;flex-direction:column;justify-content:flex-end">
+  <div onClick="{{ closePlats }}" style="position:absolute;inset:0;background:color-mix(in srgb,var(--color-neutral-900) 60%,transparent)"></div>
+  <div style="position:relative;padding:12px 16px 34px;background:var(--color-surface);border-radius:14px 14px 0 0;box-shadow:var(--shadow-lg);animation:sheet .25s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:18px;font-weight:500">Mes plateformes</span><button class="btn btn-primary" onClick="{{ closePlats }}" style="height:36px">OK</button></div>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
+      <sc-for list="{{ platTiles }}" as="p"><button onClick="{{ p.toggle }}" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px 10px;border-radius:12px;border:1px solid {{ p.border }};background:{{ p.bg }};color:var(--color-text);font:inherit;cursor:pointer"><span style="width:36px;height:36px;border-radius:50%;background:var(--color-neutral-800);display:grid;place-items:center;font-size:12px;font-weight:600">{{ p.short }}</span><span style="font-size:11px;text-align:center">{{ p.name }}</span></button></sc-for>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ epOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:36;display:flex;flex-direction:column;justify-content:flex-end">
+  <div onClick="{{ closeEp }}" style="position:absolute;inset:0;background:color-mix(in srgb,var(--color-neutral-900) 60%,transparent);animation:fade .2s ease"></div>
+  <div style="position:relative;background:var(--color-surface);border-radius:14px 14px 0 0;box-shadow:var(--shadow-lg);overflow:hidden;animation:sheet .25s ease">
+    <div style="height:180px;overflow:hidden"><div style="width:100%;height:100%;background:{{ ep.bg }};filter:{{ ep.filter }};transform:scale(1.1)"></div></div>
+    <button onClick="{{ closeEp }}" aria-label="Fermer" style="position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;border:0;background:color-mix(in srgb,var(--color-bg) 60%,transparent);color:var(--color-text);display:grid;place-items:center;cursor:pointer"><i class="ph ph-x"></i></button>
+    <div style="padding:16px 16px 34px;display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:12px;color:var(--color-accent-300)">{{ ep.code }}</div>
+      <h3 style="font-size:22px;margin:0">{{ ep.title }}</h3>
+      <div style="font-size:13px;color:var(--color-neutral-400)">{{ ep.meta }}</div>
+      <sc-if value="{{ ep.hasImdb }}"><div style="display:flex;align-items:center;gap:8px"><span style="padding:2px 5px;border-radius:4px;background:var(--color-neutral-200);color:var(--color-bg);font-size:11px;font-weight:700">IMDb</span><span style="font-size:13px;font-weight:500">{{ ep.imdb }}</span></div></sc-if>
+      <p style="margin:4px 0 8px;font-size:14px;color:var(--color-neutral-300)">{{ ep.syn }}</p>
+      <sc-if value="{{ ep.canCheck }}"><button class="{{ ep.cls }}" onClick="{{ ep.toggle }}" style="height:48px;font-size:15px"><i class="{{ ep.icon }}" style="font-size:18px"></i>{{ ep.label }}</button></sc-if>
+      <sc-if value="{{ ep.cantCheck }}"><div style="font-size:13px;color:var(--color-neutral-500)">Pas encore diffusé.</div></sc-if>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ socOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:37;display:flex;flex-direction:column;justify-content:flex-end">
+<div onClick="{{ closeSoc }}" style="position:absolute;inset:0;background:color-mix(in srgb,var(--color-neutral-900) 60%,transparent);animation:fade .2s ease"></div>
+<div style="position:relative;max-height:75%;display:flex;flex-direction:column;padding:8px 8px 34px;background:var(--color-surface);border-radius:14px 14px 0 0;box-shadow:var(--shadow-lg);animation:sheet .25s ease">
+<div style="width:36px;height:4px;border-radius:4px;background:var(--color-neutral-700);margin:0 auto 10px"></div>
+<div style="padding:0 12px 8px"><div style="font-size:18px;font-weight:500">Tes abonnements</div><div style="font-size:13px;color:var(--color-neutral-400)">{{ socTitle }}</div></div>
+<div style="overflow-y:auto;scrollbar-width:none"><sc-for list="{{ socRows }}" as="r"><div onClick="{{ r.open }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:6px 12px;border-radius:8px;cursor:pointer" style-hover="background:var(--color-neutral-800)"><div style="flex:none;width:40px;height:40px;border-radius:50%;background:{{ r.bg }};display:grid;place-items:center;font-size:15px;font-weight:500">{{ r.initial }}</div><div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:500">{{ r.name }}</div><div style="font-size:13px;color:var(--color-neutral-400)">{{ r.status }}</div></div><i class="ph ph-caret-right" style="color:var(--color-neutral-600)"></i></div></sc-for></div>
+<button class="btn btn-secondary" onClick="{{ closeSoc }}" style="height:46px;margin:8px 4px 0">Fermer</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ inviteOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:37;display:flex;flex-direction:column;justify-content:flex-end">
+<div onClick="{{ closeInvite }}" style="position:absolute;inset:0;background:color-mix(in srgb,var(--color-neutral-900) 60%,transparent);animation:fade .2s ease"></div>
+<div style="position:relative;padding:8px 16px 34px;background:var(--color-surface);border-radius:14px 14px 0 0;box-shadow:var(--shadow-lg);animation:sheet .25s ease;display:flex;flex-direction:column;gap:12px">
+<div style="width:36px;height:4px;border-radius:4px;background:var(--color-neutral-700);margin:0 auto"></div>
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:18px;font-weight:500">Inviter</span><button class="btn btn-icon btn-ghost" onClick="{{ closeInvite }}" aria-label="Fermer" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-x" style="font-size:20px"></i></button></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px;border-radius:12px;background:var(--color-bg)">
+<div style="position:relative;width:200px;height:200px">
+<sc-if value="{{ hasQr }}"><div role="img" aria-label="QR code de ton profil" style="width:100%;height:100%;border-radius:8px;background-image:url({{ qr }});background-size:contain;background-repeat:no-repeat;image-rendering:pixelated"></div></sc-if>
+<sc-if value="{{ noQr }}"><div style="width:100%;height:100%;border-radius:8px;background:repeating-conic-gradient(var(--color-text) 0% 25%,var(--color-bg) 0% 50%) 0 0/20px 20px;opacity:.85"></div></sc-if>
+<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:50%;background:var(--color-accent-800);border:4px solid var(--color-bg);display:grid;place-items:center;font-size:18px;font-weight:500;color:var(--color-accent-100)">{{ meInitial }}</div>
+</div>
+<div style="font-size:16px;font-weight:500">{{ myHandle }}</div>
+<div style="font-size:12px;color:var(--color-neutral-500)">{{ myLinkShort }}</div>
+</div>
+<button class="btn btn-primary" onClick="{{ shareLink }}" style="height:48px;font-size:15px"><i class="ph ph-share-network" style="font-size:18px"></i>Partager mon lien</button>
+<div style="display:flex;gap:8px"><button class="btn btn-secondary" onClick="{{ copyMyLink }}" style="flex:1;height:44px"><i class="ph ph-link" style="font-size:18px"></i>Copier le lien</button><button class="btn btn-secondary" onClick="{{ openScan }}" style="flex:1;height:44px"><i class="ph ph-scan" style="font-size:18px"></i>Scanner un code</button></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ scanOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:38;background:var(--color-neutral-900);display:flex;flex-direction:column;align-items:center;padding:56px 20px 40px;animation:fade .2s ease">
+<div style="align-self:stretch;display:flex;justify-content:space-between;align-items:center"><span style="font-size:17px;font-weight:500">Scanner un code</span><button class="btn btn-icon btn-ghost" onClick="{{ closeScan }}" aria-label="Fermer" style="width:44px;height:44px;color:var(--color-text)"><i class="ph ph-x" style="font-size:20px"></i></button></div>
+<div style="flex:1;display:grid;place-items:center"><div style="position:relative;width:240px;height:240px;border-radius:20px;box-shadow:0 0 0 2px var(--color-accent);background:linear-gradient(160deg,var(--color-neutral-800),var(--color-bg))"><div style="position:absolute;left:16px;right:16px;top:50%;height:2px;background:var(--color-accent);opacity:.7"></div></div></div>
+<p style="margin:0 0 16px;font-size:14px;color:var(--color-neutral-300);text-align:center">Vise le code Zabava d'un ami pour ouvrir son profil.</p>
+<button class="btn btn-secondary" onClick="{{ simulateScan }}" style="height:44px;align-self:stretch">Simuler un scan (prototype)</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;justify-content:flex-end">
+  <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;background:color-mix(in srgb,var(--color-neutral-900) 60%,transparent);animation:fade .2s ease"></div>
+  <div style="position:relative;padding:8px 8px 34px;background:var(--color-surface);border-radius:14px 14px 0 0;box-shadow:var(--shadow-lg);animation:sheet .22s ease">
+    <div style="width:36px;height:4px;border-radius:4px;background:var(--color-neutral-700);margin:0 auto 10px"></div>
+    <div style="padding:0 12px 8px;font-size:13px;color:var(--color-neutral-400)">{{ sheetTitle }}</div>
+    <sc-for list="{{ sheetOpts }}" as="o"><button onClick="{{ o.run }}" style="display:flex;align-items:center;gap:12px;width:100%;min-height:50px;padding:0 12px;border:0;border-radius:8px;background:none;color:var(--color-text);font:inherit;font-size:15px;text-align:left;cursor:pointer" style-hover="background:var(--color-neutral-800)"><i class="{{ o.icon }}" style="font-size:20px;color:var(--color-neutral-400)"></i>{{ o.label }}</button></sc-for>
+    <button class="btn btn-secondary" onClick="{{ closeSheet }}" style="width:100%;height:46px;margin-top:8px">Annuler</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ dlgOpen }}" hint-placeholder-val="{{ false }}">
+<div class="dialog-backdrop" style="position:absolute;z-index:50;animation:fade .2s ease">
+  <div class="dialog">
+    <div class="dialog-title">{{ dlgTitle }}</div>
+    <sc-if value="{{ hasDlgBody }}"><div class="dialog-body">{{ dlgBody }}</div></sc-if>
+    <div class="dialog-actions"><sc-for list="{{ dlgActions }}" as="a"><button class="{{ a.cls }}" onClick="{{ a.run }}" style="height:42px">{{ a.label }}</button></sc-for></div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ toastOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:16px;right:16px;bottom:{{ toastBottom }};z-index:45;display:flex;align-items:center;gap:12px;min-height:48px;padding:4px 6px 4px 16px;border-radius:12px;background:var(--color-neutral-800);box-shadow:var(--shadow-md);animation:up .25s ease;font-size:14px">
+  <span style="flex:1">{{ toastMsg }}</span>
+  <sc-if value="{{ toastUndo }}"><button class="btn btn-ghost" onClick="{{ undo }}" style="height:40px;padding:0 12px;color:var(--color-accent-300)">Annuler</button></sc-if>
+</div>
+</sc-if>
+
+<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:5px;background:var(--color-neutral-300);z-index:70;pointer-events:none"></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startAt&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Connexion&quot;,&quot;Watchlist&quot;],&quot;default&quot;:&quot;Connexion&quot;,&quot;tsType&quot;:&quot;'Connexion'|'Watchlist'&quot;},&quot;offline&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { ready: false, zoom: 1 };
+  mainRef = React.createRef();
+  ovRef = React.createRef();
+  componentDidMount() {
+    this.fit = () => this.setState({ zoom: Math.min(1, (window.innerHeight - 24) / 864, (window.innerWidth - 24) / 410) });
+    this.fit();
+    window.addEventListener('resize', this.fit);
+    const go = () => {
+      if (!window.APP || !window.SOCIAL) { this._boot = setTimeout(go, 40); return; }
+      this.setState({ ...window.APP.initState(), ready: true }, () => {
+        this.A = window.APP.make(this);
+        if (this.props.startAt === 'Watchlist') this.A.enterApp();
+      });
+    };
+    go();
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this.fit); clearTimeout(this._boot); }
+  componentDidUpdate(pp, ps) {
+    if (this.A && pp && pp.startAt !== this.props.startAt) {
+      if (this.props.startAt === 'Watchlist') this.A.enterApp(); else this.setState({ route: 'login', stack: [] });
+    }
+    const st = this.state.stack || [];
+    const top = st[st.length - 1];
+    const k = top ? st.length + top.kind + (top.id || top.name || top.genre || top.u || '') : '';
+    if (k !== this._k) { this._k = k; if (this.ovRef.current) this.ovRef.current.scrollTop = 0; }
+    if (this._tab !== this.state.tab) { this._tab = this.state.tab; if (this.mainRef.current) this.mainRef.current.scrollTop = 0; }
+  }
+  renderVals() {
+    if (!this.state.ready || !window.APP || !this.A) return { notReady: true, zoom: this.state.zoom };
+    return { ...window.APP.vals(this), notReady: false, mainRef: this.mainRef, ovRef: this.ovRef };
+  }
+}
+</script>
+</body>
+</html>

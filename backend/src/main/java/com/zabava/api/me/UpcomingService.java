@@ -14,16 +14,15 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.zabava.api.catalog.TitleService;
 import com.zabava.api.catalog.TitleStore;
 import com.zabava.api.catalog.TitleStore.Arrival;
 import com.zabava.api.catalog.TitleStore.EpisodeRow;
 import com.zabava.api.catalog.TitleStore.TitleRow;
 import com.zabava.api.catalog.dto.CatalogDtos.Availability;
 import com.zabava.api.catalog.dto.CatalogDtos.Provider;
-import com.zabava.api.catalog.dto.CatalogDtos.TitleLite;
 import com.zabava.api.common.ApiException;
 import com.zabava.api.common.MediaType;
-import com.zabava.api.common.TitleRef;
 import com.zabava.api.me.LibraryStore.UserTitleRow;
 import com.zabava.api.me.ProfileService.Prefs;
 import com.zabava.api.me.dto.MeDtos.NoDateItem;
@@ -77,14 +76,14 @@ public class UpcomingService {
                 default -> null;
             };
             if (event != null && inRange(date, from, to)) {
-                events.add(new UpcomingEvent(date, event, lite(titles.get(titleId)), null, null, null, null));
+                events.add(new UpcomingEvent(date, event, TitleService.lite(titles.get(titleId)), null, null, null, null));
             }
         }));
         Instant start = from.atStartOfDay(zone).toInstant();
         Instant end = to.plusDays(1).atStartOfDay(zone).toInstant();
         for (Arrival arrival : store.subscriptionArrivals(movies, prefs.region(), start, end)) {
             events.add(new UpcomingEvent(
-                    arrival.firstSeen().atZone(zone).toLocalDate(), "streaming", lite(titles.get(arrival.titleId())),
+                    arrival.firstSeen().atZone(zone).toLocalDate(), "streaming", TitleService.lite(titles.get(arrival.titleId())),
                     null, null, null, arrival.providerName()));
         }
 
@@ -105,13 +104,13 @@ public class UpcomingService {
                 if (watched.containsKey(e.id()) || !inRange(date, from, to)) continue;
                 if (e.airstamp() != null && e.airstamp().isBefore(clock.instant())) continue;
                 events.add(new UpcomingEvent(
-                        date, "episode", lite(title), e.season(), e.number(), e.airstamp(),
+                        date, "episode", TitleService.lite(title), e.season(), e.number(), e.airstamp(),
                         platform(offers.get(title.id()), prefs.providerIds(), title.network())));
             }
             // Série en production sans épisode daté : « Saison {n+1} annoncée, date à venir ».
             if (!hasFutureDate && !Boolean.TRUE.equals(title.ended())) {
                 int lastSeason = episodes.stream().mapToInt(EpisodeRow::season).max().orElse(0);
-                noDate.add(new NoDateItem(lite(title), lastSeason + 1));
+                noDate.add(new NoDateItem(TitleService.lite(title), lastSeason + 1));
             }
         }
 
@@ -142,22 +141,5 @@ public class UpcomingService {
 
     private static boolean inRange(LocalDate date, LocalDate from, LocalDate to) {
         return !date.isBefore(from) && !date.isAfter(to);
-    }
-
-    static TitleLite lite(TitleRow t) {
-        return new TitleLite(
-                TitleRef.format(t.type(), t.tmdbId()),
-                t.tmdbId(),
-                t.type().key(),
-                t.title(),
-                t.originalTitle(),
-                t.year(),
-                t.posterPath(),
-                t.backdropPath(),
-                t.overview(),
-                null,
-                null,
-                null,
-                null);
     }
 }

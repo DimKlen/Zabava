@@ -547,6 +547,24 @@ public class TitleService {
                 TmdbMapper.date(Json.text(s, "air_date"))));
     }
 
+    /** Titre résumé à partir de la ligne en base (Ma liste, À venir, social). */
+    public static TitleLite lite(TitleRow t) {
+        return new TitleLite(
+                TitleRef.format(t.type(), t.tmdbId()),
+                t.tmdbId(),
+                t.type().key(),
+                t.title(),
+                t.originalTitle(),
+                t.year(),
+                t.posterPath(),
+                t.backdropPath(),
+                t.overview(),
+                null,
+                null,
+                null,
+                null);
+    }
+
     public static UserTitle userTitle(MediaType type, int tmdbId, UserTitleRow row) {
         return new UserTitle(
                 TitleRef.format(type, tmdbId), row.status(), row.addedAt(), row.watchedAt(), row.notificationsEnabled());

@@ -1,5 +1,6 @@
 package com.zabava.api.common;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -25,13 +26,20 @@ public class ApiErrorHandler {
 
     public record ErrorBody(Map<String, String> error) {
         static ErrorBody of(String code, String message) {
-            return new ErrorBody(Map.of("code", code, "message", message == null ? "" : message));
+            return of(code, message, Map.of());
+        }
+
+        static ErrorBody of(String code, String message, Map<String, String> details) {
+            Map<String, String> error = new LinkedHashMap<>(details);
+            error.put("code", code);
+            error.put("message", message == null ? "" : message);
+            return new ErrorBody(error);
         }
     }
 
     @ExceptionHandler(ApiException.class)
     ResponseEntity<ErrorBody> api(ApiException e) {
-        return ResponseEntity.status(e.status()).body(ErrorBody.of(e.code(), e.getMessage()));
+        return ResponseEntity.status(e.status()).body(ErrorBody.of(e.code(), e.getMessage(), e.details()));
     }
 
     @ExceptionHandler({
