@@ -36,6 +36,54 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/users/{username}/report': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['report'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/users/{username}/follow': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['follow'];
+    delete: operations['unfollow'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/users/{username}/block': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['block'];
+    delete: operations['unblock'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/me/titles': {
     parameters: {
       query?: never;
@@ -46,6 +94,22 @@ export interface paths {
     get?: never;
     put?: never;
     post: operations['addTitle'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/me/recent-profiles/{username}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['visit'];
     delete?: never;
     options?: never;
     head?: never;
@@ -63,6 +127,70 @@ export interface paths {
     put?: never;
     post: operations['pushToken'];
     delete: operations['deletePushToken'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/me/followers/{username}/restore': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['restoreFollower'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/me/follow-requests/{username}/decline': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['decline'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/me/follow-requests/{username}/accept': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['accept'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/me/follow-requests/accept-all': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['acceptAll'];
+    delete?: never;
     options?: never;
     head?: never;
     patch?: never;
@@ -100,6 +228,102 @@ export interface paths {
     patch: operations['patchTitle'];
     trace?: never;
   };
+  '/api/v1/users/{username}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['profile_1'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/users/{username}/titles': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['titles'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/users/{username}/following': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['following'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/users/{username}/followers': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['followers'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/users/username-available': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['usernameAvailable'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/users/search': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['search'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/trending': {
     parameters: {
       query?: never;
@@ -124,6 +348,22 @@ export interface paths {
       cookie?: never;
     };
     get: operations['title'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/titles/{type}/{tmdbId}/social': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['titleSocial'];
     put?: never;
     post?: never;
     delete?: never;
@@ -187,7 +427,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get: operations['search'];
+    get: operations['search_1'];
     put?: never;
     post?: never;
     delete?: never;
@@ -260,6 +500,70 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/me/recent-profiles': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['recentProfiles'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/me/follow-requests': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['followRequests'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/me/feed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['feed'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/me/blocks': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['blocks'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/discover': {
     parameters: {
       query?: never;
@@ -308,6 +612,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/me/followers/{username}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete: operations['removeFollower'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -322,6 +642,8 @@ export interface components {
       seasons?: boolean;
       /** Format: int32 */
       digestHour?: number;
+      newFollower?: boolean;
+      followRequests?: boolean;
     };
     ProfileUpdate: {
       region?: string;
@@ -330,6 +652,10 @@ export interface components {
       notificationPrefs?: components['schemas']['NotificationPrefsUpdate'];
       /** Format: date-time */
       onboardedAt?: string;
+      username?: string;
+      displayName?: string;
+      isPrivate?: boolean;
+      avatarUrl?: string;
     };
     NotificationPrefs: {
       episodes?: boolean;
@@ -338,6 +664,8 @@ export interface components {
       seasons?: boolean;
       /** Format: int32 */
       digestHour?: number;
+      newFollower?: boolean;
+      followRequests?: boolean;
     };
     Profile: {
       id?: string;
@@ -353,6 +681,22 @@ export interface components {
       /** Format: date-time */
       onboardedAt?: string;
       providerIds?: number[];
+      username?: string;
+      /** Format: date-time */
+      usernameChangedAt?: string;
+      isPrivate?: boolean;
+      /** Format: int32 */
+      followersCount?: number;
+      /** Format: int32 */
+      followingCount?: number;
+      /** Format: int32 */
+      followRequestsCount?: number;
+    };
+    ReportRequest: {
+      reason: string;
+    };
+    FollowResult: {
+      status?: string;
     };
     AddTitleRequest: {
       /** Format: int32 */
@@ -374,10 +718,24 @@ export interface components {
       watchedAt?: string;
       notificationsEnabled?: boolean;
     };
+    MemberLite: {
+      username?: string;
+      displayName?: string;
+      avatarUrl?: string;
+      isPrivate?: boolean;
+      followState?: string;
+      followsMe?: boolean;
+      /** Format: int32 */
+      commonCount?: number;
+    };
     PushTokenRequest: {
       expoToken: string;
       platform: string;
       timezone?: string;
+    };
+    AcceptAllResult: {
+      /** Format: int32 */
+      accepted?: number;
     };
     EpisodesRequest: {
       episodeIds: number[];
@@ -390,11 +748,45 @@ export interface components {
       watchedAt?: string;
       notificationsEnabled?: boolean;
     };
+    UserProfile: {
+      username?: string;
+      displayName?: string;
+      avatarUrl?: string;
+      isPrivate?: boolean;
+      followState?: string;
+      followsMe?: boolean;
+      /** Format: int32 */
+      commonCount?: number;
+      /** Format: int32 */
+      followersCount?: number;
+      /** Format: int32 */
+      followingCount?: number;
+      canSeeLists?: boolean;
+      isMe?: boolean;
+    };
     Availability: {
       sub?: components['schemas']['Provider'][];
       rent?: components['schemas']['Provider'][];
       buy?: components['schemas']['Provider'][];
       link?: string;
+    };
+    EpisodeCode: {
+      /** Format: int32 */
+      season?: number;
+      /** Format: int32 */
+      number?: number;
+    };
+    PageProfileTitle: {
+      items?: components['schemas']['ProfileTitle'][];
+      nextCursor?: string;
+    };
+    ProfileTitle: {
+      title?: components['schemas']['TitleLite'];
+      status?: string;
+      lastEpisode?: components['schemas']['EpisodeCode'];
+      /** Format: int32 */
+      progressPct?: number;
+      inMyList?: boolean;
     };
     Provider: {
       /** Format: int32 */
@@ -432,6 +824,15 @@ export interface components {
       /** Format: double */
       voteAverage?: number;
       badge?: components['schemas']['TitleBadge'];
+    };
+    PageMemberLite: {
+      items?: components['schemas']['MemberLite'][];
+      nextCursor?: string;
+    };
+    UsernameAvailability: {
+      available?: boolean;
+      reason?: string;
+      suggestions?: string[];
     };
     CastMember: {
       /** Format: int32 */
@@ -512,6 +913,17 @@ export interface components {
       collection?: components['schemas']['Collection'];
       similar?: components['schemas']['TitleLite'][];
       userTitle?: components['schemas']['UserTitle'];
+    };
+    FollowingStatus: {
+      user?: components['schemas']['MemberLite'];
+      status?: string;
+      detail?: string;
+      /** Format: date-time */
+      date?: string;
+    };
+    TitleSocial: {
+      following?: components['schemas']['FollowingStatus'][];
+      saw?: components['schemas']['MemberLite'][];
     };
     Episode: {
       /** Format: int64 */
@@ -647,6 +1059,33 @@ export interface components {
       airstamp?: string;
       provider?: string;
     };
+    Activity: {
+      id?: string;
+      /** Format: date-time */
+      createdAt?: string;
+      actor?: components['schemas']['MemberLite'];
+      type?: string;
+      title?: components['schemas']['TitleLite'];
+      episode?: components['schemas']['ActivityEpisode'];
+      /** Format: int32 */
+      count?: number;
+      target?: components['schemas']['MemberLite'];
+      inMyList?: boolean;
+    };
+    ActivityEpisode: {
+      /** Format: int64 */
+      id?: number;
+      /** Format: int32 */
+      season?: number;
+      /** Format: int32 */
+      number?: number;
+      name?: string;
+      stillPath?: string;
+    };
+    PageActivity: {
+      items?: components['schemas']['Activity'][];
+      nextCursor?: string;
+    };
     DiscoverResult: {
       results?: components['schemas']['TitleLite'][];
       /** Format: int32 */
@@ -736,6 +1175,112 @@ export interface operations {
       };
     };
   };
+  report: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        username: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReportRequest'];
+      };
+    };
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  follow: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        username: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          '*/*': components['schemas']['FollowResult'];
+        };
+      };
+    };
+  };
+  unfollow: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        username: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  block: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        username: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  unblock: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        username: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   addTitle: {
     parameters: {
       query?: never;
@@ -756,6 +1301,28 @@ export interface operations {
         };
         content: {
           '*/*': components['schemas']['UserTitle'];
+        };
+      };
+    };
+  };
+  visit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        username: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          '*/*': components['schemas']['MemberLite'][];
         };
       };
     };
@@ -801,6 +1368,86 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  restoreFollower: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        username: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  decline: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        username: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  accept: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        username: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  acceptAll: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          '*/*': components['schemas']['AcceptAllResult'];
+        };
       };
     };
   };
@@ -894,6 +1541,149 @@ export interface operations {
       };
     };
   };
+  profile_1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        username: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          '*/*': components['schemas']['UserProfile'];
+        };
+      };
+    };
+  };
+  titles: {
+    parameters: {
+      query: {
+        type: string;
+        status: string;
+        cursor?: string;
+      };
+      header?: never;
+      path: {
+        username: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          '*/*': components['schemas']['PageProfileTitle'];
+        };
+      };
+    };
+  };
+  following: {
+    parameters: {
+      query?: {
+        q?: string;
+        cursor?: string;
+      };
+      header?: never;
+      path: {
+        username: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          '*/*': components['schemas']['PageMemberLite'];
+        };
+      };
+    };
+  };
+  followers: {
+    parameters: {
+      query?: {
+        q?: string;
+        cursor?: string;
+      };
+      header?: never;
+      path: {
+        username: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          '*/*': components['schemas']['PageMemberLite'];
+        };
+      };
+    };
+  };
+  usernameAvailable: {
+    parameters: {
+      query: {
+        u: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          '*/*': components['schemas']['UsernameAvailability'];
+        };
+      };
+    };
+  };
+  search: {
+    parameters: {
+      query: {
+        q: string;
+        cursor?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          '*/*': components['schemas']['PageMemberLite'];
+        };
+      };
+    };
+  };
   trending: {
     parameters: {
       query?: {
@@ -936,6 +1726,29 @@ export interface operations {
         };
         content: {
           '*/*': components['schemas']['TitleDetail'];
+        };
+      };
+    };
+  };
+  titleSocial: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        type: string;
+        tmdbId: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          '*/*': components['schemas']['TitleSocial'];
         };
       };
     };
@@ -1008,7 +1821,7 @@ export interface operations {
       };
     };
   };
-  search: {
+  search_1: {
     parameters: {
       query: {
         q: string;
@@ -1120,6 +1933,91 @@ export interface operations {
       };
     };
   };
+  recentProfiles: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          '*/*': components['schemas']['MemberLite'][];
+        };
+      };
+    };
+  };
+  followRequests: {
+    parameters: {
+      query?: {
+        cursor?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          '*/*': components['schemas']['PageMemberLite'];
+        };
+      };
+    };
+  };
+  feed: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          '*/*': components['schemas']['PageActivity'];
+        };
+      };
+    };
+  };
+  blocks: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          '*/*': components['schemas']['MemberLite'][];
+        };
+      };
+    };
+  };
   discover: {
     parameters: {
       query?: {
@@ -1190,6 +2088,26 @@ export interface operations {
       query?: never;
       header?: never;
       path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  removeFollower: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        username: string;
+      };
       cookie?: never;
     };
     requestBody?: never;
