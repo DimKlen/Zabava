@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useCameraPermissions } from 'expo-camera';
 import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
@@ -20,6 +20,7 @@ import { ScanScreen } from '../ScanScreen';
 
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true },
+  useSegments: () => ['(tabs)', 'profile'],
 }));
 jest.mock('@/api/http', () => ({ api: jest.fn() }));
 jest.mock('@/api/queryClient', () => {
@@ -116,7 +117,8 @@ describe('InviteSheetHost', () => {
     expect(Clipboard.setStringAsync).toHaveBeenCalledWith(
       'https://151-145-50-138.sslip.io/u/dim.k',
     );
-    await waitFor(() => expect(useUiStore.getState().toast?.message).toBe('Lien copié'));
+    // Visible au-dessus de la sheet (la Modal couvre le toast global).
+    expect(await screen.findByText('Lien copié')).toBeTruthy();
   });
 
   it('« Scanner un code » ferme la sheet et ouvre le scanner', async () => {

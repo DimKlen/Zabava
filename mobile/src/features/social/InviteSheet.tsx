@@ -10,6 +10,7 @@ import { Avatar } from '@/components/Avatar';
 import { BottomSheet, SheetHandle } from '@/components/BottomSheet';
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
+import { ToastHost } from '@/components/Toast';
 import { inviteLink, inviteMessage } from '@/domain/social/links';
 import { closeInviteSheet, showToast, useUiStore } from '@/store/ui';
 import { colors, durations, radii } from '@/theme/tokens';
@@ -34,6 +35,8 @@ export function InviteSheetHost() {
       onClose={closeInviteSheet}
       enterDuration={durations.sheetPlatforms}
       panelStyle={styles.panel}
+      // « Lien copié » : le toast global est sous la Modal de la sheet.
+      overlay={<ToastHost />}
     >
       <SheetHandle />
       <View style={styles.header}>
