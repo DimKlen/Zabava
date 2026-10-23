@@ -63,6 +63,8 @@ const config: ExpoConfig = {
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     deeplinkScheme: process.env.EXPO_PUBLIC_DEEPLINK_SCHEME ?? 'zabava',
+    // Domaine des liens d'invitation https://{domaine}/u/{pseudo} (specs/social/docs/02 §4).
+    inviteDomain: process.env.EXPO_PUBLIC_INVITE_DOMAIN ?? '151-145-50-138.sslip.io',
     eas: { projectId: 'b7db8a7c-ea84-4aa5-8f42-5c1218ac33f7' },
   },
 };

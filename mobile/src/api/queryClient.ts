@@ -44,10 +44,16 @@ function isInList(type: unknown, tmdbId: unknown): boolean {
   );
 }
 
+/** Profils visités et leurs listes de titres (specs/social/docs/07 §2), pas leurs abonnés. */
+function isVisitedProfile(key: readonly unknown[]): boolean {
+  return key[0] === 'user' && (key.length === 2 || key[2] === 'titles');
+}
+
 export function shouldPersistQuery(query: Query): boolean {
   if (query.state.status !== 'success') return false;
   const [root, type, tmdbId] = query.queryKey;
   if (PERSISTED_ROOTS.has(String(root))) return true;
+  if (isVisitedProfile(query.queryKey)) return true;
   // Découvrir s'ouvre aussitôt au lancement suivant, puis se met à jour s'il a plus d'un jour.
   if (isDiscoverCarousel(query.queryKey)) return true;
   return LIST_TITLE_ROOTS.has(String(root)) && isInList(type, tmdbId);
