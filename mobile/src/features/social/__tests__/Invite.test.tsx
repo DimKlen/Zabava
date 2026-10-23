@@ -4,7 +4,7 @@ import { useCameraPermissions } from 'expo-camera';
 import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
 import type { ReactElement } from 'react';
-import { Linking, Share } from 'react-native';
+import { AppState, Linking, Share } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { api } from '@/api/http';
@@ -69,8 +69,16 @@ const member = (username: string, displayName: string) => ({
   commonCount: 0,
 });
 
+// Abonnements AppState (le mock de React Native ne renvoie pas d'abonnement).
+let appStateListeners: ((state: string) => void)[] = [];
+
 beforeEach(() => {
   jest.clearAllMocks();
+  appStateListeners = [];
+  jest.spyOn(AppState, 'addEventListener').mockImplementation((_, listener) => {
+    appStateListeners.push(listener as (state: string) => void);
+    return { remove: jest.fn() } as unknown as ReturnType<typeof AppState.addEventListener>;
+  });
   queryClient.clear();
   queryClient.setQueryData(profileKey, ME);
 });
@@ -148,6 +156,14 @@ describe('ScanScreen', () => {
     expect(screen.getByText("Autorise l'accès à la caméra pour scanner un code.")).toBeTruthy();
     await fireEvent.press(screen.getByText('Ouvrir les réglages'));
     expect(settings).toHaveBeenCalled();
+  });
+
+  it('retour au premier plan (depuis les réglages) : la permission est relue', async () => {
+    const get = jest.fn(() => Promise.resolve());
+    mockPermissions.mockReturnValue([{ status: 'denied', granted: false }, jest.fn(), get]);
+    await show(<ScanScreen />);
+    await act(() => appStateListeners.forEach((listener) => listener('active')));
+    expect(get).toHaveBeenCalledTimes(1);
   });
 
   it('code Zabava : vibration, fermeture et profil ouvert une seule fois', async () => {

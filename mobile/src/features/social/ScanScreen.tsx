@@ -2,7 +2,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
 import { XIcon } from 'phosphor-react-native';
 import { useEffect, useRef } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { AppState, Linking, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { config } from '@/api/config';
@@ -22,7 +22,7 @@ const FRAME = 240;
 /** Scanner un code Zabava (specs/social/docs/04 §4.8) : modal plein écran. */
 export function ScanScreen() {
   const insets = useSafeAreaInsets();
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission, getPermission] = useCameraPermissions();
   // Un code non reconnu n'affiche son toast qu'une fois ; un code reconnu n'ouvre qu'un profil.
   const seen = useRef(new Set<string>());
   const done = useRef(false);
@@ -32,6 +32,14 @@ export function ScanScreen() {
   useEffect(() => {
     if (undetermined) void requestPermission();
   }, [undetermined, requestPermission]);
+
+  // Retour des réglages : la permission accordée là-bas ouvre la caméra.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void getPermission();
+    });
+    return () => subscription.remove();
+  }, [getPermission]);
 
   const scanned = ({ data }: { data: string }) => {
     if (done.current || seen.current.has(data)) return;
