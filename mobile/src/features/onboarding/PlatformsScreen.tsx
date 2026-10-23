@@ -25,10 +25,18 @@ const SKELETON_COUNT = 6;
 /** Hauteur d'une tuile pendant le chargement : 16 + logo 44 + 8 + nom 16 + 12. */
 const TILE_HEIGHT = 96;
 
+/**
+ * Largeur d'une tuile pour 3 colonnes, arrondie à l'entier inférieur : une largeur fractionnaire
+ * (113,57 pt sur un écran de 392,7 pt) déborde à l'arrondi et la 3e tuile passe à la ligne.
+ */
+export function platformTileWidth(screenWidth: number): number {
+  return Math.floor((screenWidth - PADDING * 2 - GAP * (COLUMNS - 1)) / COLUMNS);
+}
+
 /** Étape 2 — Mes plateformes (specs/docs/05 §5.2). */
 export function PlatformsScreen() {
   const { width } = useWindowDimensions();
-  const tileWidth = (width - PADDING * 2 - GAP * (COLUMNS - 1)) / COLUMNS;
+  const tileWidth = platformTileWidth(width);
   const profile = useProfile();
   const providers = useProviders();
   const setProviders = useSetProviders();
