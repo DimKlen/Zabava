@@ -157,6 +157,23 @@ describe('openNotificationUrl', () => {
     expect(router.push).not.toHaveBeenCalled();
   });
 
+  it('nouvel abonné, demande acceptée : onglet Profil puis le profil', () => {
+    openNotificationUrl('zabava://u/lea.m');
+    expect(router.navigate).toHaveBeenCalledWith('/(tabs)/profile');
+    expect(router.push).toHaveBeenCalledWith('/u/lea.m');
+  });
+
+  it('abonnés groupés : ma liste d’abonnés', () => {
+    openNotificationUrl('zabava://u/dim.k/connections?tab=followers');
+    expect(router.push).toHaveBeenCalledWith('/u/dim.k/connections?tab=followers');
+  });
+
+  it('demande d’abonnement : Demandes', () => {
+    openNotificationUrl('zabava://follow-requests');
+    expect(router.navigate).toHaveBeenCalledWith('/(tabs)/profile');
+    expect(router.push).toHaveBeenCalledWith('/follow-requests');
+  });
+
   it('lien inconnu : ignoré', () => {
     openNotificationUrl('zabava://ailleurs');
     expect(router.navigate).not.toHaveBeenCalled();

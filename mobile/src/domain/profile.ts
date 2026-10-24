@@ -2,7 +2,7 @@
 import { isGroupSelected, type ProviderGroup } from './providers';
 
 export type NotificationSwitch = {
-  key: 'episodes' | 'cinema' | 'streaming' | 'seasons';
+  key: 'episodes' | 'cinema' | 'streaming' | 'seasons' | 'newFollower' | 'followRequests';
   label: string;
 };
 
@@ -11,6 +11,9 @@ export const NOTIFICATION_SWITCHES: readonly NotificationSwitch[] = [
   { key: 'cinema', label: 'Sorties en salle' },
   { key: 'streaming', label: 'Disponibilité en streaming' },
   { key: 'seasons', label: 'Nouvelles saisons' },
+  // Partie sociale (specs/social/docs/04 §4.13) : activés par défaut.
+  { key: 'newFollower', label: 'Nouvel abonné' },
+  { key: 'followRequests', label: "Demandes d'abonnement" },
 ];
 
 /** « 9 h ». */

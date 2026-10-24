@@ -1,5 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { router } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { api } from '@/api/http';
@@ -11,6 +12,9 @@ import { useUiStore } from '@/store/ui';
 import { SettingsScreen } from '../SettingsScreen';
 
 jest.mock('@/api/http', () => ({ api: jest.fn() }));
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true },
+}));
 // Le client de l'app garde ses requêtes 7 jours : ses minuteurs empêcheraient Jest de finir.
 jest.mock('@/api/queryClient', () => {
   const { QueryClient } =
@@ -67,8 +71,12 @@ const PROVIDERS = [
   { id: 230, name: 'Crave', shortName: 'C' },
 ];
 
+let profile: Record<string, unknown> = PROFILE;
+let blocked: unknown[] = [];
+
 function route(path: string): unknown {
-  if (path === '/me/profile') return PROFILE;
+  if (path === '/me/profile') return profile;
+  if (path === '/me/blocks') return blocked;
   if (path === '/providers') return PROVIDERS;
   return undefined;
 }
@@ -95,6 +103,8 @@ function pressDialogAction(label: string) {
 
 beforeEach(async () => {
   jest.clearAllMocks();
+  profile = PROFILE;
+  blocked = [];
   mockApi.mockImplementation(async (path) => route(path));
   await act(() => useUiStore.setState({ dialog: null, dialogOpen: false }));
 });
@@ -203,5 +213,64 @@ describe('SettingsScreen', () => {
     await fireEvent.press(screen.getByLabelText('Mes plateformes'));
     expect(await screen.findByText('OK')).toBeTruthy();
     expect(screen.getByLabelText('Disney Plus')).toBeTruthy();
+  });
+
+  it('notifications sociales : « Nouvel abonné » et « Demandes d’abonnement »', async () => {
+    await renderProfile();
+    await fireEvent.press(screen.getByLabelText('Nouvel abonné'));
+    expect(mockPermission).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(mockApi).toHaveBeenCalledWith('/me/profile', {
+        method: 'PUT',
+        body: { notificationPrefs: { newFollower: false } },
+      }),
+    );
+    expect(screen.getByLabelText("Demandes d'abonnement")).toBeTruthy();
+  });
+
+  it('confidentialité : comptes bloqués « Aucun », puis leur nombre ; la ligne ouvre l’écran', async () => {
+    await renderProfile();
+    expect(await screen.findByText('Aucun')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'En privé, seules les personnes que tu acceptes voient tes listes et ton activité.',
+      ),
+    ).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Comptes bloqués'));
+    expect(router.push).toHaveBeenCalledWith('/settings/blocked');
+
+    blocked = [{ username: 'x.y', displayName: 'X', followState: 'blocked' }];
+    await act(() => queryClient.invalidateQueries({ queryKey: ['blocks'] }));
+    expect(await screen.findByText('1')).toBeTruthy();
+  });
+
+  it('passer en public accepte les demandes : « 3 demandes acceptées automatiquement »', async () => {
+    profile = { ...PROFILE, isPrivate: true, followRequestsCount: 3, username: 'dim.k' };
+    await renderProfile();
+    mockApi.mockImplementation(async (path, options) =>
+      path === '/me/profile' && options?.method === 'PUT'
+        ? { ...profile, isPrivate: false, followRequestsCount: 0 }
+        : route(path),
+    );
+    await fireEvent.press(screen.getByLabelText('Profil privé'));
+    await waitFor(() =>
+      expect(useUiStore.getState().toast?.message).toBe('3 demandes acceptées automatiquement'),
+    );
+    expect(mockApi).toHaveBeenCalledWith('/me/profile', {
+      method: 'PUT',
+      body: { isPrivate: false },
+    });
+  });
+
+  it('anti-spoiler : son propre groupe, « Protection anti-spoiler »', async () => {
+    await renderProfile();
+    expect(screen.getByText('Anti-spoiler')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Protection anti-spoiler'));
+    await waitFor(() =>
+      expect(mockApi).toHaveBeenCalledWith('/me/profile', {
+        method: 'PUT',
+        body: { spoilerProtection: true },
+      }),
+    );
   });
 });

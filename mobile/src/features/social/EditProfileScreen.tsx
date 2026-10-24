@@ -15,6 +15,7 @@ import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
 import { TextField } from '@/components/TextField';
 import { UsernameField } from '@/components/UsernameField';
+import { autoAcceptedLabel } from '@/domain/social/members';
 import { canSubmitUsername } from '@/domain/social/username';
 import { goBack } from '@/lib/navigation';
 import { openActionSheet, openDialog, showToast } from '@/store/ui';
@@ -106,13 +107,7 @@ function EditForm({ profile, username }: { profile: Profile; username: string })
     updateProfile.mutate(changes, {
       onSuccess: () => {
         setSaved(true);
-        showToast(
-          accepted > 0
-            ? accepted > 1
-              ? `${accepted} demandes acceptées automatiquement`
-              : '1 demande acceptée automatiquement'
-            : 'Profil mis à jour',
-        );
+        showToast(autoAcceptedLabel(accepted) ?? 'Profil mis à jour');
       },
       onError: (error) => {
         if (error instanceof ApiError && (error.status === 409 || error.status === 422)) {
