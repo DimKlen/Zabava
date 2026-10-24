@@ -1,10 +1,10 @@
 import { useScrollToTop } from 'expo-router';
 import { CalendarBlankIcon } from 'phosphor-react-native';
-import { useRef, type ReactElement } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useRef } from 'react';
+import { SectionList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useUpcoming, type UpcomingData, type UpcomingFilter } from '@/api/upcoming';
+import { useUpcoming, type NoDateTitle, type UpcomingFilter } from '@/api/upcoming';
 import { Chip } from '@/components/Chip';
 import { EmptyState } from '@/components/EmptyState';
 import { LoadError, showsLoadError } from '@/components/LoadError';
@@ -12,7 +12,7 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SkeletonBox } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
-import { groupUpcoming, noDateLine, type UpcomingGroup } from '@/domain/upcoming';
+import { groupUpcoming, noDateLine, type UpcomingItem } from '@/domain/upcoming';
 import { openDiscover } from '@/lib/discover';
 import { useUiStore } from '@/store/ui';
 import { colors, radii, spacing } from '@/theme/tokens';
@@ -29,102 +29,107 @@ const FILTERS: readonly { key: UpcomingFilter; label: string }[] = [
 
 const SKELETONS = 4;
 
-/** À venir (specs/docs/09 §9.1) : groupes par jour, puis Sans date (toujours visible, grisée). */
+/** Un jour (ses événements), ou « Sans date » (ses séries sans épisode daté). */
+type Section =
+  | { kind: 'day'; key: string; label: string; data: UpcomingItem[] }
+  | { kind: 'noDate'; key: string; data: NoDateTitle[] };
+
+/**
+ * À venir (specs/docs/09 §9.1) : groupes par jour, puis Sans date (toujours visible, grisée). Liste
+ * virtualisée : seuls les jours proches de l'écran sont montés.
+ */
 export function UpcomingScreen() {
   const insets = useSafeAreaInsets();
   const filter = useUiStore((s) => s.upcomingFilter);
   const setFilter = useUiStore((s) => s.setUpcomingFilter);
   const query = useUpcoming(filter);
-  const scrollRef = useRef<ScrollView>(null);
-  useScrollToTop(scrollRef);
+  const listRef = useRef<SectionList<UpcomingItem | NoDateTitle, Section>>(null);
+  useScrollToTop(listRef);
 
   const now = new Date();
-  const groups = query.data ? groupUpcoming(query.data.events, now) : [];
-
-  const children: ReactElement[] = [
-    <ScreenHeader key="header" title="À venir" />,
-    <View key="chips" style={styles.chips}>
-      {FILTERS.map((option) => (
-        <Chip
-          key={option.key}
-          label={option.label}
-          active={filter === option.key}
-          onPress={() => setFilter(option.key)}
-          paddingHorizontal={14}
-        />
-      ))}
-    </View>,
-  ];
-
+  const sections: Section[] = [];
   if (query.data) {
-    children.push(...content(query.data, groups));
-  } else if (showsLoadError(query)) {
-    children.push(<LoadError key="error" onRetry={() => void query.refetch()} />);
-  } else {
-    children.push(
-      <View key="loading" style={styles.loading}>
+    for (const group of groupUpcoming(query.data.events, now)) {
+      sections.push({ kind: 'day', key: group.key, label: group.label, data: group.items });
+    }
+    if (query.data.noDate.length > 0) {
+      sections.push({ kind: 'noDate', key: 'no-date', data: query.data.noDate });
+    }
+  }
+
+  let state = null;
+  if (!query.data) {
+    state = showsLoadError(query) ? (
+      <LoadError onRetry={() => void query.refetch()} />
+    ) : (
+      <View style={styles.loading}>
         {Array.from({ length: SKELETONS }, (_, i) => (
           <SkeletonBox key={i} height={76} radius={radii.rLg} />
         ))}
-      </View>,
+      </View>
     );
   }
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <OfflineBanner />
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
-        {children}
-      </ScrollView>
-    </View>
-  );
-}
-
-function content(data: UpcomingData, groups: UpcomingGroup[]): ReactElement[] {
-  if (groups.length === 0 && data.noDate.length === 0) {
-    return [
-      <EmptyState
-        key="empty"
-        icon={CalendarBlankIcon}
-        title="Rien de prévu"
-        paddingTop={48}
-        action={{ label: 'Suivre des séries', onPress: () => openDiscover('tv') }}
-      />,
-    ];
-  }
-  const blocks: ReactElement[] = groups.map((group) => (
-    <View key={group.key} testID={`group-${group.key}`} style={styles.group}>
-      <Text accessibilityRole="header" style={styles.groupLabel}>
-        {group.label}
-      </Text>
-      <View style={styles.items}>
-        {group.items.map((item) => (
-          <UpcomingRow key={item.key} title={item.event.title} line={item.line} tag={item.tag} />
-        ))}
-      </View>
-    </View>
-  ));
-  if (data.noDate.length > 0) blocks.push(<NoDateSection key="no-date" data={data} />);
-  return blocks;
-}
-
-/** « Sans date » : séries en production sans épisode daté, toujours dépliée et grisée. */
-function NoDateSection({ data }: { data: UpcomingData }) {
-  return (
-    <View style={styles.noDate}>
-      <Text accessibilityRole="header" style={styles.noDateTitle}>
-        Sans date
-      </Text>
-      <View style={styles.items}>
-        {data.noDate.map((item) => (
-          <UpcomingRow
-            key={item.title.id}
-            title={item.title}
-            line={noDateLine(item.nextSeason)}
-            dimmed
-          />
-        ))}
-      </View>
+      <SectionList<UpcomingItem | NoDateTitle, Section>
+        ref={listRef}
+        sections={sections}
+        keyExtractor={(item) => ('key' in item ? item.key : item.title.id)}
+        stickySectionHeadersEnabled={false}
+        contentContainerStyle={styles.content}
+        ListHeaderComponent={
+          <>
+            <ScreenHeader title="À venir" />
+            <View style={styles.chips}>
+              {FILTERS.map((option) => (
+                <Chip
+                  key={option.key}
+                  label={option.label}
+                  active={filter === option.key}
+                  onPress={() => setFilter(option.key)}
+                  paddingHorizontal={14}
+                />
+              ))}
+            </View>
+            {state}
+          </>
+        }
+        ListEmptyComponent={
+          query.data ? (
+            <EmptyState
+              icon={CalendarBlankIcon}
+              title="Rien de prévu"
+              paddingTop={48}
+              action={{ label: 'Suivre des séries', onPress: () => openDiscover('tv') }}
+            />
+          ) : null
+        }
+        renderSectionHeader={({ section }) =>
+          section.kind === 'day' ? (
+            <Text accessibilityRole="header" style={[styles.group, styles.groupLabel]}>
+              {section.label}
+            </Text>
+          ) : (
+            <Text accessibilityRole="header" style={[styles.noDate, styles.noDateTitle]}>
+              Sans date
+            </Text>
+          )
+        }
+        renderItem={({ item, index }) => (
+          <View style={[styles.item, index > 0 && styles.itemGap]}>
+            {'key' in item ? (
+              <UpcomingRow title={item.event.title} line={item.line} tag={item.tag} />
+            ) : (
+              <UpcomingRow title={item.title} line={noDateLine(item.nextSeason)} dimmed />
+            )}
+          </View>
+        )}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={7}
+      />
     </View>
   );
 }
@@ -159,8 +164,11 @@ const styles = StyleSheet.create({
     color: colors.accent300,
     marginBottom: 6,
   },
-  items: {
-    gap: spacing.upcomingGap,
+  item: {
+    paddingHorizontal: spacing.screenX,
+  },
+  itemGap: {
+    paddingTop: spacing.upcomingGap,
   },
   noDate: {
     paddingTop: 16,

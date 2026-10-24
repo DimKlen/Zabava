@@ -115,4 +115,20 @@ describe('UpcomingScreen', () => {
       query: expect.objectContaining({ type: 'anime' }),
     });
   });
+
+  it('liste virtualisée : 120 événements ne montent pas 120 lignes', async () => {
+    mockApi.mockResolvedValue({
+      events: Array.from({ length: 120 }, (_, i) => ({
+        date: new Date(2026, 9, 11 + Math.floor(i / 2)).toLocaleDateString('fr-CA'),
+        kind: 'episode',
+        title: { ...bear, id: `tv-${i}`, tmdbId: 100 + i, title: `Série ${i}` },
+        season: 1,
+        episode: i + 1,
+      })),
+      noDate: [],
+    });
+    await renderUpcoming();
+    expect(await screen.findByLabelText(/^Série 0,/)).toBeTruthy();
+    expect(screen.getAllByLabelText(/^Série \d+,/).length).toBeLessThan(40);
+  });
 });
