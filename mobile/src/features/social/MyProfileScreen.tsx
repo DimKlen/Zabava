@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { GearSixIcon } from 'phosphor-react-native';
+import { GearSixIcon, UserPlusIcon } from 'phosphor-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,6 +21,7 @@ import {
   type SeriesSegment,
 } from '@/domain/social/profileLists';
 import type { MediaType } from '@/domain/types';
+import { openInviteSheet } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 
 import { ProfileContent } from './ProfileContent';
@@ -57,15 +58,26 @@ function Bar() {
     <ScreenHeader
       title="Profil"
       actions={
-        <Button
-          variant="icon"
-          height={44}
-          icon={GearSixIcon}
-          iconSize={22}
-          color={colors.text}
-          accessibilityLabel="Réglages"
-          onPress={() => router.push('/settings')}
-        />
+        <>
+          <Button
+            variant="icon"
+            height={44}
+            icon={UserPlusIcon}
+            iconSize={22}
+            color={colors.text}
+            accessibilityLabel="Inviter"
+            onPress={openInviteSheet}
+          />
+          <Button
+            variant="icon"
+            height={44}
+            icon={GearSixIcon}
+            iconSize={22}
+            color={colors.text}
+            accessibilityLabel="Réglages"
+            onPress={() => router.push('/settings')}
+          />
+        </>
       }
     />
   );
@@ -135,6 +147,14 @@ function MyProfile({
               height={44}
               label="Modifier le profil"
               onPress={() => router.push('/profile/edit')}
+              style={styles.button}
+            />
+            <Button
+              variant="primary"
+              height={44}
+              icon={UserPlusIcon}
+              label="Inviter"
+              onPress={openInviteSheet}
               style={styles.button}
             />
           </View>

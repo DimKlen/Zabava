@@ -33,6 +33,13 @@ zabava:
     access-token: ${EXPO_ACCESS_TOKEN:}
   jobs:
     enabled: ${ZABAVA_JOBS_ENABLED:true}
+  # Liens d'invitation : App Links Android (assetlinks.json) et page de repli /u/{pseudo}.
+  app:
+    package-name: com.zabava.app
+    scheme: zabava
+    # Certificat de l'APK (clé EAS), empreinte publique : apksigner verify --print-certs.
+    cert-sha256:
+      - 6A:73:9D:0C:D3:B5:0D:EC:61:E9:2F:39:5B:04:30:0C:3F:A4:D3:92:30:26:1F:77:87:5B:01:AC:93:15:31:F6
 
 springdoc:
   api-docs:

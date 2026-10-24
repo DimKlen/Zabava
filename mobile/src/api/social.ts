@@ -9,6 +9,7 @@ import type { MediaType } from '@/domain/types';
 
 import { toPosterTitle } from './catalog';
 import { api } from './http';
+import { queryClient } from './queryClient';
 import type { components } from './types';
 
 type ApiMember = components['schemas']['MemberLite'];
@@ -177,5 +178,43 @@ export function useConnections(username: string, kind: ConnectionsKind, q: strin
 
 /** Ouvrir un profil le met en tête des « Personnes suivies récemment ». */
 export function rememberVisit(username: string): Promise<void> {
-  return api<unknown>(`/me/recent-profiles/${username}`, { method: 'POST' }).then(() => undefined);
+  return api<ApiMember[]>(`/me/recent-profiles/${username}`, { method: 'POST' }).then((items) => {
+    queryClient.setQueryData(
+      recentProfilesKey,
+      items.map(toMember).filter((m): m is Member => m !== null),
+    );
+  });
+}
+
+// ─── Recherche de membres ──────────────────────────────────────────────────
+
+export const membersKey = (q: string) => ['members', q] as const;
+export const recentProfilesKey = ['recentProfiles'] as const;
+
+/** Membres par préfixe (pseudo, nom, mot du nom), à partir de 2 caractères, sans « @ ». */
+export function useMemberSearch(q: string) {
+  return useInfiniteQuery({
+    queryKey: membersKey(q),
+    queryFn: ({ pageParam, signal }) =>
+      api<ApiMemberPage>('/users/search', { query: { q, cursor: pageParam }, signal }).then(
+        toMemberPage,
+      ),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (page) => page.nextCursor,
+    enabled: q.length >= 2,
+    staleTime: MINUTE,
+  });
+}
+
+/** « Personnes suivies récemment » : les 5 derniers profils visités. */
+export function useRecentProfiles(enabled = true) {
+  return useQuery({
+    queryKey: recentProfilesKey,
+    queryFn: ({ signal }) =>
+      api<ApiMember[]>('/me/recent-profiles', { signal }).then((items) =>
+        items.map(toMember).filter((m): m is Member => m !== null),
+      ),
+    enabled,
+    staleTime: 10 * MINUTE,
+  });
 }

@@ -109,7 +109,10 @@ beforeEach(() => {
   queryClient.setQueryData(watchlistKey('anime'), []);
 });
 
-afterEach(() => useUiStore.getState().hideToast());
+afterEach(() => {
+  useUiStore.getState().hideToast();
+  useUiStore.setState({ inviteOpen: false });
+});
 
 async function show(element: ReactElement) {
   await render(
@@ -153,6 +156,19 @@ describe('MyProfileScreen', () => {
   });
 });
 
+describe('MyProfileScreen › Inviter', () => {
+  it('l’icône personne + et le bouton « Inviter » ouvrent la sheet Inviter', async () => {
+    await show(<MyProfileScreen />);
+    const [icon, button] = screen.getAllByLabelText('Inviter');
+    expect(screen.getByText('Inviter')).toBeTruthy();
+    for (const target of [icon!, button!]) {
+      useUiStore.setState({ inviteOpen: false });
+      await fireEvent.press(target);
+      expect(useUiStore.getState().inviteOpen).toBe(true);
+    }
+  });
+});
+
 describe('ConnectionsScreen', () => {
   beforeEach(() => {
     mockApi.mockImplementation(async (path) => {
@@ -191,6 +207,18 @@ describe('ConnectionsScreen', () => {
     sheet?.options[0]?.onPress();
     await waitFor(() => expect(screen.queryByText('Léa Martin')).toBeNull());
     expect(mockApi).toHaveBeenCalledWith('/me/followers/lea.m', { method: 'DELETE' });
+  });
+
+  it('mes abonnés vides : « Personne ne te suit encore » + « Inviter »', async () => {
+    mockApi.mockImplementation(async (path) => {
+      if (path === '/users/dim.k')
+        return { ...ME, isMe: true, canSeeLists: true, followState: 'none' };
+      return { items: [] };
+    });
+    await show(<ConnectionsScreen username="dim.k" initialTab="followers" />);
+    expect(await screen.findByText('Personne ne te suit encore')).toBeTruthy();
+    await fireEvent.press(screen.getByText('Inviter'));
+    expect(useUiStore.getState().inviteOpen).toBe(true);
   });
 
   it('mes abonnements vides : « Tu ne suis personne pour l’instant » + « Trouver des membres »', async () => {

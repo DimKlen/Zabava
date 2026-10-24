@@ -9,3 +9,8 @@ export function hapticLight(): void {
 export function hapticMedium(): void {
   void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
 }
+
+/** Retour haptique de réussite : code Zabava reconnu par le scanner. */
+export function hapticSuccess(): void {
+  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+}

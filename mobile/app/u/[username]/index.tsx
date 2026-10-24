@@ -1,8 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 
-import { UserProfileScreen } from '@/features/social/UserProfileScreen';
+import { UserProfileGate } from '@/features/social/UserProfileGate';
 
 export default function User() {
   const { username } = useLocalSearchParams<{ username: string }>();
-  return <UserProfileScreen key={username} username={username} />;
+  return <UserProfileGate username={username.toLowerCase()} />;
 }

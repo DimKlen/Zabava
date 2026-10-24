@@ -25,6 +25,7 @@ import { initSession } from '@/api/session';
 import { ActionSheetHost } from '@/components/ActionSheet';
 import { DialogHost } from '@/components/Dialog';
 import { ToastHost } from '@/components/Toast';
+import { InviteSheetHost } from '@/features/social/InviteSheet';
 import { colors, durations } from '@/theme/tokens';
 
 // Le splash reste affiché jusqu'au chargement des polices Inter.
@@ -85,6 +86,10 @@ export default function RootLayout() {
             <Stack.Screen name="settings/index" options={pushOptions} />
             <Stack.Screen name="profile/edit" options={pushOptions} />
             <Stack.Screen
+              name="scan"
+              options={{ presentation: 'fullScreenModal', animation: 'fade' }}
+            />
+            <Stack.Screen
               name="search"
               options={{ animation: 'fade', animationDuration: durations.fadeSearch }}
             />
@@ -92,6 +97,7 @@ export default function RootLayout() {
             <Stack.Screen name="dev/session" options={{ animation: 'none' }} />
           </Stack>
           {/* Empilement : écran < Toast < ActionSheet / sheets < Dialog. */}
+          <InviteSheetHost />
           <ToastHost />
           <ActionSheetHost />
           <DialogHost />

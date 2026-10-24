@@ -1,8 +1,10 @@
+import { useEffect, useRef } from 'react';
 import {
   Pressable,
   ScrollView,
   StyleSheet,
   View,
+  type LayoutRectangle,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -34,6 +36,7 @@ export function UnderlineTabs<K extends string>({
   const isSearch = variant === 'search';
   const gap = variant === 'default' ? 22 : 20;
   const fontSize = isSearch ? 14 : 15;
+  const { scroll, measured, viewport, scrolled } = useRevealTab(value);
 
   const items = tabs.map((tab) => {
     const active = tab.key === value;
@@ -43,6 +46,7 @@ export function UnderlineTabs<K extends string>({
         accessibilityRole="tab"
         accessibilityState={{ selected: active }}
         onPress={() => onChange(tab.key)}
+        onLayout={isSearch ? (e) => measured(tab.key, e.nativeEvent.layout) : undefined}
         // Visuel ≈ 40 pt de haut : la zone tactile est portée à 44 pt minimum.
         hitSlop={{ top: 3, bottom: 3, left: gap / 2, right: gap / 2 }}
         style={styles.tab}
@@ -67,8 +71,12 @@ export function UnderlineTabs<K extends string>({
   if (isSearch) {
     return (
       <ScrollView
+        ref={scroll}
         horizontal
         showsHorizontalScrollIndicator={false}
+        onLayout={(e) => viewport(e.nativeEvent.layout.width)}
+        onScroll={(e) => scrolled(e.nativeEvent.contentOffset.x)}
+        scrollEventThrottle={16}
         // Recherche : changer d'onglet clavier ouvert, sans un premier tap qui le ferme.
         keyboardShouldPersistTaps="handled"
         accessibilityRole="tablist"
@@ -85,6 +93,50 @@ export function UnderlineTabs<K extends string>({
       {items}
     </View>
   );
+}
+
+/**
+ * Onglets défilants : l'onglet actif est ramené dans le champ s'il en sort (onglet changé par
+ * la saisie, comme « @ » qui passe sur Membres, le dernier onglet).
+ */
+function useRevealTab<K extends string>(value: K) {
+  const scroll = useRef<ScrollView>(null);
+  const layouts = useRef(new Map<K, LayoutRectangle>());
+  const view = useRef({ width: 0, offset: 0 });
+  const active = useRef(value);
+
+  useEffect(() => {
+    active.current = value;
+    revealTab(scroll.current, layouts.current.get(value), view.current);
+  }, [value]);
+
+  return {
+    scroll,
+    measured: (key: K, layout: LayoutRectangle) => {
+      layouts.current.set(key, layout);
+      if (key === active.current) revealTab(scroll.current, layout, view.current);
+    },
+    viewport: (width: number) => {
+      view.current.width = width;
+      revealTab(scroll.current, layouts.current.get(active.current), view.current);
+    },
+    scrolled: (offset: number) => {
+      view.current.offset = offset;
+    },
+  };
+}
+
+/** Défile juste assez pour montrer l'onglet en entier, marges comprises. */
+function revealTab(
+  scroll: ScrollView | null,
+  tab: LayoutRectangle | undefined,
+  view: { width: number; offset: number },
+) {
+  if (!scroll || !tab || view.width === 0) return;
+  const start = tab.x - spacing.screenX;
+  const end = tab.x + tab.width + spacing.screenX;
+  if (start < view.offset) scroll.scrollTo({ x: Math.max(0, start) });
+  else if (end > view.offset + view.width) scroll.scrollTo({ x: end - view.width });
 }
 
 const styles = StyleSheet.create({

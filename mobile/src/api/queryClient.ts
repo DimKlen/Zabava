@@ -24,7 +24,7 @@ export const queryPersister = createAsyncStoragePersister({
 });
 
 // Requêtes gardées hors ligne (specs/docs/10 §3).
-const PERSISTED_ROOTS = new Set(['profile', 'watchlist', 'upcoming']);
+const PERSISTED_ROOTS = new Set(['profile', 'watchlist', 'upcoming', 'recentProfiles']);
 // Fiche et épisodes : seulement pour les titres de Ma liste.
 const LIST_TITLE_ROOTS = new Set(['title', 'episodes']);
 

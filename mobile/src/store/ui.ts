@@ -65,6 +65,8 @@ type UiState = {
   discoverTab: MediaType;
   /** À venir : filtre (Tout, Films, Séries, Animés). */
   upcomingFilter: 'all' | MediaType;
+  /** Sheet « Inviter » (Mon profil, abonnés vides, recherche de membres). */
+  inviteOpen: boolean;
 
   showToast: (message: string, undo?: () => void) => void;
   hideToast: () => void;
@@ -109,6 +111,7 @@ export const useUiStore = create<UiState>()((set, get) => ({
   collapsedSections: { ...DEFAULT_COLLAPSED },
   discoverTab: 'movie',
   upcomingFilter: 'all',
+  inviteOpen: false,
 
   // Un nouveau toast remplace le précédent et relance le minuteur de 5 s.
   showToast: (message, undo) => {
@@ -162,3 +165,6 @@ export const showToast = (message: string, undo?: () => void) =>
 export const openActionSheet = (sheet: ActionSheetState) =>
   useUiStore.getState().openActionSheet(sheet);
 export const openDialog = (dialog: DialogState) => useUiStore.getState().openDialog(dialog);
+
+export const openInviteSheet = () => useUiStore.setState({ inviteOpen: true });
+export const closeInviteSheet = () => useUiStore.setState({ inviteOpen: false });

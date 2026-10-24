@@ -104,3 +104,9 @@ export function usernameStatus({
 export function canSubmitUsername(status: UsernameStatus): boolean {
   return status === 'available' || status === 'current';
 }
+
+/** Requête de recherche de membres : sans « @ » initial, sans accents ni casse (docs/07 §5). */
+export function searchQuery(raw: string): string {
+  const text = raw.trim();
+  return stripAccents(text.startsWith('@') ? text.slice(1) : text).trim();
+}

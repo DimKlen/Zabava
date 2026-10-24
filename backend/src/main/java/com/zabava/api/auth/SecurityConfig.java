@@ -38,7 +38,10 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/docs/**", "/swagger-ui/**", "/actuator/health")
+                        // Liens d'invitation : ouverts sans compte (App Links et page de repli).
+                        .requestMatchers(
+                                "/api/docs/**", "/swagger-ui/**", "/actuator/health",
+                                "/.well-known/assetlinks.json", "/u/*")
                         .permitAll()
                         .anyRequest()
                         .authenticated())

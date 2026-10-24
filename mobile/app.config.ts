@@ -4,6 +4,8 @@ import type { ExpoConfig } from 'expo/config';
 // ne peut pas importer src/theme, d'où la répétition ici.
 const BG = '#161826';
 const ACCENT = '#9184d9';
+// Domaine des liens d'invitation https://{domaine}/u/{pseudo} (specs/social/docs/02 §4).
+const INVITE_DOMAIN = process.env.EXPO_PUBLIC_INVITE_DOMAIN ?? '151-145-50-138.sslip.io';
 
 const config: ExpoConfig = {
   name: 'Zabava',
@@ -31,6 +33,15 @@ const config: ExpoConfig = {
       monochromeImage: './assets/android-icon-monochrome.png',
     },
     predictiveBackGestureEnabled: false,
+    // App Links : les liens d'invitation s'ouvrent dans l'app (assetlinks.json servi par le serveur).
+    intentFilters: [
+      {
+        action: 'VIEW',
+        autoVerify: true,
+        data: [{ scheme: 'https', host: INVITE_DOMAIN, pathPrefix: '/u/' }],
+        category: ['BROWSABLE', 'DEFAULT'],
+      },
+    ],
   },
   web: {
     favicon: './assets/favicon.png',
@@ -45,6 +56,14 @@ const config: ExpoConfig = {
     // Petite icône de la barre d'état (blanche sur transparent), teintée en accent.
     ['expo-notifications', { icon: './assets/notification-icon.png', color: ACCENT }],
     ['expo-status-bar', { style: 'light' }],
+    // Scanner un code Zabava (specs/social/docs/04 §4.8) : caméra seulement, pas de micro.
+    [
+      'expo-camera',
+      {
+        cameraPermission: "Zabava utilise la caméra pour scanner le code d'un ami.",
+        recordAudioAndroid: false,
+      },
+    ],
     [
       'expo-splash-screen',
       {
@@ -63,8 +82,7 @@ const config: ExpoConfig = {
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     deeplinkScheme: process.env.EXPO_PUBLIC_DEEPLINK_SCHEME ?? 'zabava',
-    // Domaine des liens d'invitation https://{domaine}/u/{pseudo} (specs/social/docs/02 §4).
-    inviteDomain: process.env.EXPO_PUBLIC_INVITE_DOMAIN ?? '151-145-50-138.sslip.io',
+    inviteDomain: INVITE_DOMAIN,
     eas: { projectId: 'b7db8a7c-ea84-4aa5-8f42-5c1218ac33f7' },
   },
 };
