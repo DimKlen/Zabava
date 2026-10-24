@@ -153,7 +153,11 @@ public class SocialStore {
         return result;
     }
 
-    /** Nombre de titres vus en commun avec moi, par membre (absent = 0). */
+    /**
+     * Nombre de titres vus en commun avec moi, par membre (absent = 0). Seulement pour les comptes
+     * dont je peux voir les listes : public ou privé que je suis, sans blocage dans un sens ou dans
+     * l'autre. Sinon, ce nombre révélerait une partie de leur liste.
+     */
     public Map<UUID, Integer> commonCounts(UUID me, Collection<UUID> others) {
         if (others.isEmpty()) return Map.of();
         Map<UUID, Integer> result = new HashMap<>();
@@ -161,9 +165,13 @@ public class SocialStore {
                 )
                 select o.user_id, count(*) as n from seen o
                 join seen m on m.title_id = o.title_id and m.user_id = :me
+                join profiles p on p.id = o.user_id
                 where o.user_id <> :me
+                  and (not p.is_private or exists (select 1 from follows f
+                    where f.follower_id = :me and f.followee_id = o.user_id and f.status = 'accepted'))
+                  and %s
                 group by o.user_id
-                """)
+                """.formatted(notBlocked("o.user_id")))
                 .param("me", me)
                 .param("users", union(me, others))
                 .query((rs, n) -> result.put(rs.getObject("user_id", UUID.class), rs.getInt("n")))
