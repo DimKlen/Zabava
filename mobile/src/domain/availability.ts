@@ -14,6 +14,8 @@ export type MovieState = 'upcoming' | 'avail' | 'cinema' | 'unknown';
 export type MovieAvailability = {
   /** Sortie en salle dans la région (ISO). */
   releaseTheatrical?: string;
+  /** Sortie numérique dans la région, sinon la plus proche ailleurs (ISO). */
+  releaseDigital?: string;
   availability: Availability;
 };
 
@@ -31,7 +33,14 @@ export function movieState(movie: MovieAvailability, now: Date): MovieState {
   if (release !== undefined && release > 0) return 'upcoming';
   if (hasOffer(movie.availability)) return 'avail';
   if (release !== undefined && release > -CINEMA_WINDOW_DAYS) return 'cinema';
+  // Sorti en salle, pas encore en numérique : il reste à l'affiche (« L'Odyssée » en octobre).
+  if (release !== undefined && isAfterToday(movie.releaseDigital, now)) return 'cinema';
   return 'unknown';
+}
+
+/** Date (ISO) postérieure à aujourd'hui. */
+export function isAfterToday(iso: string | undefined, now: Date): iso is string {
+  return iso !== undefined && daysFromToday(iso, now) > 0;
 }
 
 /** Abonnement ou location chez une de mes plateformes (l'achat n'est plus affiché). */

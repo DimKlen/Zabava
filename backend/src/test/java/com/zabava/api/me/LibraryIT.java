@@ -1,5 +1,7 @@
 package com.zabava.api.me;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
 import com.zabava.api.IntegrationTest;
 
 /** GET /me/watchlist, POST/PATCH/DELETE /me/titles, POST/DELETE /me/episodes/watched. */
@@ -50,6 +53,35 @@ class LibraryIT extends IntegrationTest {
                 .param("e", number)
                 .query(Long.class)
                 .single();
+    }
+
+    @Test
+    void sortieNumeriqueAilleursQuandMaRegionNEnAPas() throws Exception {
+        // « L'Odyssée » : en salle au Canada, date numérique seulement aux États-Unis, aucune offre.
+        WIREMOCK.stubFor(WireMock.get(urlPathEqualTo("/tmdb/movie/1368337")).willReturn(okJson("""
+                        {"id": 1368337, "title": "L'Odyssée", "original_title": "The Odyssey",
+                         "release_date": "2026-07-15",
+                         "release_dates": {"results": [
+                           {"iso_3166_1": "CA", "release_dates": [{"type": 3, "release_date": "2026-07-17T00:00:00.000Z"}]},
+                           {"iso_3166_1": "US", "release_dates": [
+                             {"type": 3, "release_date": "2026-07-17T00:00:00.000Z"},
+                             {"type": 4, "release_date": "2026-11-17T00:00:00.000Z"}]}]},
+                         "watch/providers": {"results": {}}}
+                        """)));
+
+        mvc.perform(as(user, get("/api/v1/titles/movie/1368337")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.releaseTheatrical").value("2026-07-17"))
+                .andExpect(jsonPath("$.releaseDigital").value("2026-11-17"))
+                .andExpect(jsonPath("$.releaseDigitalCountry").value("US"));
+        mvc.perform(as(user, get("/api/v1/titles/badges?ids=movie-1368337")))
+                .andExpect(jsonPath("$[0].releaseDigital").value("2026-11-17"));
+
+        mvc.perform(json(post("/api/v1/me/titles"), "{\"tmdbId\": 1368337, \"type\": \"movie\", \"status\": \"towatch\"}"))
+                .andExpect(status().isCreated());
+        mvc.perform(as(user, get("/api/v1/me/watchlist?type=movie")))
+                .andExpect(jsonPath("$[0].releaseTheatrical").value("2026-07-17"))
+                .andExpect(jsonPath("$[0].releaseDigital").value("2026-11-17"));
     }
 
     @Test

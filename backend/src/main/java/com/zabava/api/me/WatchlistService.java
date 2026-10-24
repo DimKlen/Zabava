@@ -44,13 +44,14 @@ public class WatchlistService {
         List<Long> ids = titles.stream().map(TitleRow::id).toList();
 
         Map<Long, Availability> offers = store.offers(ids);
-        Map<Long, Map<String, LocalDate>> releases = store.releaseDates(ids, prefs.region());
+        Map<Long, Map<String, Map<String, LocalDate>>> releases = store.releaseDatesByRegion(ids, prefs.region());
         Map<Long, Instant> watched = type.isSeries() ? library.watched(prefs.userId(), ids) : Map.of();
 
         return titles.stream()
                 .sorted((a, b) -> userTitles.get(b.id()).addedAt().compareTo(userTitles.get(a.id()).addedAt()))
                 .map(t -> {
-                    Map<String, LocalDate> dates = releases.getOrDefault(t.id(), Map.of());
+                    Map<String, Map<String, LocalDate>> byRegion = releases.getOrDefault(t.id(), Map.of());
+                    Map<String, LocalDate> dates = byRegion.getOrDefault(prefs.region(), Map.of());
                     return new WatchlistItem(
                             TitleRef.format(t.type(), t.tmdbId()),
                             t.tmdbId(),
@@ -65,7 +66,7 @@ public class WatchlistService {
                             t.imdbVotes(),
                             t.rtScore(),
                             dates.get("salle"),
-                            dates.get("numerique"),
+                            TitleService.digitalRelease(byRegion, prefs.region()).date(),
                             t.status(),
                             t.ended(),
                             t.network(),

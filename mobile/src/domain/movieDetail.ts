@@ -1,5 +1,11 @@
 /** Fiche film : méta, bandeau de statut, Équipe et Infos — specs/docs/07 §7.1, docs/01 §5. */
-import { movieState, type MovieAvailability, type MovieState } from './availability';
+import {
+  countryLabel,
+  isAfterToday,
+  movieState,
+  type MovieAvailability,
+  type MovieState,
+} from './availability';
 import { formatLongDate, formatRuntime, formatShortDate } from './format';
 
 export type MovieMetaInput = { year?: number; runtime?: number; certification?: string };
@@ -13,10 +19,7 @@ export function movieMeta({ year, runtime, certification }: MovieMetaInput): str
 
 export type MovieStatus = { state: MovieState; digital: boolean; text: string };
 
-export function movieStatus(
-  movie: MovieAvailability & { releaseDigital?: string },
-  now: Date,
-): MovieStatus {
+export function movieStatus(movie: MovieAvailability, now: Date): MovieStatus {
   const state = movieState(movie, now);
   switch (state) {
     case 'upcoming':
@@ -30,7 +33,8 @@ export function movieStatus(
     case 'cinema':
       return { state, digital: false, text: 'Au cinéma maintenant' };
     case 'avail':
-      return movie.releaseDigital
+      // Une date numérique à venir (offre en précommande) ne dit pas « depuis ».
+      return movie.releaseDigital && !isAfterToday(movie.releaseDigital, now)
         ? {
             state,
             digital: true,
@@ -40,6 +44,27 @@ export function movieStatus(
     case 'unknown':
       return { state, digital: false, text: 'Pas encore de date' };
   }
+}
+
+/**
+ * « Où regarder » sans aucune offre : encore au cinéma et date de sortie numérique à venir,
+ * avec son pays quand ce n'est pas le mien (TMDB n'a souvent que la date américaine).
+ */
+export function noOfferText(
+  movie: MovieAvailability & { releaseDigitalCountry?: string },
+  region: string | undefined,
+  now: Date,
+): string {
+  const parts: string[] = [];
+  if (movieState(movie, now) === 'cinema') parts.push("Seulement au cinéma pour l'instant.");
+  if (isAfterToday(movie.releaseDigital, now)) {
+    const country = movie.releaseDigitalCountry
+      ? countryLabel([movie.releaseDigitalCountry], region)
+      : undefined;
+    const date = formatLongDate(movie.releaseDigital);
+    parts.push(`En numérique le ${date}${country ? ` ${country}` : ''}.`);
+  }
+  return parts.length > 0 ? parts.join(' ') : 'Disponibilité inconnue.';
 }
 
 export type InfoRow = {

@@ -39,6 +39,8 @@ export type TitleDetail = {
   studios: { id: number; name: string }[];
   releaseTheatrical?: string;
   releaseDigital?: string;
+  /** Pays de `releaseDigital` (ma région, sinon un autre pays). */
+  releaseDigitalCountry?: string;
   network?: string;
   /** Séries : « En cours », « Terminée » ou « Annulée ». */
   status?: string;
@@ -119,6 +121,7 @@ export function toTitleDetail(
     ),
     releaseTheatrical: detail.releaseTheatrical,
     releaseDigital: detail.releaseDigital,
+    releaseDigitalCountry: detail.releaseDigitalCountry,
     network: detail.network,
     status: detail.status,
     ended: detail.ended,

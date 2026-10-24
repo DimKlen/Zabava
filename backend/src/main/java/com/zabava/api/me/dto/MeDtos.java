@@ -128,6 +128,7 @@ public final class MeDtos {
             Integer imdbVotes,
             Integer rtScore,
             LocalDate releaseTheatrical,
+            /** Ma région, sinon la plus proche dans le temps ailleurs. */
             LocalDate releaseDigital,
             String status,
             Boolean ended,

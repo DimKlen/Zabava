@@ -56,12 +56,11 @@ public class TitleFacts {
         return parallel(refs, ref -> {
             JsonNode d = facts(ref.type(), ref.tmdbId());
             boolean movie = ref.type() == MediaType.MOVIE;
-            Map<String, LocalDate> releases = movie
-                    ? TitleService.releaseDates(d).getOrDefault(region, Map.of())
-                    : Map.of();
+            Map<String, Map<String, LocalDate>> byRegion = movie ? TitleService.releaseDates(d) : Map.of();
             return new TitleBadge(
                     ref.toString(),
-                    releases.get("salle"),
+                    byRegion.getOrDefault(region, Map.of()).get("salle"),
+                    TitleService.digitalRelease(byRegion, region).date(),
                     TitleService.availability(d),
                     movie ? null : TitleService.network(d),
                     movie ? null : TitleService.isEnded(Json.text(d, "status")));

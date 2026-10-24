@@ -30,6 +30,16 @@ describe('movieState', () => {
     );
   });
 
+  it('sorti depuis plus de 60 jours, numérique à venir → toujours au cinéma', () => {
+    const odyssey = { ...film('odyssey'), releaseTheatrical: '2026-07-17' };
+    expect(movieState({ ...odyssey, releaseDigital: '2026-11-17' }, TODAY)).toBe('cinema');
+    expect(posterBadge({ ...odyssey, releaseDigital: '2026-11-17' }, [], TODAY)).toEqual({
+      text: 'Au cinéma',
+      highlight: true,
+    });
+    expect(movieState({ ...odyssey, releaseDigital: '2026-10-01' }, TODAY)).toBe('unknown');
+  });
+
   it('sorti en salle avec un simple achat en ligne → toujours au cinéma', () => {
     const buyOnly = { sub: [], rent: [], buy: [{ id: 7, name: 'Fandango At Home', short: 'FA' }] };
     expect(movieState({ releaseTheatrical: '2026-10-08', availability: buyOnly }, TODAY)).toBe(
