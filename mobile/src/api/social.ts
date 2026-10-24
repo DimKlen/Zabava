@@ -2,6 +2,8 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 import { episodeCode } from '@/domain/format';
+import type { ActivityType, FeedActivity } from '@/domain/social/feed';
+import type { TitleHolder, TitleSocial, TitleStatus } from '@/domain/social/followingSummary';
 import type { FollowState, Member } from '@/domain/social/members';
 import type { ProfileGridItem, ProfileSegment } from '@/domain/social/profileLists';
 import { isWellFormedUsername } from '@/domain/social/username';
@@ -16,6 +18,10 @@ type ApiMember = components['schemas']['MemberLite'];
 type ApiUserProfile = components['schemas']['UserProfile'];
 type ApiMemberPage = components['schemas']['PageMemberLite'];
 type ApiTitlePage = components['schemas']['PageProfileTitle'];
+type ApiActivity = components['schemas']['Activity'];
+type ApiActivityPage = components['schemas']['PageActivity'];
+type ApiTitleSocial = components['schemas']['TitleSocial'];
+type ApiFollowingStatus = components['schemas']['FollowingStatus'];
 export type UsernameAvailability = components['schemas']['UsernameAvailability'];
 
 export type UserProfile = Member & {
@@ -31,6 +37,21 @@ export type ConnectionsKind = 'followers' | 'following';
 
 const MINUTE = 60 * 1000;
 const FOLLOW_STATES: ReadonlySet<string> = new Set(['none', 'pending', 'following', 'blocked']);
+const ACTIVITY_TYPES: ReadonlySet<string> = new Set([
+  'added',
+  'watched_movie',
+  'started_show',
+  'watched_episodes',
+  'finished_show',
+  'followed',
+]);
+const TITLE_STATUSES: ReadonlySet<string> = new Set([
+  'watched',
+  'towatch',
+  'in_progress',
+  'finished',
+  'abandoned',
+]);
 
 // ─── Clés ──────────────────────────────────────────────────────────────────
 
@@ -215,6 +236,94 @@ export function useRecentProfiles(enabled = true) {
         items.map(toMember).filter((m): m is Member => m !== null),
       ),
     enabled,
+    staleTime: 10 * MINUTE,
+  });
+}
+
+// ─── Fil d'activité ────────────────────────────────────────────────────────
+
+export const feedKey = ['feed'] as const;
+
+/** Activité du fil, ou null si elle est incomplète (type inconnu, titre ou personne absents). */
+export function toActivity(item: ApiActivity): FeedActivity | null {
+  const actor = item.actor ? toMember(item.actor) : null;
+  if (!item.id || !item.createdAt || !actor || !ACTIVITY_TYPES.has(item.type ?? '')) return null;
+  const type = item.type as ActivityType;
+  const target = item.target ? toMember(item.target) : null;
+  const title = item.title ? toPosterTitle(item.title, 'movie') : null;
+  if (type === 'followed' ? !target : !title) return null;
+  const episode = item.episode;
+  return {
+    id: item.id,
+    createdAt: item.createdAt,
+    actor,
+    type,
+    title: title ?? undefined,
+    episode:
+      episode?.id !== undefined && episode.season !== undefined && episode.number !== undefined
+        ? {
+            id: episode.id,
+            season: episode.season,
+            number: episode.number,
+            name: episode.name,
+            stillPath: episode.stillPath,
+          }
+        : undefined,
+    count: item.count ?? 1,
+    target: target ?? undefined,
+    inMyList: item.inMyList ?? false,
+  };
+}
+
+function toActivityPage(page: ApiActivityPage): Page<FeedActivity> {
+  return {
+    items: (page.items ?? []).map(toActivity).filter((a): a is FeedActivity => a !== null),
+    nextCursor: page.nextCursor,
+  };
+}
+
+/** Activités de mes abonnements, plus récentes d'abord, par 30 ; 1re page gardée hors ligne. */
+export function useFeed() {
+  return useInfiniteQuery({
+    queryKey: feedKey,
+    queryFn: ({ pageParam, signal }) =>
+      api<ApiActivityPage>('/me/feed', { query: { cursor: pageParam }, signal }).then(
+        toActivityPage,
+      ),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (page) => page.nextCursor,
+    staleTime: 2 * MINUTE,
+  });
+}
+
+// ─── Blocs sociaux d'une fiche ─────────────────────────────────────────────
+
+export const titleSocialKey = (type: MediaType, tmdbId: number) =>
+  ['title', type, tmdbId, 'social'] as const;
+
+function toHolder(item: ApiFollowingStatus): TitleHolder | null {
+  const user = item.user ? toMember(item.user) : null;
+  if (!user || !item.date) return null;
+  return {
+    user,
+    status: TITLE_STATUSES.has(item.status ?? '') ? (item.status as TitleStatus) : 'towatch',
+    detail: item.detail,
+    date: item.date,
+  };
+}
+
+export function toTitleSocial(data: ApiTitleSocial): TitleSocial {
+  const holders = (items: ApiFollowingStatus[] | undefined) =>
+    (items ?? []).map(toHolder).filter((h): h is TitleHolder => h !== null);
+  return { following: holders(data.following), saw: holders(data.saw) };
+}
+
+/** « Tes abonnements » et « Ils l'ont vu », chargés en parallèle de la fiche. */
+export function useTitleSocial(type: MediaType, tmdbId: number) {
+  return useQuery({
+    queryKey: titleSocialKey(type, tmdbId),
+    queryFn: ({ signal }) =>
+      api<ApiTitleSocial>(`/titles/${type}/${tmdbId}/social`, { signal }).then(toTitleSocial),
     staleTime: 10 * MINUTE,
   });
 }

@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import { onlineManager, QueryClient, type Query } from '@tanstack/react-query';
+import { onlineManager, QueryClient, type InfiniteData, type Query } from '@tanstack/react-query';
+import type { PersistedClient } from '@tanstack/react-query-persist-client';
 
 const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
 
@@ -21,10 +22,30 @@ export const queryClient = new QueryClient({
 export const queryPersister = createAsyncStoragePersister({
   storage: AsyncStorage,
   key: 'zabava.query-cache',
+  serialize: (client) => JSON.stringify(withFirstFeedPage(client)),
 });
 
-// Requêtes gardées hors ligne (specs/docs/10 §3).
-const PERSISTED_ROOTS = new Set(['profile', 'watchlist', 'upcoming', 'recentProfiles']);
+/**
+ * Fil d'activité : seule la 1re page est sauvegardée (specs/social/docs/07 §2). Sinon, au retour
+ * du réseau, un long fil rechargerait toutes ses pages une à une.
+ */
+export function withFirstFeedPage(client: PersistedClient): PersistedClient {
+  const queries = client.clientState.queries.map((query) => {
+    const data = query.state.data as InfiniteData<unknown> | undefined;
+    if (query.queryKey[0] !== 'feed' || !data || data.pages.length <= 1) return query;
+    return {
+      ...query,
+      state: {
+        ...query.state,
+        data: { pages: data.pages.slice(0, 1), pageParams: data.pageParams.slice(0, 1) },
+      },
+    };
+  });
+  return { ...client, clientState: { ...client.clientState, queries } };
+}
+
+// Requêtes gardées hors ligne (specs/docs/10 §3 et specs/social/docs/07 §2).
+const PERSISTED_ROOTS = new Set(['profile', 'watchlist', 'upcoming', 'recentProfiles', 'feed']);
 // Fiche et épisodes : seulement pour les titres de Ma liste.
 const LIST_TITLE_ROOTS = new Set(['title', 'episodes']);
 

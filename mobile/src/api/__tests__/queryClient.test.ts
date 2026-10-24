@@ -1,6 +1,7 @@
 import { onlineManager } from '@tanstack/react-query';
+import type { PersistedClient } from '@tanstack/react-query-persist-client';
 
-import { queryClient, shouldPersistQuery } from '../queryClient';
+import { queryClient, shouldPersistQuery, withFirstFeedPage } from '../queryClient';
 
 afterEach(() => {
   onlineManager.setOnline(true);
@@ -34,5 +35,36 @@ describe('cache sauvegardé', () => {
       false,
     );
     expect(await saved(['search', 'dune'])).toBe(false);
+  });
+});
+
+describe('fil d’activité sauvegardé', () => {
+  it('gardé hors ligne', async () => {
+    await queryClient.fetchQuery({ queryKey: ['feed'], queryFn: () => Promise.resolve([]) });
+    const query = queryClient.getQueryCache().find({ queryKey: ['feed'], exact: true });
+    expect(query && shouldPersistQuery(query)).toBe(true);
+  });
+
+  it('seulement sa 1re page ; les autres requêtes intactes', () => {
+    const query = (queryKey: unknown[], data: unknown) => ({
+      queryKey,
+      queryHash: JSON.stringify(queryKey),
+      state: { data, status: 'success' },
+    });
+    const watchlist = query(['watchlist', 'movie'], [{ id: 1 }]);
+    const client = {
+      timestamp: 0,
+      buster: '',
+      clientState: {
+        mutations: [],
+        queries: [
+          query(['feed'], { pages: [{ items: [1] }, { items: [2] }], pageParams: [null, 'c1'] }),
+          watchlist,
+        ],
+      },
+    } as unknown as PersistedClient;
+    const [feed, other] = withFirstFeedPage(client).clientState.queries;
+    expect(feed?.state.data).toEqual({ pages: [{ items: [1] }], pageParams: [null] });
+    expect(other).toBe(watchlist);
   });
 });
