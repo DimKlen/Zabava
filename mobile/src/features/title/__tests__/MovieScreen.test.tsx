@@ -6,6 +6,8 @@ import type { TitleDetail } from '@/api/titles';
 
 import { MovieScreen } from '../MovieScreen';
 
+// Blocs sociaux : testés à part (SocialFeed.test.tsx), avec leur client de requêtes.
+jest.mock('../../social/TitleSocialBlocks', () => ({ TitleSocialBlocks: () => null }));
 jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
 jest.mock('@/api/profile', () => ({
   useProfile: () => ({ data: { region: 'CA', providerIds: [230] } }),

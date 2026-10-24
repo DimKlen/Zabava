@@ -6,6 +6,8 @@ import { useTitle } from '@/api/titles';
 import { openTitle } from '../openTitle';
 import { TitleScreen } from '../TitleScreen';
 
+// Blocs sociaux : testés à part (SocialFeed.test.tsx), avec leur client de requêtes.
+jest.mock('../../social/TitleSocialBlocks', () => ({ TitleSocialBlocks: () => null }));
 jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
 jest.mock('@/api/titles', () => ({ useTitle: jest.fn(), prefetchTitle: jest.fn() }));
 

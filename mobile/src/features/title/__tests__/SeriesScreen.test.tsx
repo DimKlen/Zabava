@@ -10,6 +10,8 @@ import { useUiStore } from '@/store/ui';
 
 import { SeriesScreen } from '../SeriesScreen';
 
+// Blocs sociaux : testés à part (SocialFeed.test.tsx), avec leur client de requêtes.
+jest.mock('../../social/TitleSocialBlocks', () => ({ TitleSocialBlocks: () => null }));
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), push: jest.fn(), canGoBack: () => true },
   useSegments: () => ['title'],
