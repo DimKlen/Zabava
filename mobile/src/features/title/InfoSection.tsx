@@ -48,24 +48,21 @@ export function InfoRows({ rows }: { rows: InfoRow[] }) {
         <View key={row.key} style={styles.row}>
           <Text style={styles.key}>{row.key}</Text>
           {row.studios ? (
-            // Sur une ligne, séparés par des virgules ; chaque studio ouvre sa page.
-            <View style={styles.inline}>
+            // Un seul paragraphe, séparé par des virgules ; chaque studio ouvre sa page.
+            <Text style={styles.value}>
               {row.studios.map((studio, index) => (
-                <View key={studio.id} style={styles.inlineItem}>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={studio.name}
+                <Text key={studio.id}>
+                  {index > 0 ? ', ' : null}
+                  <Text
+                    accessibilityRole="link"
                     onPress={() => openStudio(studio)}
-                    style={styles.person}
+                    style={styles.link}
                   >
-                    <Text style={styles.link}>{studio.name}</Text>
-                  </Pressable>
-                  {index < (row.studios?.length ?? 0) - 1 ? (
-                    <Text style={styles.value}>, </Text>
-                  ) : null}
-                </View>
+                    {studio.name}
+                  </Text>
+                </Text>
               ))}
-            </View>
+            </Text>
           ) : row.people ? (
             <View style={styles.people}>
               {row.people.map((person) => (
@@ -115,15 +112,6 @@ const styles = StyleSheet.create({
   },
   people: {
     flex: 1,
-  },
-  inline: {
-    flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  inlineItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   person: {
     minHeight: 44,
