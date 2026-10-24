@@ -207,14 +207,17 @@ class UserIT extends SocialTest {
                 .andExpect(jsonPath("$.following[*].user.username", contains("max.dubois")))
                 .andExpect(jsonPath("$.following[0].status").value("towatch"))
                 // Profils publics qui l'ont vu, hors mes abonnements et les profils privés.
-                .andExpect(jsonPath("$.saw[*].username", contains("lea.m", "sarah.l")));
+                .andExpect(jsonPath("$.saw[*].user.username", contains("lea.m", "sarah.l")))
+                // Avec leur statut, pour passer dans « Tes abonnements » dès qu'on les suit.
+                .andExpect(jsonPath("$.saw[0].status").value("watched"))
+                .andExpect(jsonPath("$.saw[0].date").value("2026-10-11T12:00:00Z"));
 
         follow(dim, "lea.m");
         mvc.perform(as(dim, get("/api/v1/titles/movie/603/social")))
                 .andExpect(jsonPath("$.following[*].user.username", contains("lea.m", "max.dubois")))
                 .andExpect(jsonPath("$.following[0].status").value("watched"))
                 .andExpect(jsonPath("$.following[0].date").value("2026-10-11T12:00:00Z"))
-                .andExpect(jsonPath("$.saw[*].username", contains("sarah.l")));
+                .andExpect(jsonPath("$.saw[*].user.username", contains("sarah.l")));
         mvc.perform(as(dim, get("/api/v1/titles/movie/999/social")))
                 .andExpect(jsonPath("$.following", hasSize(0)))
                 .andExpect(jsonPath("$.saw", hasSize(0)));

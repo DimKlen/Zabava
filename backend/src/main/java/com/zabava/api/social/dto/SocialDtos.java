@@ -75,7 +75,8 @@ public final class SocialDtos {
      */
     public record FollowingStatus(MemberLite user, String status, String detail, Instant date) {}
 
-    public record TitleSocial(List<FollowingStatus> following, List<MemberLite> saw) {}
+    /** {@code saw} : même forme que {@code following}, le membre portant ses titres en commun. */
+    public record TitleSocial(List<FollowingStatus> following, List<FollowingStatus> saw) {}
 
     public record FollowResult(String status) {}
 

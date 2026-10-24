@@ -1,9 +1,10 @@
-import { useQueries, type UseQueryResult } from '@tanstack/react-query';
+import { useQueries, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useScrollToTop } from 'expo-router';
 import { memo, useRef, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 
 import { discoverListQuery, type CatalogTitle } from '@/api/discover';
+import { feedKey } from '@/api/social';
 import { HorizontalCarousel } from '@/components/HorizontalCarousel';
 import { LoadError, showsLoadError } from '@/components/LoadError';
 import { SkeletonPoster } from '@/components/Skeleton';
@@ -19,6 +20,7 @@ import {
   useMyProviderIds,
   type Membership,
 } from '../catalog/useLibraryMembership';
+import { ActivityCarousel } from '../social/ActivityCarousel';
 import { GenreGrid } from './GenreGrid';
 
 const POSTER_WIDTH = 112;
@@ -40,11 +42,15 @@ export function DiscoverTab({ type }: { type: MediaType }) {
   const myProviderIds = useMyProviderIds();
   const listRef = useRef<FlatList<Row>>(null);
   useScrollToTop(listRef);
+  const queryClient = useQueryClient();
 
   const [refreshing, setRefreshing] = useState(false);
   const refresh = async () => {
     setRefreshing(true);
-    await Promise.all(results.map((result) => result.refetch()));
+    await Promise.all([
+      ...results.map((result) => result.refetch()),
+      queryClient.refetchQueries({ queryKey: feedKey }),
+    ]);
     setRefreshing(false);
   };
 
@@ -73,7 +79,13 @@ export function DiscoverTab({ type }: { type: MediaType }) {
       initialNumToRender={3}
       maxToRenderPerBatch={1}
       windowSize={5}
-      ListHeaderComponent={allFailed ? <LoadError onRetry={() => void refresh()} /> : null}
+      ListHeaderComponent={
+        <>
+          {/* Tout en haut, avant les autres carrousels (specs/social/docs/04 §4.10). */}
+          <ActivityCarousel />
+          {allFailed ? <LoadError onRetry={() => void refresh()} /> : null}
+        </>
+      }
       ListFooterComponent={<GenreGrid type={type} />}
       contentContainerStyle={styles.content}
       refreshControl={

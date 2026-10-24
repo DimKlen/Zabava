@@ -152,16 +152,51 @@ public class FeedService {
                 .param("title", title.id())
                 .query(UUID.class)
                 .list();
-        if (followees.isEmpty()) return List.of();
-        Map<UUID, ListRow> rows = store.holders(followees, title.id());
+        return statuses(me, followees, title).stream()
+                .sorted(Comparator.comparing(FollowingStatus::date).reversed()
+                        .thenComparing(status -> status.user().username()))
+                .toList();
+    }
+
+    /**
+     * Même forme que « Tes abonnements » : suivre quelqu'un depuis « Ils l'ont vu » le fait passer
+     * dans « Tes abonnements » tout de suite, avec son statut sur le titre.
+     */
+    private List<FollowingStatus> saw(UUID me, TitleRow title) {
+        List<UUID> candidates = db.sql("""
+                with seen as (%s)
+                select s.user_id from seen s join profiles p on p.id = s.user_id
+                where s.title_id = :title and s.user_id <> :me and not p.is_private and p.username is not null
+                  and not exists (select 1 from follows f where f.follower_id = :me and f.followee_id = s.user_id)
+                  and %s
+                """.formatted(SocialStore.seen("ut.title_id = :title"),
+                        SocialStore.notBlocked("s.user_id")))
+                .param("me", me)
+                .param("title", title.id())
+                .query(UUID.class)
+                .list();
+        return statuses(me, candidates, title).stream()
+                .sorted(Comparator.comparingInt((FollowingStatus status) -> status.user().commonCount()).reversed()
+                        .thenComparing(status -> status.user().username()))
+                .limit(SAW_MAX)
+                .toList();
+    }
+
+    /**
+     * Statut de chaque compte sur le titre : film watched (date de visionnage) ou towatch ; série
+     * in_progress (« S02 E05 »), finished, abandoned ou towatch (date de la dernière action).
+     */
+    private List<FollowingStatus> statuses(UUID me, List<UUID> users, TitleRow title) {
+        if (users.isEmpty()) return List.of();
+        Map<UUID, ListRow> rows = store.holders(users, title.id());
         boolean series = title.type().isSeries();
         Map<UUID, Map<Long, SeriesProgress>> progress = series
-                ? store.progress(followees, List.of(title.id()), clock.instant())
+                ? store.progress(users, List.of(title.id()), clock.instant())
                 : Map.of();
-        Map<UUID, MemberLite> people = members.byId(me, followees);
+        Map<UUID, MemberLite> people = members.byId(me, users);
 
         List<FollowingStatus> result = new ArrayList<>();
-        for (UUID id : followees) {
+        for (UUID id : users) {
             MemberLite user = people.get(id);
             ListRow row = rows.get(id);
             if (user == null || row == null) continue;
@@ -177,27 +212,6 @@ public class FeedService {
                     ? row.addedAt() : p.lastWatchedAt();
             result.add(new FollowingStatus(user, bucket, "in_progress".equals(bucket) ? p.lastCode() : null, last));
         }
-        result.sort(Comparator.comparing(FollowingStatus::date).reversed()
-                .thenComparing(status -> status.user().username()));
         return result;
-    }
-
-    private List<MemberLite> saw(UUID me, TitleRow title) {
-        List<UUID> candidates = db.sql("""
-                with seen as (%s)
-                select s.user_id from seen s join profiles p on p.id = s.user_id
-                where s.title_id = :title and s.user_id <> :me and not p.is_private and p.username is not null
-                  and not exists (select 1 from follows f where f.follower_id = :me and f.followee_id = s.user_id)
-                  and %s
-                """.formatted(SocialStore.seen("ut.title_id = :title"),
-                        SocialStore.notBlocked("s.user_id")))
-                .param("me", me)
-                .param("title", title.id())
-                .query(UUID.class)
-                .list();
-        return members.of(me, candidates).stream()
-                .sorted(Comparator.comparingInt(MemberLite::commonCount).reversed().thenComparing(MemberLite::username))
-                .limit(SAW_MAX)
-                .toList();
     }
 }

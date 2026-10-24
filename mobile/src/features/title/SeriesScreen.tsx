@@ -33,6 +33,7 @@ import { TitleBodySkeleton } from './TitleSkeleton';
 import { toggleTitleAlerts } from './toggleTitleAlerts';
 import { TrailerButton } from './TrailerButton';
 import { WhereToWatch } from './WhereToWatch';
+import { TitleSocialBlocks } from '../social/TitleSocialBlocks';
 
 type Props = {
   /** Identifiant de la route (`tv-1399`) : stable du tap jusqu'à la fiche complète. */
@@ -206,6 +207,7 @@ function SeriesInfos({
         myProviderIds={myProviderIds}
         region={region}
       />
+      <TitleSocialBlocks type={series.type} tmdbId={series.tmdbId} title={series.title} />
       {series.overview ? <Synopsis text={series.overview} /> : null}
       {/* Sous la ligne de flottaison : montés à l'image suivante, sans figer l'écran. */}
       {belowFold ? (

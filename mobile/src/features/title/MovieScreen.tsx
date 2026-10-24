@@ -22,6 +22,7 @@ import { TitleBodySkeleton } from './TitleSkeleton';
 import { toggleTitleAlerts } from './toggleTitleAlerts';
 import { TrailerButton } from './TrailerButton';
 import { WhereToWatch } from './WhereToWatch';
+import { TitleSocialBlocks } from '../social/TitleSocialBlocks';
 
 type Props = {
   /** Identifiant de la route (`movie-603`) : stable du tap jusqu'à la fiche complète. */
@@ -87,6 +88,7 @@ function MovieBody({ movie }: { movie: TitleDetail }) {
         myProviderIds={myProviderIds}
         region={profile?.region}
       />
+      <TitleSocialBlocks type={movie.type} tmdbId={movie.tmdbId} title={movie.title} />
       {movie.overview ? <Synopsis text={movie.overview} /> : null}
       {/* Sous la ligne de flottaison : montés à l'image suivante, sans figer l'écran. */}
       {belowFold && movie.trailerKey ? (
