@@ -90,6 +90,19 @@ export function SkeletonSearchRow() {
   );
 }
 
+/** Ligne de membre (specs/social/docs/05 §3) : hauteur 60, cercle de 44, nom et @pseudo. */
+export function SkeletonMemberRow() {
+  return (
+    <View style={styles.memberRow}>
+      <SkeletonBox width={44} height={44} radius={22} />
+      <View style={styles.memberText}>
+        <SkeletonBox width={140} height={15} radius={radii.rSm} />
+        <SkeletonBox width={90} height={13} radius={radii.rSm} />
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   box: {
     overflow: 'hidden',
@@ -111,5 +124,15 @@ const styles = StyleSheet.create({
   },
   bar: {
     flex: 1,
+  },
+  memberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 60,
+    paddingHorizontal: 16,
+  },
+  memberText: {
+    gap: 6,
   },
 });

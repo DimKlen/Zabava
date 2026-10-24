@@ -45,7 +45,13 @@ export function Avatar({ size, name, uri, mine = false, style }: Props) {
       ]}
     >
       {uri ? (
-        <Image source={{ uri }} contentFit="cover" style={StyleSheet.absoluteFill} />
+        // Cache mémoire et disque : le même avatar revient dans chaque liste.
+        <Image
+          source={{ uri }}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          style={StyleSheet.absoluteFill}
+        />
       ) : (
         <Text
           style={[

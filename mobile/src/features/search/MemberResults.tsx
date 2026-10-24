@@ -6,7 +6,7 @@ import { flatItems, useMemberSearch, useRecentProfiles } from '@/api/social';
 import { Button } from '@/components/Button';
 import { LoadError, showsLoadError } from '@/components/LoadError';
 import { MemberRow } from '@/components/MemberRow';
-import { SkeletonSearchRow } from '@/components/Skeleton';
+import { SkeletonMemberRow } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import type { Member } from '@/domain/social/members';
 import { openInviteSheet } from '@/store/ui';
@@ -123,7 +123,7 @@ function Skeletons() {
   return (
     <View style={styles.skeletons}>
       {Array.from({ length: SKELETON_ROWS }, (_, i) => (
-        <SkeletonSearchRow key={i} />
+        <SkeletonMemberRow key={i} />
       ))}
     </View>
   );
@@ -148,9 +148,7 @@ const styles = StyleSheet.create({
     color: colors.neutral400,
   },
   skeletons: {
-    gap: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 6,
   },
   none: {
     alignItems: 'flex-start',

@@ -17,7 +17,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { LoadError, showsLoadError } from '@/components/LoadError';
 import { MemberRow } from '@/components/MemberRow';
 import { OfflineBanner } from '@/components/OfflineBanner';
-import { SkeletonBox } from '@/components/Skeleton';
+import { SkeletonMemberRow } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { TextField } from '@/components/TextField';
 import { UnderlineTabs } from '@/components/UnderlineTabs';
@@ -26,7 +26,7 @@ import { stripAccents } from '@/domain/social/username';
 import { goBack } from '@/lib/navigation';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { openActionSheet, openInviteSheet } from '@/store/ui';
-import { colors, radii } from '@/theme/tokens';
+import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
 import { openUser } from './navigation';
@@ -197,13 +197,7 @@ function RowsSkeleton() {
   return (
     <View style={styles.list}>
       {[0, 1, 2, 3, 4].map((row) => (
-        <View key={row} style={styles.skeletonRow}>
-          <SkeletonBox width={44} height={44} radius={22} />
-          <View style={styles.skeletonText}>
-            <SkeletonBox width={140} height={15} radius={radii.rSm} />
-            <SkeletonBox width={90} height={13} radius={radii.rSm} />
-          </View>
-        </View>
+        <SkeletonMemberRow key={row} />
       ))}
     </View>
   );
@@ -235,15 +229,5 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingBottom: 40,
-  },
-  skeletonRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    minHeight: 60,
-    paddingLeft: 16,
-  },
-  skeletonText: {
-    gap: 6,
   },
 });

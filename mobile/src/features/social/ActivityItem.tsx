@@ -21,6 +21,8 @@ export function ActivityItem({ activity, sentence }: Props) {
         accessibilityRole="button"
         accessibilityLabel={actor.displayName}
         onPress={() => openUser(actor.username)}
+        // Avatar 40 : zone tactile portée à 44.
+        hitSlop={2}
       >
         <Avatar size={40} name={actor.displayName} uri={actor.avatarUrl} />
       </Pressable>

@@ -9,7 +9,7 @@ import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
 import { LoadError, showsLoadError } from '@/components/LoadError';
 import { OfflineBanner } from '@/components/OfflineBanner';
-import { SkeletonSearchRow } from '@/components/Skeleton';
+import { SkeletonMemberRow } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { groupByDay, type ActivityDay } from '@/domain/social/feed';
 import { goBack } from '@/lib/navigation';
@@ -45,7 +45,7 @@ export function FeedScreen() {
     ) : (
       <View style={styles.skeletons}>
         {Array.from({ length: SKELETONS }, (_, i) => (
-          <SkeletonSearchRow key={i} />
+          <SkeletonMemberRow key={i} />
         ))}
       </View>
     );
@@ -148,9 +148,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   skeletons: {
-    gap: 10,
-    paddingVertical: 12,
-    paddingHorizontal: spacing.screenX,
+    paddingVertical: 6,
   },
   day: {
     paddingTop: 12,

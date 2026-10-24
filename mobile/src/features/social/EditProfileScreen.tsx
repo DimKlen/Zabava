@@ -192,7 +192,7 @@ function EditForm({ profile, username }: { profile: Profile; username: string })
           <Button
             variant="ghost"
             height={44}
-            label={uploading ? 'Envoi de la photo…' : 'Changer la photo'}
+            label="Changer la photo"
             disabled={uploading}
             onPress={photoMenu}
           />
