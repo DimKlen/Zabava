@@ -923,7 +923,7 @@ export interface components {
     };
     TitleSocial: {
       following?: components['schemas']['FollowingStatus'][];
-      saw?: components['schemas']['MemberLite'][];
+      saw?: components['schemas']['FollowingStatus'][];
     };
     Episode: {
       /** Format: int64 */
