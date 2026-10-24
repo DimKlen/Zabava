@@ -38,6 +38,30 @@ beforeEach(async () => {
 async function renderTab(type: 'tv' | 'anime' = 'tv') {
   await render(<SeriesTab type={type} />);
   await act(() => jest.advanceTimersByTime(700));
+  await showWholeList();
+}
+
+/**
+ * La liste est virtualisée : sans mise en page réelle, seul le premier écran est rendu. Une hauteur
+ * de fenêtre très grande, puis un défilement, font monter toutes les sections.
+ */
+async function showWholeList() {
+  const list = screen.queryByTestId('series-list');
+  if (!list) return;
+  const layout = { x: 0, y: 0, width: 390, height: 20000 };
+  await fireEvent(list, 'layout', { nativeEvent: { layout } });
+  await fireEvent(list, 'contentSizeChange', 390, 20000);
+  // Rendu par lots : quelques passes suffisent pour la liste du prototype.
+  for (let pass = 0; pass < 4; pass++) {
+    await fireEvent.scroll(list, {
+      nativeEvent: {
+        contentOffset: { x: 0, y: pass },
+        contentSize: { width: 390, height: 20000 },
+        layoutMeasurement: { width: 390, height: 20000 },
+      },
+    });
+    await act(() => jest.advanceTimersByTime(100));
+  }
 }
 
 describe('SeriesTab', () => {
@@ -72,6 +96,7 @@ describe('SeriesTab', () => {
   it('déplier une section la garde ouverte pendant la session', async () => {
     await renderTab();
     await fireEvent.press(screen.getByText('Terminées'));
+    await showWholeList();
     expect(screen.getByText('Terminée · 24 épisodes vus')).toBeTruthy();
     expect(useUiStore.getState().collapsedSections.done).toBe(false);
   });
@@ -115,5 +140,19 @@ describe('SeriesTab', () => {
     mockSeries = [protoSeries('shogun')];
     await renderTab();
     expect(screen.queryByText(/Coche pour avancer/)).toBeNull();
+  });
+
+  it('liste virtualisée : 200 séries à regarder ne montent pas 200 cartes', async () => {
+    const bear = protoSeries('bear');
+    mockSeries = Array.from({ length: 200 }, (_, i) => ({
+      ...bear,
+      id: `tv-${i}`,
+      tmdbId: 10_000 + i,
+      userTitle: { ...bear.userTitle, titleId: `tv-${i}` },
+    }));
+    await render(<SeriesTab type="tv" />);
+    await act(() => jest.advanceTimersByTime(700));
+    expect(screen.getByText('À regarder')).toBeTruthy();
+    expect(screen.getAllByTestId('next-episode-card').length).toBeLessThan(30);
   });
 });

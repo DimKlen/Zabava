@@ -211,4 +211,16 @@ describe('SeriesScreen', () => {
     expect(screen.getByText('Christopher Storer')).toBeTruthy();
     expect(screen.getByText('2 saisons · 10 épisodes')).toBeTruthy();
   });
+
+  it('saison de 1 218 épisodes : lignes montées au fil du défilement, pas toutes d’un coup', async () => {
+    // Détective Conan : une seule saison de plus de mille épisodes.
+    mockEpisodes = Array.from({ length: 1218 }, (_, i) => ep(1, i + 1));
+    await render(
+      <SafeAreaProvider initialMetrics={metrics}>
+        <SeriesScreen id={bear.id} type="tv" tmdbId={bear.tmdbId} series={bear} />
+      </SafeAreaProvider>,
+    );
+    expect(await screen.findByText('E01 · Épisode 1-1')).toBeTruthy();
+    expect(screen.getAllByText(/^E\d+ · /).length).toBeLessThan(100);
+  });
 });
