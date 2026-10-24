@@ -1,6 +1,6 @@
 import { DotsThreeIcon } from 'phosphor-react-native';
 import { useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 
 import { useEpisodes } from '@/api/episodes';
 import { useProfile } from '@/api/profile';
@@ -12,7 +12,7 @@ import { RoundIconButton } from '@/components/RoundIconButton';
 import { SkeletonBox } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { seriesPlatform } from '@/domain/badge';
-import { defaultSeason, seriesInfo } from '@/domain/series';
+import { defaultSeason, seriesInfo, type SeriesEpisode } from '@/domain/series';
 import { nextEpisodeLine, seriesCrew, seriesInfos, seriesMeta } from '@/domain/seriesDetail';
 import { useAfterFirstFrame } from '@/lib/useAfterFirstFrame';
 import { useUiStore } from '@/store/ui';
@@ -21,7 +21,8 @@ import { typography } from '@/theme/typography';
 
 import { CastCarousel } from './CastCarousel';
 import { EpisodeSheet } from './EpisodeSheet';
-import { EpisodesTab } from './EpisodesTab';
+import { EpisodeRow } from './EpisodeRow';
+import { EpisodesHeader, seasonEpisodesOf, useEpisodeActions } from './EpisodesHeader';
 import type { TitlePreview } from './openTitle';
 import { InfoRows, InfoSection } from './InfoSection';
 import { PosterCarousel } from './PosterCarousel';
@@ -96,75 +97,118 @@ export function SeriesScreen({
   const openMenu = series ? () => openSeriesMenu(series, series.userTitle, alertsOn) : undefined;
   const openEpisode = episodes?.find((episode) => episode.id === openEpisodeId);
 
+  // Sous la ligne de flottaison (infos, épisodes, similaires) : montés à l'image suivante.
+  const belowFold = useAfterFirstFrame();
+  const showEpisodes = Boolean(series && belowFold && episodes && season !== undefined);
+  const seasonEpisodes =
+    showEpisodes && episodes && season !== undefined ? seasonEpisodesOf(episodes, season) : [];
+  const actions = useEpisodeActions(series, episodes ?? [], (episode) =>
+    setOpenEpisodeId(episode.id),
+  );
+
+  const header = (
+    <>
+      <TitleHeader
+        id={id}
+        title={series?.title ?? preview?.title ?? ''}
+        posterPath={series?.posterPath ?? preview?.posterPath}
+        backdropPath={series?.backdropPath}
+        meta={
+          series
+            ? seriesMeta(series.year, seriesPlatform(series, myProviderIds), series.status)
+            : ''
+        }
+        genres={series?.genres ?? []}
+        loading={!series}
+        alertsOn={alertsOn}
+        onToggleAlerts={series ? () => toggleTitleAlerts(series, !alertsOn) : undefined}
+        extraActions={
+          openMenu ? (
+            <RoundIconButton
+              icon={DotsThreeIcon}
+              iconSize={22}
+              accessibilityLabel="Plus"
+              onPress={openMenu}
+            />
+          ) : undefined
+        }
+      />
+      {series ? (
+        <>
+          <RatingChips
+            imdbRating={series.imdbRating}
+            imdbVotes={series.imdbVotes}
+            rtScore={series.rtScore}
+            style={styles.ratings}
+          />
+          {nextLine ? <Text style={styles.nextEpisode}>{nextLine}</Text> : null}
+          <SeriesActions
+            series={series}
+            userTitle={series.userTitle}
+            onOpenMenu={() => openSeriesMenu(series, series.userTitle, alertsOn)}
+          />
+          <SeriesInfos
+            series={series}
+            myProviderIds={myProviderIds}
+            region={profile?.region}
+            belowFold={belowFold}
+          />
+          {belowFold ? (
+            showEpisodes && episodes && season !== undefined ? (
+              <EpisodesHeader
+                series={series}
+                episodes={episodes}
+                seasonEpisodes={seasonEpisodes}
+                season={season}
+                onSeasonChange={setSeason}
+              />
+            ) : showsLoadError(episodesQuery) ? (
+              <LoadError onRetry={() => void episodesQuery.refetch()} />
+            ) : episodes ? null : (
+              <EpisodesSkeleton />
+            )
+          ) : null}
+        </>
+      ) : (
+        (failure ?? <TitleBodySkeleton series />)
+      )}
+    </>
+  );
+
   return (
     <>
-      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <TitleHeader
-          id={id}
-          title={series?.title ?? preview?.title ?? ''}
-          posterPath={series?.posterPath ?? preview?.posterPath}
-          backdropPath={series?.backdropPath}
-          meta={
-            series
-              ? seriesMeta(series.year, seriesPlatform(series, myProviderIds), series.status)
-              : ''
-          }
-          genres={series?.genres ?? []}
-          loading={!series}
-          alertsOn={alertsOn}
-          onToggleAlerts={series ? () => toggleTitleAlerts(series, !alertsOn) : undefined}
-          extraActions={
-            openMenu ? (
-              <RoundIconButton
-                icon={DotsThreeIcon}
-                iconSize={22}
-                accessibilityLabel="Plus"
-                onPress={openMenu}
-              />
-            ) : undefined
-          }
-        />
-        {series ? (
-          <>
-            <RatingChips
-              imdbRating={series.imdbRating}
-              imdbVotes={series.imdbVotes}
-              rtScore={series.rtScore}
-              style={styles.ratings}
+      {/* Liste virtualisée : une saison peut compter plus de mille épisodes (Détective Conan). */}
+      <FlatList
+        style={styles.screen}
+        contentContainerStyle={styles.content}
+        data={seasonEpisodes}
+        keyExtractor={(episode) => String(episode.id)}
+        ListHeaderComponent={header}
+        renderItem={({ item }: { item: SeriesEpisode }) => (
+          <View style={styles.row}>
+            <EpisodeRow
+              seriesId={series?.id ?? id}
+              episode={item}
+              spoilerProtection={spoilerProtection}
+              now={now}
+              onPress={actions.openEpisode}
+              onCheck={actions.check}
             />
-            {nextLine ? <Text style={styles.nextEpisode}>{nextLine}</Text> : null}
-            <SeriesActions
-              series={series}
-              userTitle={series.userTitle}
-              onOpenMenu={() => openSeriesMenu(series, series.userTitle, alertsOn)}
-            />
-            <SeriesInfos
-              series={series}
-              myProviderIds={myProviderIds}
-              region={profile?.region}
-              libraryIds={libraryIds}
-              episodesSection={
-                episodes && season !== undefined ? (
-                  <EpisodesTab
-                    series={series}
-                    episodes={episodes}
-                    season={season}
-                    onSeasonChange={setSeason}
-                    spoilerProtection={spoilerProtection}
-                    onOpenEpisode={(episode) => setOpenEpisodeId(episode.id)}
-                  />
-                ) : showsLoadError(episodesQuery) ? (
-                  <LoadError onRetry={() => void episodesQuery.refetch()} />
-                ) : episodes ? null : (
-                  <EpisodesSkeleton />
-                )
-              }
-            />
-          </>
-        ) : (
-          (failure ?? <TitleBodySkeleton series />)
+          </View>
         )}
-      </ScrollView>
+        ListFooterComponent={
+          series && belowFold ? (
+            <PosterCarousel
+              title="Titres similaires"
+              titles={series.similar}
+              libraryIds={libraryIds}
+            />
+          ) : null
+        }
+        initialNumToRender={12}
+        maxToRenderPerBatch={12}
+        windowSize={7}
+      />
       {series ? (
         <EpisodeSheet
           series={series}
@@ -182,15 +226,12 @@ function SeriesInfos({
   series,
   myProviderIds,
   region,
-  libraryIds,
-  episodesSection,
+  belowFold,
 }: {
   series: TitleDetail;
   myProviderIds: number[];
   region: string | undefined;
-  libraryIds: Set<string>;
-  /** Liste des épisodes, entre les infos et les titres similaires. */
-  episodesSection: ReactNode;
+  belowFold: boolean;
 }) {
   const crew = seriesCrew(
     series.creators,
@@ -199,7 +240,6 @@ function SeriesInfos({
     series.type === 'anime' ? series.studios : [],
   );
   const infos = seriesInfos(series);
-  const belowFold = useAfterFirstFrame();
   return (
     <View>
       <WhereToWatch
@@ -230,12 +270,6 @@ function SeriesInfos({
               <InfoRows rows={infos} />
             </InfoSection>
           ) : null}
-          {episodesSection}
-          <PosterCarousel
-            title="Titres similaires"
-            titles={series.similar}
-            libraryIds={libraryIds}
-          />
         </>
       ) : null}
     </View>
@@ -263,6 +297,9 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 48,
+  },
+  row: {
+    paddingHorizontal: 16,
   },
   ratings: {
     paddingTop: 16,
