@@ -47,6 +47,8 @@ export function ActivityVisual({ activity, visual, background }: Props) {
         accessibilityRole="button"
         accessibilityLabel={title.title}
         onPress={open}
+        // Vignette de 36 de haut : zone tactile portée à 44.
+        hitSlop={{ top: 4, bottom: 4 }}
         style={[styles.still, styles.clip]}
       >
         <GradientFill gradientKey={`${title.id}-${episode?.season}-${episode?.number}`} />

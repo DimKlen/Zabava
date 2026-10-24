@@ -9,10 +9,10 @@ import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
 import { LoadError, showsLoadError } from '@/components/LoadError';
 import { OfflineBanner } from '@/components/OfflineBanner';
-import { SkeletonSearchRow } from '@/components/Skeleton';
+import { SkeletonMemberRow } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { goBack } from '@/lib/navigation';
-import { colors, spacing } from '@/theme/tokens';
+import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
 const SKELETONS = 3;
@@ -31,7 +31,7 @@ export function BlockedScreen() {
     ) : (
       <View style={styles.skeletons}>
         {Array.from({ length: SKELETONS }, (_, i) => (
-          <SkeletonSearchRow key={i} />
+          <SkeletonMemberRow key={i} />
         ))}
       </View>
     );
@@ -115,9 +115,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   skeletons: {
-    gap: 10,
-    paddingVertical: 12,
-    paddingHorizontal: spacing.screenX,
+    paddingVertical: 6,
   },
   row: {
     flexDirection: 'row',
