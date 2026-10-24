@@ -117,6 +117,27 @@ describe('featuredProviders', () => {
     ).toBe('Philo');
   });
 
+  it('Canada : ICI TOU.TV, Club illico et Tubi font partie des services mis en avant', () => {
+    // Ordre de priorité TMDB du Canada (extrait).
+    const ca = groupProviders([
+      provider(350, 'Apple TV'),
+      provider(8, 'Netflix'),
+      provider(1883, 'Hoopla'),
+      provider(146, 'iciTouTV'),
+      provider(230, 'Crave'),
+      provider(73, 'Tubi TV'),
+      provider(484, 'Club Illico'),
+    ]);
+    expect(featuredProviders(ca, []).map((g) => g.name)).toEqual([
+      'Netflix',
+      'Crave',
+      'iciTouTV',
+      'Club Illico',
+      'Apple TV',
+      'Tubi TV',
+    ]);
+  });
+
   it('région sans grand service connu : les premières par priorité', () => {
     const others = groupProviders([provider(1, 'A'), provider(2, 'B'), provider(3, 'C')]);
     expect(featuredProviders(others, []).map((g) => g.name)).toEqual(['A', 'B', 'C']);
