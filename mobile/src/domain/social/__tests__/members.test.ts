@@ -1,4 +1,5 @@
 import {
+  autoAcceptedLabel,
   commonLabel,
   counterLabel,
   firstName,
@@ -93,4 +94,10 @@ describe('profileAccess', () => {
 it('prénom = premier mot du nom', () => {
   expect(firstName('Léa Martin')).toBe('Léa');
   expect(firstName('  Max ')).toBe('Max');
+});
+
+it('passage en public : libellé des demandes acceptées', () => {
+  expect(autoAcceptedLabel(0)).toBeNull();
+  expect(autoAcceptedLabel(1)).toBe('1 demande acceptée automatiquement');
+  expect(autoAcceptedLabel(3)).toBe('3 demandes acceptées automatiquement');
 });
