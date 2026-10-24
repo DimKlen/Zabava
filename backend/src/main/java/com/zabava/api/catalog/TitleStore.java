@@ -248,6 +248,29 @@ public class TitleStore {
                         Collectors.toMap(e -> e.getValue().getKey(), e -> e.getValue().getValue(), (a, b) -> a)));
     }
 
+    /**
+     * Dates de chaque titre par région : toutes celles de ma région, et les sorties numériques des
+     * autres pays ({@link TitleService#digitalRelease}).
+     */
+    public Map<Long, Map<String, Map<String, LocalDate>>> releaseDatesByRegion(Collection<Long> titleIds, String region) {
+        if (titleIds.isEmpty()) return Map.of();
+        Map<Long, Map<String, Map<String, LocalDate>>> result = new HashMap<>();
+        db.sql("""
+                select title_id, region, type, date from release_dates
+                where title_id in (:ids) and (region = :region or type = 'numerique')
+                """)
+                .param("ids", titleIds)
+                .param("region", region)
+                .query((rs, n) -> {
+                    result.computeIfAbsent(rs.getLong("title_id"), id -> new HashMap<>())
+                            .computeIfAbsent(rs.getString("region"), r -> new HashMap<>())
+                            .put(rs.getString("type"), rs.getDate("date").toLocalDate());
+                    return null;
+                })
+                .list();
+        return result;
+    }
+
     /** {@code first_seen_at} des offres déjà présentes quand le titre entre en base : « depuis toujours ». */
     static final Instant KNOWN_BEFORE_TRACKING = Instant.EPOCH;
 

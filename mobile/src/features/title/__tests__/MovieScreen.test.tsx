@@ -3,6 +3,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { setMovieWatched, toggleInList } from '@/api/libraryActions';
 import type { TitleDetail } from '@/api/titles';
+import { formatLongDate } from '@/domain/format';
 
 import { MovieScreen } from '../MovieScreen';
 
@@ -56,6 +57,14 @@ async function renderMovie(movie: TitleDetail) {
   );
 }
 
+/** Date locale (ISO) à `days` jours d'aujourd'hui : l'écran compare à la vraie date du jour. */
+function isoInDays(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 beforeEach(() => jest.clearAllMocks());
 
 describe('chargement', () => {
@@ -86,6 +95,22 @@ describe('MovieScreen', () => {
     expect(screen.queryByText('IMDb')).toBeNull();
     expect(screen.queryByText('Rotten Tomatoes')).toBeNull();
     expect(screen.getByText('Disponibilité inconnue.')).toBeTruthy();
+  });
+
+  it('sans plateforme mais encore au cinéma : la date de sortie numérique, avec son pays', async () => {
+    await renderMovie({
+      ...base,
+      releaseTheatrical: isoInDays(-99),
+      releaseDigital: isoInDays(24),
+      releaseDigitalCountry: 'US',
+    });
+    expect(screen.getByText('Au cinéma maintenant')).toBeTruthy();
+    expect(
+      screen.getByText(
+        `Seulement au cinéma pour l'instant. En numérique le ${formatLongDate(isoInDays(24))} (États-Unis).`,
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText('Disponibilité inconnue.')).toBeNull();
   });
 
   it('affiche les notes, les plateformes de location sans libellé et le bandeau', async () => {

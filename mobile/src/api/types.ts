@@ -801,6 +801,8 @@ export interface components {
       id?: string;
       /** Format: date */
       releaseTheatrical?: string;
+      /** Format: date */
+      releaseDigital?: string;
       availability?: components['schemas']['Availability'];
       network?: string;
       ended?: boolean;
@@ -900,6 +902,7 @@ export interface components {
       releaseTheatrical?: string;
       /** Format: date */
       releaseDigital?: string;
+      releaseDigitalCountry?: string;
       /** Format: int32 */
       collectionId?: number;
       status?: string;

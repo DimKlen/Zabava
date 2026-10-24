@@ -16,6 +16,8 @@ type Props = {
   myProviderIds: readonly number[];
   /** Région du profil (« Netflix » chez moi, « Netflix (États-Unis) » ailleurs). */
   region: string | undefined;
+  /** Texte sans aucune plateforme (film : au cinéma, date numérique à venir). */
+  emptyText?: string;
 };
 
 function open(provider: Provider, fallbackLink: string | undefined) {
@@ -28,7 +30,12 @@ function open(provider: Provider, fallbackLink: string | undefined) {
  * « Où regarder » : toutes les plateformes, avec le pays le plus proche quand elles ne proposent
  * pas le titre dans ma région ; les miennes en premier et cerclées.
  */
-export function WhereToWatch({ availability, myProviderIds, region }: Props) {
+export function WhereToWatch({
+  availability,
+  myProviderIds,
+  region,
+  emptyText = 'Disponibilité inconnue.',
+}: Props) {
   const providers = whereToWatch(availability, myProviderIds);
 
   return (
@@ -46,7 +53,7 @@ export function WhereToWatch({ availability, myProviderIds, region }: Props) {
           ))}
         </View>
       ) : (
-        <Text style={styles.unknown}>Disponibilité inconnue.</Text>
+        <Text style={styles.unknown}>{emptyText}</Text>
       )}
     </InfoSection>
   );

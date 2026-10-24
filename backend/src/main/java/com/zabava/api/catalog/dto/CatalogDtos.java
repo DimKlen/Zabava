@@ -91,7 +91,9 @@ public final class CatalogDtos {
             String studio,
             List<Studio> studios,
             LocalDate releaseTheatrical,
+            /** Ma région, sinon la plus proche dans le temps ailleurs ({@code releaseDigitalCountry}). */
             LocalDate releaseDigital,
+            String releaseDigitalCountry,
             Integer collectionId,
             String status,
             String network,
@@ -146,5 +148,11 @@ public final class CatalogDtos {
      * sortie en salle dans la région, offres, chaîne d'origine et fin de production des séries.
      */
     public record TitleBadge(
-            String id, LocalDate releaseTheatrical, Availability availability, String network, Boolean ended) {}
+            String id,
+            LocalDate releaseTheatrical,
+            /** Ma région, sinon ailleurs : un film qui n'est pas encore sorti en numérique reste au cinéma. */
+            LocalDate releaseDigital,
+            Availability availability,
+            String network,
+            Boolean ended) {}
 }

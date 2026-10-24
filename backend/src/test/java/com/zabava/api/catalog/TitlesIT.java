@@ -47,6 +47,7 @@ class TitlesIT extends IntegrationTest {
                 // Région du profil : Canada.
                 .andExpect(jsonPath("$.releaseTheatrical").value("2026-10-20"))
                 .andExpect(jsonPath("$.releaseDigital").value("2026-12-18"))
+                .andExpect(jsonPath("$.releaseDigitalCountry").value("CA"))
                 .andExpect(jsonPath("$.availability.sub[0].name").value("Netflix"))
                 .andExpect(jsonPath("$.availability.sub[0].shortName").value("N"))
                 .andExpect(jsonPath("$.availability.rent[0].name").value("Apple TV"))

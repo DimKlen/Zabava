@@ -109,7 +109,9 @@ public class TitleService {
         boolean movie = type == MediaType.MOVIE;
         String region = prefs.region();
 
-        Map<String, LocalDate> releases = movie ? releaseDates(d).getOrDefault(region, Map.of()) : Map.of();
+        Map<String, Map<String, LocalDate>> byRegion = movie ? releaseDates(d) : Map.of();
+        Map<String, LocalDate> releases = byRegion.getOrDefault(region, Map.of());
+        DigitalRelease digital = digitalRelease(byRegion, region);
         Optional<UserTitleRow> userTitle = library.find(prefs.userId(), id);
 
         return new TitleDetail(
@@ -133,7 +135,8 @@ public class TitleService {
                 studio(d),
                 studios(d),
                 releases.get("salle"),
-                releases.get("numerique"),
+                digital.date(),
+                digital.country(),
                 movie ? Json.integer(d.path("belongs_to_collection"), "id") : null,
                 row.status(),
                 row.network(),
@@ -389,6 +392,27 @@ public class TitleService {
             if (code != null && !byType.isEmpty()) result.put(code, byType);
         }
         return result;
+    }
+
+    /** Sortie numérique d'un film et pays de cette date. */
+    public record DigitalRelease(LocalDate date, String country) {
+        static final DigitalRelease NONE = new DigitalRelease(null, null);
+    }
+
+    /**
+     * Sortie numérique dans ma région ; à défaut, la plus proche dans le temps parmi les pays suivis
+     * (TMDB n'a souvent que la date américaine : « L'Odyssée » en numérique le 17 novembre).
+     */
+    public static DigitalRelease digitalRelease(Map<String, Map<String, LocalDate>> byRegion, String region) {
+        LocalDate mine = byRegion.getOrDefault(region, Map.of()).get("numerique");
+        if (mine != null) return new DigitalRelease(mine, region);
+        return byRegion.entrySet().stream()
+                .filter(e -> e.getValue().get("numerique") != null)
+                .min(Map.Entry.<String, Map<String, LocalDate>>comparingByValue(
+                                Comparator.comparing(dates -> dates.get("numerique")))
+                        .thenComparing(Map.Entry.comparingByKey()))
+                .map(e -> new DigitalRelease(e.getValue().get("numerique"), e.getKey()))
+                .orElse(DigitalRelease.NONE);
     }
 
     private static String certification(JsonNode d, boolean movie, String region) {

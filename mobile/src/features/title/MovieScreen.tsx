@@ -5,7 +5,7 @@ import { useProfile } from '@/api/profile';
 import type { TitleDetail } from '@/api/titles';
 import { useMovieWatchlist } from '@/api/watchlist';
 import { RatingChips } from '@/components/RatingChips';
-import { movieCrew, movieInfos, movieMeta, movieStatus } from '@/domain/movieDetail';
+import { movieCrew, movieInfos, movieMeta, movieStatus, noOfferText } from '@/domain/movieDetail';
 import { useAfterFirstFrame } from '@/lib/useAfterFirstFrame';
 import { useUiStore } from '@/store/ui';
 import { colors } from '@/theme/tokens';
@@ -87,6 +87,7 @@ function MovieBody({ movie }: { movie: TitleDetail }) {
         availability={movie.availability}
         myProviderIds={myProviderIds}
         region={profile?.region}
+        emptyText={noOfferText(movie, profile?.region, new Date())}
       />
       <TitleSocialBlocks type={movie.type} tmdbId={movie.tmdbId} title={movie.title} />
       {movie.overview ? <Synopsis text={movie.overview} /> : null}

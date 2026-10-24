@@ -20,6 +20,7 @@ const BATCH_DELAY_MS = 30;
 
 export type BadgeData = {
   releaseTheatrical?: string;
+  releaseDigital?: string;
   availability: Availability;
   network?: string;
   ended?: boolean;
@@ -33,6 +34,7 @@ let timer: ReturnType<typeof setTimeout> | undefined;
 export function toBadgeData(item: ApiTitleBadge): BadgeData {
   return {
     releaseTheatrical: item.releaseTheatrical,
+    releaseDigital: item.releaseDigital,
     availability: toAvailability(item.availability),
     network: item.network,
     ended: item.ended,

@@ -1,4 +1,4 @@
-import { movieCrew, movieInfos, movieMeta, movieStatus } from '../movieDetail';
+import { movieCrew, movieInfos, movieMeta, movieStatus, noOfferText } from '../movieDetail';
 import { seriesCrew } from '../seriesDetail';
 
 const TODAY = new Date(2026, 9, 10, 12, 0);
@@ -61,6 +61,91 @@ describe('movieStatus (bandeau de la fiche)', () => {
     expect(movieStatus({ releaseTheatrical: '2025-06-01', availability: none }, TODAY).text).toBe(
       'Pas encore de date',
     );
+  });
+
+  it('sorti en salle il y a plus de 60 jours, numérique à venir : toujours au cinéma', () => {
+    // « L'Odyssée » : en salle le 17 juillet, en numérique le 17 novembre.
+    expect(
+      movieStatus(
+        { releaseTheatrical: '2026-07-17', releaseDigital: '2026-11-17', availability: none },
+        TODAY,
+      ),
+    ).toEqual({ state: 'cinema', digital: false, text: 'Au cinéma maintenant' });
+  });
+
+  it('numérique passé, sans offre : inconnu', () => {
+    expect(
+      movieStatus(
+        { releaseTheatrical: '2026-03-01', releaseDigital: '2026-05-01', availability: none },
+        TODAY,
+      ).state,
+    ).toBe('unknown');
+  });
+
+  it('offre en précommande : pas de « depuis » une date à venir', () => {
+    expect(
+      movieStatus(
+        {
+          releaseTheatrical: '2026-07-17',
+          releaseDigital: '2026-11-17',
+          availability: { ...none, rent: [crave] },
+        },
+        TODAY,
+      ).text,
+    ).toBe('Disponible en streaming');
+  });
+});
+
+describe('noOfferText (« Où regarder » sans plateforme)', () => {
+  const odyssey = { releaseTheatrical: '2026-07-17', availability: none };
+
+  it('au cinéma, en numérique plus tard aux États-Unis', () => {
+    expect(
+      noOfferText(
+        { ...odyssey, releaseDigital: '2026-11-17', releaseDigitalCountry: 'US' },
+        'CA',
+        TODAY,
+      ),
+    ).toBe("Seulement au cinéma pour l'instant. En numérique le 17 novembre 2026 (États-Unis).");
+  });
+
+  it('date de ma région : sans pays', () => {
+    expect(
+      noOfferText(
+        { ...odyssey, releaseDigital: '2026-11-17', releaseDigitalCountry: 'CA' },
+        'CA',
+        TODAY,
+      ),
+    ).toBe("Seulement au cinéma pour l'instant. En numérique le 17 novembre 2026.");
+  });
+
+  it('pas encore en salle, date numérique annoncée', () => {
+    expect(
+      noOfferText(
+        { releaseTheatrical: '2026-12-01', releaseDigital: '2027-02-01', availability: none },
+        'CA',
+        TODAY,
+      ),
+    ).toBe('En numérique le 1 février 2027.');
+  });
+
+  it('sorti récemment, sans date numérique', () => {
+    expect(noOfferText({ releaseTheatrical: '2026-09-20', availability: none }, 'CA', TODAY)).toBe(
+      "Seulement au cinéma pour l'instant.",
+    );
+  });
+
+  it('sinon : disponibilité inconnue', () => {
+    expect(noOfferText({ releaseTheatrical: '2025-06-01', availability: none }, 'CA', TODAY)).toBe(
+      'Disponibilité inconnue.',
+    );
+    expect(
+      noOfferText(
+        { releaseTheatrical: '2026-03-01', releaseDigital: '2026-05-01', availability: none },
+        'CA',
+        TODAY,
+      ),
+    ).toBe('Disponibilité inconnue.');
   });
 });
 
