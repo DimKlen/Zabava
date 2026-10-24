@@ -104,3 +104,9 @@ export function profileAccess(profile: {
 export function firstName(displayName: string): string {
   return displayName.trim().split(/\s+/)[0] ?? displayName;
 }
+
+/** Passage de privé à public : « 3 demandes acceptées automatiquement » ; null sans demande. */
+export function autoAcceptedLabel(n: number): string | null {
+  if (n <= 0) return null;
+  return n === 1 ? '1 demande acceptée automatiquement' : `${n} demandes acceptées automatiquement`;
+}

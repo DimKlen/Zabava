@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.zabava.api.common.ApiException;
+import com.zabava.api.notifications.SocialNotifications;
 import com.zabava.api.social.SocialStore.ProfileRow;
 import com.zabava.api.social.SocialStore.Relation;
 import com.zabava.api.social.dto.SocialDtos.FollowResult;
@@ -44,13 +45,16 @@ public class FollowService {
     private final SocialStore store;
     private final Members members;
     private final ActivityService activities;
+    private final SocialNotifications notifications;
     private final Clock clock;
 
-    public FollowService(JdbcClient db, SocialStore store, Members members, ActivityService activities, Clock clock) {
+    public FollowService(JdbcClient db, SocialStore store, Members members, ActivityService activities,
+            SocialNotifications notifications, Clock clock) {
         this.db = db;
         this.store = store;
         this.members = members;
         this.activities = activities;
+        this.notifications = notifications;
         this.clock = clock;
     }
 
@@ -75,6 +79,9 @@ public class FollowService {
         consumeQuota(me, now);
         String status = target.isPrivate() ? "pending" : "accepted";
         insert(me, target.id(), status, now, "accepted".equals(status) ? now : null);
+        // « Annuler » un désabonnement (ci-dessus) ne prévient personne ; un vrai abonnement, si.
+        if ("accepted".equals(status)) notifications.newFollower(me, target.id());
+        else notifications.followRequest(me, target.id());
         return new FollowResult(status);
     }
 
@@ -283,7 +290,10 @@ public class FollowService {
                 .param("me", me)
                 .param("ids", followers)
                 .update();
-        followers.forEach(follower -> activities.followed(follower, me, now));
+        followers.forEach(follower -> {
+            activities.followed(follower, me, now);
+            notifications.followAccepted(follower, me);
+        });
     }
 
     /** Compte un nouvel abonnement du jour ; au-delà de la limite, {@code 429}. */

@@ -1,8 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { GearSixIcon, UserPlusIcon } from 'phosphor-react-native';
+import {
+  CaretRightIcon,
+  GearSixIcon,
+  UserCirclePlusIcon,
+  UserPlusIcon,
+} from 'phosphor-react-native';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useProfile, type Profile } from '@/api/profile';
@@ -11,6 +16,7 @@ import { Button } from '@/components/Button';
 import { LoadError, showsLoadError } from '@/components/LoadError';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { Text } from '@/components/Text';
 import {
   defaultSegment,
   myMovieGrid,
@@ -22,7 +28,8 @@ import {
 } from '@/domain/social/profileLists';
 import type { MediaType } from '@/domain/types';
 import { openInviteSheet } from '@/store/ui';
-import { colors } from '@/theme/tokens';
+import { colors, radii } from '@/theme/tokens';
+import { fonts } from '@/theme/typography';
 
 import { ProfileContent } from './ProfileContent';
 import { ProfileHeader } from './ProfileHeader';
@@ -158,6 +165,9 @@ function MyProfile({
               style={styles.button}
             />
           </View>
+          {profile.isPrivate && (profile.followRequestsCount ?? 0) > 0 ? (
+            <RequestsRow count={profile.followRequestsCount ?? 0} />
+          ) : null}
         </>
       }
       tab={tab}
@@ -170,6 +180,25 @@ function MyProfile({
       refreshing={refreshing}
       onRefresh={refresh}
     />
+  );
+}
+
+/** Profil privé avec au moins une demande : « Demandes d'abonnement » et son badge. */
+function RequestsRow({ count }: { count: number }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Demandes d'abonnement, ${count}`}
+      onPress={() => router.push('/follow-requests')}
+      style={({ pressed }) => [styles.requests, pressed && styles.requestsPressed]}
+    >
+      <UserCirclePlusIcon size={20} color={colors.neutral400} />
+      <Text style={styles.requestsLabel}>Demandes d&apos;abonnement</Text>
+      <View style={styles.badge}>
+        <Text style={styles.badgeText}>{count}</Text>
+      </View>
+      <CaretRightIcon size={16} color={colors.neutral600} />
+    </Pressable>
   );
 }
 
@@ -186,5 +215,41 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
+  },
+  requests: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 52,
+    marginTop: 12,
+    marginHorizontal: 16,
+    paddingHorizontal: 14,
+    borderRadius: radii.rLg,
+    backgroundColor: colors.surface,
+  },
+  requestsPressed: {
+    backgroundColor: colors.neutral800,
+  },
+  requestsLabel: {
+    flex: 1,
+    fontFamily: fonts.regular,
+    fontSize: 15,
+    lineHeight: 15 * 1.3,
+    color: colors.text,
+  },
+  badge: {
+    height: 22,
+    minWidth: 22,
+    paddingHorizontal: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radii.rPill,
+    backgroundColor: colors.accent,
+  },
+  badgeText: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    lineHeight: 12 * 1.3,
+    color: colors.bg,
   },
 });

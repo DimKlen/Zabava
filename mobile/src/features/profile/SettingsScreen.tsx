@@ -1,10 +1,13 @@
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import {
   CaretDownIcon,
   CaretLeftIcon,
   CaretRightIcon,
   CheckIcon,
+  LockSimpleIcon,
+  ProhibitIcon,
   ShieldCheckIcon,
   SignOutIcon,
   TelevisionSimpleIcon,
@@ -16,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useProviders } from '@/api/catalog';
 import { useProfile, type Profile } from '@/api/profile';
+import { useBlocks } from '@/api/social';
 import { Button } from '@/components/Button';
 import { LoadError, showsLoadError } from '@/components/LoadError';
 import { OfflineBanner } from '@/components/OfflineBanner';
@@ -41,6 +45,7 @@ import {
   changeLanguage,
   confirmDeleteAccount,
   confirmSignOut,
+  setPrivacy,
   updatePreference,
 } from './profileActions';
 import { SettingsGroup, SettingsRow } from './SettingsGroup';
@@ -96,6 +101,7 @@ function SettingsContent({ profile }: { profile: Profile }) {
   const [platformsOpen, setPlatformsOpen] = useState(false);
   // Pendant le chargement : rien plutôt qu'un « Aucune » trompeur.
   const providers = useProviders().data;
+  const blocked = useBlocks().data;
   const prefs = profile.notificationPrefs;
 
   const pick = <V extends string>(
@@ -147,13 +153,6 @@ function SettingsContent({ profile }: { profile: Profile }) {
             </Text>
             <CaretRightIcon size={16} color={colors.neutral600} />
           </SettingsRow>
-          <SettingsRow label="Anti-spoiler" icon={ShieldCheckIcon}>
-            <Switch
-              value={profile.spoilerProtection ?? false}
-              onValueChange={(value) => void updatePreference({ spoilerProtection: value })}
-              accessibilityLabel="Anti-spoiler"
-            />
-          </SettingsRow>
         </SettingsGroup>
 
         <SettingsGroup label="Notifications">
@@ -179,6 +178,40 @@ function SettingsContent({ profile }: { profile: Profile }) {
             }
           >
             <Value text={digestLabel(prefs?.digestHour ?? 9)} />
+          </SettingsRow>
+        </SettingsGroup>
+
+        <View>
+          <SettingsGroup label="Confidentialité">
+            <SettingsRow label="Profil privé" icon={LockSimpleIcon}>
+              <Switch
+                value={profile.isPrivate ?? false}
+                onValueChange={(value) => void setPrivacy(value)}
+                accessibilityLabel="Profil privé"
+              />
+            </SettingsRow>
+            <SettingsRow
+              label="Comptes bloqués"
+              icon={ProhibitIcon}
+              onPress={() => router.push('/settings/blocked')}
+            >
+              <Text style={styles.count}>{blockedLabel(blocked)}</Text>
+              <CaretRightIcon size={16} color={colors.neutral600} />
+            </SettingsRow>
+          </SettingsGroup>
+          <Text style={styles.help}>
+            En privé, seules les personnes que tu acceptes voient tes listes et ton activité.
+          </Text>
+        </View>
+
+        {/* Déplacé des Préférences (specs/social/docs/04 §4.13). */}
+        <SettingsGroup label="Anti-spoiler">
+          <SettingsRow label="Protection anti-spoiler" icon={ShieldCheckIcon}>
+            <Switch
+              value={profile.spoilerProtection ?? false}
+              onValueChange={(value) => void updatePreference({ spoilerProtection: value })}
+              accessibilityLabel="Protection anti-spoiler"
+            />
           </SettingsRow>
         </SettingsGroup>
 
@@ -227,6 +260,13 @@ function SettingsContent({ profile }: { profile: Profile }) {
       <PlatformsSheet visible={platformsOpen} onClose={() => setPlatformsOpen(false)} />
     </>
   );
+}
+
+/** « 3 », « Aucun » ; rien pendant le chargement. */
+function blockedLabel(blocked: readonly { followState: string }[] | undefined): string {
+  if (!blocked) return '';
+  const count = blocked.filter((member) => member.followState === 'blocked').length;
+  return count > 0 ? String(count) : 'Aucun';
 }
 
 /** Valeur d'une ligne à choix : texte 14 `neutral300` et CaretDown. */
@@ -282,6 +322,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 14 * 1.4,
     color: colors.neutral300,
+  },
+  count: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 13 * 1.4,
+    color: colors.neutral400,
+  },
+  help: {
+    marginTop: 8,
+    paddingHorizontal: 4,
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    lineHeight: 12 * 1.4,
+    color: colors.neutral500,
   },
   platforms: {
     flexShrink: 1,

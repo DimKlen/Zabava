@@ -17,7 +17,13 @@ import { openActionSheet, openDialog, showToast } from '@/store/ui';
 import { ApiError, api } from './http';
 import { profileKey, type Profile } from './profile';
 import { queryClient } from './queryClient';
-import { userKey, type ConnectionsKind, type Page, type UserProfile } from './social';
+import {
+  followRequestsKey,
+  userKey,
+  type ConnectionsKind,
+  type Page,
+  type UserProfile,
+} from './social';
 
 export const OFFLINE = 'Connexion requise';
 export const SAVE_FAILED = "Impossible d'enregistrer, réessaie";
@@ -352,6 +358,114 @@ export function unblockMember(member: Member): void {
     request: () => api(`/users/${member.username}/block`, { method: 'DELETE' }),
   }).then((done) => {
     if (done) showToast(`@${member.username} est débloqué·e`);
+  });
+}
+
+// ─── Demandes d'abonnement ─────────────────────────────────────────────────
+
+/** Retire des demandes en cache ; renvoie de quoi les remettre à leur place. */
+function takeRequests(usernames: ReadonlySet<string>): () => void {
+  const before = queryClient.getQueryData<MemberPages>(followRequestsKey);
+  const removed: { page: number; index: number; member: Member }[] = [];
+  before?.pages.forEach((page, p) =>
+    page.items.forEach((member, index) => {
+      if (usernames.has(member.username)) removed.push({ page: p, index, member });
+    }),
+  );
+  queryClient.setQueryData<MemberPages>(
+    followRequestsKey,
+    (data) =>
+      data && {
+        ...data,
+        pages: data.pages.map((page) => ({
+          ...page,
+          items: page.items.filter((item) => !usernames.has(item.username)),
+        })),
+      },
+  );
+  return () =>
+    queryClient.setQueryData<MemberPages>(followRequestsKey, (data) => {
+      if (!data) return data;
+      const pages = data.pages.map((page) => ({ ...page, items: [...page.items] }));
+      for (const { page, index, member } of removed) {
+        const items = pages[page]?.items;
+        if (items && !items.some((item) => item.username === member.username)) {
+          items.splice(Math.min(index, items.length), 0, member);
+        }
+      }
+      return { ...data, pages };
+    });
+}
+
+/** Mon compteur de demandes (ligne et badge de Mon profil). */
+function countRequests(delta: number): void {
+  queryClient.setQueryData<Profile>(profileKey, (profile) =>
+    profile
+      ? { ...profile, followRequestsCount: Math.max(0, (profile.followRequestsCount ?? 0) + delta) }
+      : profile,
+  );
+}
+
+/** Accepter : la ligne disparaît, la personne me suit, toast « Léa te suit maintenant ». */
+export function acceptRequest(member: Member): void {
+  acceptRequests([member], `${firstName(member.displayName)} te suit maintenant`, (m) =>
+    api(`/me/follow-requests/${m[0]?.username}/accept`, { method: 'POST' }),
+  );
+}
+
+/** « Tout accepter » : toast « 4 demandes acceptées ». */
+export function acceptAllRequests(members: readonly Member[]): void {
+  acceptRequests(members, `${members.length} demandes acceptées`, () =>
+    api('/me/follow-requests/accept-all', { method: 'POST' }),
+  );
+}
+
+function acceptRequests(
+  members: readonly Member[],
+  toast: string,
+  request: (members: readonly Member[]) => Promise<unknown>,
+): void {
+  if (members.length === 0 || !requireOnline()) return;
+  let putBack = () => undefined as void;
+  void send({
+    apply: () => {
+      putBack = takeRequests(new Set(members.map((m) => m.username)));
+      countRequests(-members.length);
+      for (const member of members) {
+        patchMemberEverywhere(member.username, { followsMe: true });
+        countFollower(member.username, 1);
+      }
+    },
+    revert: () => {
+      putBack();
+      countRequests(members.length);
+      for (const member of members) {
+        patchMemberEverywhere(member.username, { followsMe: false });
+        countFollower(member.username, -1);
+      }
+    },
+    request: () => request(members),
+  }).then((done) => {
+    if (!done) return;
+    showToast(toast);
+    reloadMyList('followers');
+  });
+}
+
+/** Refuser : la ligne disparaît, sans toast ; la personne n'est pas prévenue. */
+export function declineRequest(member: Member): void {
+  if (!requireOnline()) return;
+  let putBack = () => undefined as void;
+  void send({
+    apply: () => {
+      putBack = takeRequests(new Set([member.username]));
+      countRequests(-1);
+    },
+    revert: () => {
+      putBack();
+      countRequests(1);
+    },
+    request: () => api(`/me/follow-requests/${member.username}/decline`, { method: 'POST' }),
   });
 }
 

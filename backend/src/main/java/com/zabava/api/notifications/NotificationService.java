@@ -52,22 +52,25 @@ public class NotificationService {
     private final LibraryStore library;
     private final ProfileService profiles;
     private final ExpoPushClient expo;
+    private final SocialNotifications social;
     private final Clock clock;
 
     public NotificationService(NotificationStore store, TitleStore titles, LibraryStore library,
-            ProfileService profiles, ExpoPushClient expo, Clock clock) {
+            ProfileService profiles, ExpoPushClient expo, SocialNotifications social, Clock clock) {
         this.store = store;
         this.titles = titles;
         this.library = library;
         this.profiles = profiles;
         this.expo = expo;
+        this.social = social;
         this.clock = clock;
     }
 
     /** Une passe complète (toutes les 15 min) ; renvoie le nombre de messages envoyés. */
     public int dispatch() {
         List<PushMessage> messages = new ArrayList<>();
-        for (Recipient recipient : store.recipients()) {
+        List<Recipient> recipients = store.recipients();
+        for (Recipient recipient : recipients) {
             try {
                 for (Planned planned : due(recipient.userId())) {
                     // Journal d'abord : un envoi concurrent ou un nouvel essai ne doublonne jamais.
@@ -77,6 +80,14 @@ public class NotificationService {
             } catch (RuntimeException e) {
                 log.warn("Notifications non calculées pour {}", recipient.userId(), e);
             }
+        }
+        try {
+            messages.addAll(social.dispatch(recipients, userId -> {
+                Profile profile = profiles.get(userId);
+                return new SocialNotifications.Settings(profile.username(), profile.notificationPrefs());
+            }));
+        } catch (RuntimeException e) {
+            log.warn("Notifications sociales non envoyées", e);
         }
         if (messages.isEmpty()) return 0;
         store.deleteTokens(expo.send(messages));

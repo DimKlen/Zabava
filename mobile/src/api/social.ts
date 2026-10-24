@@ -327,3 +327,35 @@ export function useTitleSocial(type: MediaType, tmdbId: number) {
     staleTime: 10 * MINUTE,
   });
 }
+
+// ─── Demandes et comptes bloqués ───────────────────────────────────────────
+
+export const followRequestsKey = ['followRequests'] as const;
+export const blocksKey = ['blocks'] as const;
+
+/** Mes demandes d'abonnement, plus récentes d'abord, par 50. */
+export function useFollowRequests() {
+  return useInfiniteQuery({
+    queryKey: followRequestsKey,
+    queryFn: ({ pageParam, signal }) =>
+      api<ApiMemberPage>('/me/follow-requests', { query: { cursor: pageParam }, signal }).then(
+        toMemberPage,
+      ),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (page) => page.nextCursor,
+    staleTime: MINUTE,
+  });
+}
+
+/** Comptes que j'ai bloqués, plus récents d'abord. */
+export function useBlocks(enabled = true) {
+  return useQuery({
+    queryKey: blocksKey,
+    queryFn: ({ signal }) =>
+      api<ApiMember[]>('/me/blocks', { signal }).then((items) =>
+        items.map(toMember).filter((m): m is Member => m !== null),
+      ),
+    enabled,
+    staleTime: 10 * MINUTE,
+  });
+}
