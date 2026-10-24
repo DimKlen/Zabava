@@ -14,6 +14,9 @@ const FEATURED = [
   'disney plus',
   'hbo max',
   'crave',
+  // Canada francophone : Radio-Canada et Vidéotron.
+  'icitoutv',
+  'club illico',
   'canal plus',
   'apple tv',
   'paramount plus',
@@ -26,6 +29,7 @@ const FEATURED = [
   'google play movies',
   'rakuten tv',
   'pluto tv',
+  'tubi tv',
 ];
 
 /** Une plateforme de la liste « Mes plateformes » du profil (ou déjà cochée). */
@@ -45,6 +49,9 @@ const ALIASES: Record<string, string> = {
   'apple tv store': 'apple tv',
   'apple tv plus': 'apple tv',
   max: 'hbo max',
+  'ici tou tv': 'icitoutv',
+  'ici tou.tv': 'icitoutv',
+  tubi: 'tubi tv',
   'canal vod': 'canal plus',
 };
 

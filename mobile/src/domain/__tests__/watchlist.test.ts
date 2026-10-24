@@ -1,4 +1,5 @@
 import {
+  filterByName,
   filmCountLabel,
   filmsInSegment,
   filterFilms,
@@ -111,5 +112,25 @@ describe('filmCountLabel', () => {
   it('accorde au singulier et au pluriel', () => {
     expect(filmCountLabel(1)).toBe("1 film · appui long pour plus d'options");
     expect(filmCountLabel(9)).toBe("9 films · appui long pour plus d'options");
+  });
+});
+
+describe('filterByName', () => {
+  const titles = [
+    { title: 'Le Diable, tout le temps' },
+    { title: 'Dune : Deuxième partie' },
+    { title: "L'Odyssée" },
+  ];
+  const names = (query: string) => filterByName(titles, query).map((t) => t.title);
+
+  it('début de mots, sans accents ni casse ni ponctuation', () => {
+    expect(names('diable temps')).toEqual(['Le Diable, tout le temps']);
+    expect(names('DEUXIEME')).toEqual(['Dune : Deuxième partie']);
+    expect(names('odyss')).toEqual(["L'Odyssée"]);
+  });
+
+  it('requête vide : tout ; aucun mot commun : rien', () => {
+    expect(names('  ')).toHaveLength(3);
+    expect(names('zzz')).toEqual([]);
   });
 });

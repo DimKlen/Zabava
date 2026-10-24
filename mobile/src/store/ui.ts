@@ -81,6 +81,11 @@ type UiState = {
   setFilmFilter: (filter: FilmFilter) => void;
   /** Même tri : inverse le sens ; autre tri : repart du sens par défaut. */
   setFilmSort: (sort: FilmSort) => void;
+  /** Filtre par nom de Ma liste (loupe de l'en-tête) ; null = champ fermé. */
+  watchlistQuery: string | null;
+  setWatchlistQuery: (query: string | null) => void;
+  /** Inverse le sens du tri courant (« Plus récents » ↔ « Plus anciens »). */
+  toggleFilmSortDirection: () => void;
   setAlertsOff: (titleId: string, off: boolean) => void;
   toggleSection: (section: SeriesSection) => void;
   setDiscoverTab: (tab: MediaType) => void;
@@ -107,6 +112,7 @@ export const useUiStore = create<UiState>()((set, get) => ({
   filmFilter: 'all',
   filmSort: 'added',
   filmSortReversed: false,
+  watchlistQuery: null,
   alertsOff: {},
   collapsedSections: { ...DEFAULT_COLLAPSED },
   discoverTab: 'movie',
@@ -150,6 +156,8 @@ export const useUiStore = create<UiState>()((set, get) => ({
       filmSort,
       filmSortReversed: s.filmSort === filmSort ? !s.filmSortReversed : false,
     })),
+  setWatchlistQuery: (watchlistQuery) => set({ watchlistQuery }),
+  toggleFilmSortDirection: () => set((s) => ({ filmSortReversed: !s.filmSortReversed })),
   setAlertsOff: (titleId, off) => set((s) => ({ alertsOff: { ...s.alertsOff, [titleId]: off } })),
   toggleSection: (section) =>
     set((s) => ({

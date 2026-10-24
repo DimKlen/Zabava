@@ -10,6 +10,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { Segmented } from '@/components/Segmented';
+import { Text } from '@/components/Text';
 import {
   FILM_FILTERS,
   FILM_SORTS,
@@ -20,6 +21,7 @@ import {
 } from '@/domain/watchlist';
 import { openActionSheet } from '@/store/ui';
 import { colors, spacing } from '@/theme/tokens';
+import { fonts } from '@/theme/typography';
 
 const SEGMENTS = [
   { key: 'towatch', label: 'À voir' },
@@ -33,6 +35,8 @@ type Props = {
   filter: FilmFilter;
   onSegmentChange: (segment: FilmSegment) => void;
   onSortChange: (sort: FilmSort) => void;
+  /** Toucher le sens (« Plus récents ») l'inverse, sans ouvrir la liste des critères. */
+  onToggleDirection: () => void;
   onFilterChange: (filter: FilmFilter) => void;
 };
 
@@ -44,6 +48,7 @@ export function FilmControls({
   filter,
   onSegmentChange,
   onSortChange,
+  onToggleDirection,
   onFilterChange,
 }: Props) {
   const towatch = segment === 'towatch';
@@ -65,17 +70,31 @@ export function FilmControls({
       <View style={styles.bar}>
         <Segmented options={SEGMENTS} value={segment} onChange={onSegmentChange} />
         {towatch ? (
-          <Button
-            variant="ghost"
-            height={36}
-            fontSize={13}
-            icon={reversed ? SortAscendingIcon : SortDescendingIcon}
-            iconSize={16}
-            color={colors.neutral300}
-            label={`${sortLabel} · ${directionLabel}`}
-            accessibilityLabel={`Trier par : ${sortLabel}, ${directionLabel}`}
-            onPress={openSort}
-          />
+          <View style={styles.sort}>
+            <Button
+              variant="ghost"
+              height={36}
+              fontSize={13}
+              icon={reversed ? SortAscendingIcon : SortDescendingIcon}
+              iconSize={16}
+              color={colors.neutral300}
+              label={sortLabel}
+              accessibilityLabel={`Trier par : ${sortLabel}`}
+              onPress={openSort}
+              style={styles.sortButton}
+            />
+            <Text style={styles.dot}>·</Text>
+            <Button
+              variant="ghost"
+              height={36}
+              fontSize={13}
+              color={colors.neutral300}
+              label={directionLabel}
+              accessibilityLabel={`${directionLabel}, toucher pour inverser`}
+              onPress={onToggleDirection}
+              style={styles.sortButton}
+            />
+          </View>
         ) : null}
       </View>
       {towatch ? (
@@ -105,6 +124,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 14,
+  },
+  sort: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sortButton: {
+    paddingHorizontal: 4,
+  },
+  dot: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 13 * 1.3,
+    color: colors.neutral300,
   },
   // La grille a déjà 16 de marge : la rangée défilante déborde jusqu'aux bords.
   chipsScroll: {

@@ -15,6 +15,7 @@ import { posterBadge } from '@/domain/badge';
 import {
   filmCountLabel,
   filmsInSegment,
+  filterByName,
   filterFilms,
   sortFilms,
   sortWatched,
@@ -48,6 +49,7 @@ export function FilmsTab() {
   const setFilmSegment = useUiStore((s) => s.setFilmSegment);
   const setFilmFilter = useUiStore((s) => s.setFilmFilter);
   const setFilmSort = useUiStore((s) => s.setFilmSort);
+  const toggleFilmSortDirection = useUiStore((s) => s.toggleFilmSortDirection);
   // Indicateur réservé au geste « tirer pour rafraîchir », pas aux rechargements
   // déclenchés après un ajout ou un retrait.
   const [refreshing, setRefreshing] = useState(false);
@@ -57,8 +59,9 @@ export function FilmsTab() {
     setRefreshing(false);
   };
 
+  const query = useUiStore((s) => s.watchlistQuery) ?? '';
   const now = new Date();
-  const inSegment = filmsInSegment(watchlist.data ?? [], filmSegment);
+  const inSegment = filterByName(filmsInSegment(watchlist.data ?? [], filmSegment), query);
   const films =
     filmSegment === 'towatch'
       ? sortFilms(
@@ -76,6 +79,7 @@ export function FilmsTab() {
       filter={filmFilter}
       onSegmentChange={setFilmSegment}
       onSortChange={setFilmSort}
+      onToggleDirection={toggleFilmSortDirection}
       onFilterChange={setFilmFilter}
     />
   );
@@ -100,7 +104,7 @@ export function FilmsTab() {
     );
   }
 
-  const empty = emptyState(filmSegment === 'watched', inSegment.length === 0, {
+  const empty = emptyState(filmSegment === 'watched', inSegment.length === 0, query.trim(), {
     discover: () => openDiscover('movie'),
     showAll: () => setFilmFilter('all'),
     showToWatch: () => setFilmSegment('towatch'),
@@ -151,7 +155,13 @@ export function FilmsTab() {
 
 type EmptyActions = { discover: () => void; showAll: () => void; showToWatch: () => void };
 
-function emptyState(watchedSegment: boolean, segmentEmpty: boolean, actions: EmptyActions) {
+function emptyState(
+  watchedSegment: boolean,
+  segmentEmpty: boolean,
+  query: string,
+  actions: EmptyActions,
+) {
+  if (query) return { title: 'Aucun titre ne correspond' };
   if (watchedSegment) {
     return {
       title: "Aucun film vu pour l'instant",

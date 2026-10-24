@@ -128,3 +128,26 @@ export function sortWatched<T extends LibraryMovie>(films: readonly T[]): T[] {
 export function filmCountLabel(count: number): string {
   return `${count} ${count > 1 ? 'films' : 'film'} · appui long pour plus d'options`;
 }
+
+/** Texte comparable : minuscules, sans accents ni ponctuation, espaces simples. */
+function comparable(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+}
+
+/**
+ * Filtre de Ma liste par nom : chaque mot tapé doit commencer un mot du titre
+ * (« dia temps » trouve « Le Diable, tout le temps »). Requête vide : tout.
+ */
+export function filterByName<T extends { title: string }>(items: readonly T[], query: string): T[] {
+  const words = comparable(query).split(' ').filter(Boolean);
+  if (words.length === 0) return [...items];
+  return items.filter((item) => {
+    const titleWords = comparable(item.title).split(' ');
+    return words.every((word) => titleWords.some((titleWord) => titleWord.startsWith(word)));
+  });
+}

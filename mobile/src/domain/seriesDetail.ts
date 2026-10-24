@@ -18,6 +18,9 @@ export function seriesMeta(year?: number, platform?: string, status?: string): s
   return [year, platform, status].filter((part) => part !== undefined && part !== '').join(' · ');
 }
 
+/** Studios affichés sur la fiche d'un animé : les 3 premiers de TMDB (les plus importants). */
+export const MAX_STUDIOS = 3;
+
 export function seriesCrew(
   creators: string[],
   networks: string[],
@@ -26,11 +29,14 @@ export function seriesCrew(
 ): InfoRow[] {
   return [
     ...personRow('Création', creators, creatorIds),
-    ...(studios.length > 0
-      ? [{ key: 'Studio', value: studios.map((s) => s.name).join(', '), studios }]
-      : []),
+    ...studioRow(studios.slice(0, MAX_STUDIOS)),
     ...rows([['Diffusion', networks.join(', ')]]),
   ];
+}
+
+function studioRow(studios: { id: number; name: string }[]): InfoRow[] {
+  if (studios.length === 0) return [];
+  return [{ key: 'Studio', value: studios.map((s) => s.name).join(', '), studios }];
 }
 
 /** « 4 saisons · 38 épisodes » (Spéciaux exclus). */

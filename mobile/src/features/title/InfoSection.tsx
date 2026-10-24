@@ -48,19 +48,21 @@ export function InfoRows({ rows }: { rows: InfoRow[] }) {
         <View key={row.key} style={styles.row}>
           <Text style={styles.key}>{row.key}</Text>
           {row.studios ? (
-            <View style={styles.people}>
-              {row.studios.map((studio) => (
-                <Pressable
-                  key={studio.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={studio.name}
-                  onPress={() => openStudio(studio)}
-                  style={styles.person}
-                >
-                  <Text style={styles.link}>{studio.name}</Text>
-                </Pressable>
+            // Un seul paragraphe, séparé par des virgules ; chaque studio ouvre sa page.
+            <Text style={styles.value}>
+              {row.studios.map((studio, index) => (
+                <Text key={studio.id}>
+                  {index > 0 ? ', ' : null}
+                  <Text
+                    accessibilityRole="link"
+                    onPress={() => openStudio(studio)}
+                    style={styles.link}
+                  >
+                    {studio.name}
+                  </Text>
+                </Text>
               ))}
-            </View>
+            </Text>
           ) : row.people ? (
             <View style={styles.people}>
               {row.people.map((person) => (

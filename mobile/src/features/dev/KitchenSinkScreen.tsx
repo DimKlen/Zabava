@@ -280,7 +280,6 @@ function Header({ insetTop }: { insetTop: number }) {
       <Section title="Section repliable" padded={false}>
         <SectionHeader
           title="À regarder"
-          count={3}
           open={sectionOpen}
           onToggle={() => setSectionOpen((o) => !o)}
         />
