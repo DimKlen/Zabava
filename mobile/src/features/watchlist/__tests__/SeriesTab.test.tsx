@@ -84,6 +84,8 @@ describe('SeriesTab', () => {
       'Abandonnées',
     ]) {
       expect(screen.getByText(title)).toBeTruthy();
+      // Pas de compteur à côté du titre de section.
+      expect(screen.getByLabelText(title)).toBeTruthy();
     }
     expect(screen.getAllByTestId('next-episode-card')).toHaveLength(3);
     expect(screen.getByText('Prochain épisode le 14 oct.')).toBeTruthy();

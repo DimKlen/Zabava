@@ -90,7 +90,7 @@ describe('FilmsTab', () => {
 
   it('le tri ouvre « Trier par » et applique le tri par titre', async () => {
     await renderTab();
-    await fireEvent.press(screen.getByText("Date d'ajout · Plus récents"));
+    await fireEvent.press(screen.getByText("Date d'ajout"));
     const sheet = useUiStore.getState().actionSheet;
     expect(sheet?.title).toBe('Trier par');
     expect(sheet?.options.map((option) => option.label)).toEqual([
@@ -106,10 +106,21 @@ describe('FilmsTab', () => {
   it('un second appui sur le tri actif inverse le sens', async () => {
     await renderTab();
     const before = posterTitles();
-    await fireEvent.press(screen.getByText("Date d'ajout · Plus récents"));
+    await fireEvent.press(screen.getByText("Date d'ajout"));
     await act(() => useUiStore.getState().actionSheet?.options[0]?.onPress());
-    expect(screen.getByText("Date d'ajout · Plus anciens")).toBeTruthy();
+    expect(screen.getByText('Plus anciens')).toBeTruthy();
     expect(posterTitles()).toEqual([...before].reverse());
+  });
+
+  it('toucher « Plus récents » passe en « Plus anciens » sans ouvrir la liste', async () => {
+    await renderTab();
+    const before = posterTitles();
+    await fireEvent.press(screen.getByText('Plus récents'));
+    expect(useUiStore.getState().actionSheet).toBeNull();
+    expect(screen.getByText('Plus anciens')).toBeTruthy();
+    expect(posterTitles()).toEqual([...before].reverse());
+    await fireEvent.press(screen.getByText('Plus anciens'));
+    expect(posterTitles()).toEqual(before);
   });
 
   it('segment Vus : ordre de visionnage, sans tri ni filtre', async () => {

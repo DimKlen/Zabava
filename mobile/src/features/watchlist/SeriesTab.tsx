@@ -19,6 +19,7 @@ import {
   type SeriesFilter,
   type SeriesGroup,
 } from '@/domain/seriesList';
+import { filterByName } from '@/domain/watchlist';
 import { openDiscover } from '@/lib/discover';
 import { useUiStore } from '@/store/ui';
 import { colors } from '@/theme/tokens';
@@ -53,6 +54,7 @@ export function SeriesTab({ type }: { type: 'tv' | 'anime' }) {
   const collapsed = useUiStore((s) => s.collapsedSections);
   const toggleSection = useUiStore((s) => s.toggleSection);
   const [filter, setFilter] = useState<SeriesFilter>('all');
+  const query = useUiStore((s) => s.watchlistQuery) ?? '';
   const myProviderIds = useProfile().data?.providerIds ?? [];
   const [refreshing, setRefreshing] = useState(false);
   const refresh = async () => {
@@ -74,7 +76,8 @@ export function SeriesTab({ type }: { type: 'tv' | 'anime' }) {
   }
 
   const now = new Date();
-  const groups = groupSeries(filterSeries(watchlist.data, filter, myProviderIds, now), now);
+  const named = filterByName(watchlist.data, query);
+  const groups = groupSeries(filterSeries(named, filter, myProviderIds, now), now);
   const hasCards = groups.some((group) => group.key === 'watch');
 
   // Section repliée : son en-tête seul. Carrousel « Pas encore commencées » : un seul élément.
@@ -127,7 +130,6 @@ export function SeriesTab({ type }: { type: 'tv' | 'anime' }) {
         <View style={styles.section}>
           <SectionHeader
             title={group.title}
-            count={group.entries.length}
             open={!collapsed[group.key]}
             onToggle={() => toggleSection(group.key)}
           />
@@ -142,11 +144,15 @@ export function SeriesTab({ type }: { type: 'tv' | 'anime' }) {
         />
       )}
       ListEmptyComponent={
-        <EmptyState
-          icon={TelevisionSimpleIcon}
-          title={EMPTY[type].title}
-          action={{ label: EMPTY[type].cta, onPress: () => openDiscover(type) }}
-        />
+        query.trim() ? (
+          <EmptyState icon={TelevisionSimpleIcon} title="Aucun titre ne correspond" />
+        ) : (
+          <EmptyState
+            icon={TelevisionSimpleIcon}
+            title={EMPTY[type].title}
+            action={{ label: EMPTY[type].cta, onPress: () => openDiscover(type) }}
+          />
+        )
       }
       initialNumToRender={8}
       maxToRenderPerBatch={8}
