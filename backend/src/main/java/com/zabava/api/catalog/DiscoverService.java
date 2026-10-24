@@ -35,6 +35,8 @@ public class DiscoverService {
 
     public static final int PAGE_SIZE = 20;
     private static final int MAX_PEOPLE_IN_ALL = 3;
+    /** En dessous de ce nombre de titres en page 1, on cherche aussi les titres proches. */
+    private static final int FUZZY_BELOW = 5;
     /** Séries diffusées cette semaine examinées pour « Nouvelles saisons » et « Saison en cours ». */
     private static final int SEASON_CANDIDATE_PAGES = 3;
     private static final int ANIME_TRENDING_PAGES = 5;
@@ -75,7 +77,7 @@ public class DiscoverService {
     // ─── Recherche ────────────────────────────────────────────────────────────
 
     public SearchResult search(String query, String type, int page, Prefs prefs) {
-        SearchResult tmdbResult = tmdbSearch(query, type, page, prefs);
+        SearchResult tmdbResult = withCloseMatches(tmdbSearch(query, type, page, prefs), query, type, prefs);
         if (!"all".equals(type) && !"person".equals(type)) return tmdbResult;
 
         // Personnes populaires dont le nom commence par la requête, avant celles de TMDB.
@@ -86,6 +88,37 @@ public class DiscoverService {
         // « Tout » : jusqu'à 3 personnes en premier, puis les titres (specs/docs/08 §8.1).
         if ("all".equals(type)) people = page == 1 ? people.stream().limit(MAX_PEOPLE_IN_ALL).toList() : List.of();
         return new SearchResult(people, tmdbResult.titles(), page, tmdbResult.totalPages());
+    }
+
+    /**
+     * Peu de titres en page 1 : probable faute de frappe. On ajoute, après les résultats de TMDB, les
+     * titres proches trouvés par les variantes de la requête ({@link FuzzySearch}).
+     */
+    private SearchResult withCloseMatches(SearchResult result, String query, String type, Prefs prefs) {
+        if (result.page() != 1 || "person".equals(type) || result.titles().size() >= FUZZY_BELOW) return result;
+        Set<String> seen = result.titles().stream().map(TitleLite::id).collect(Collectors.toSet());
+        Map<String, Double> scores = new LinkedHashMap<>();
+        Map<String, TitleLite> close = new LinkedHashMap<>();
+        for (List<TitleLite> titles : facts.parallel(FuzzySearch.variants(query),
+                variant -> tmdbSearch(variant, type, 1, prefs).titles())) {
+            for (TitleLite title : titles) {
+                double score = FuzzySearch.score(query, title);
+                if (score < FuzzySearch.MIN_SCORE || seen.contains(title.id())) continue;
+                scores.merge(title.id(), score, Math::max);
+                close.putIfAbsent(title.id(), title);
+            }
+        }
+        if (close.isEmpty()) return result;
+        // Le plus proche d'abord ; à égalité (au dixième près), le plus populaire.
+        List<TitleLite> extra = close.values().stream()
+                .sorted(Comparator.comparingDouble((TitleLite t) -> -Math.round(scores.get(t.id()) * 10) / 10.0)
+                        .thenComparing(Comparator.comparingDouble(
+                                (TitleLite t) -> t.popularity() == null ? 0 : t.popularity()).reversed()))
+                .limit(PAGE_SIZE)
+                .toList();
+        List<TitleLite> titles = new ArrayList<>(result.titles());
+        titles.addAll(extra);
+        return new SearchResult(result.people(), titles, 1, Math.max(1, result.totalPages()));
     }
 
     private SearchResult tmdbSearch(String query, String type, int page, Prefs prefs) {

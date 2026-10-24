@@ -4,6 +4,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
@@ -117,6 +118,62 @@ class SearchAndListsIT extends IntegrationTest {
                 """)));
         mvc.perform(as(user, MockMvcRequestBuilders.get("/api/v1/search?q=zen")))
                 .andExpect(jsonPath("$.people[*].id", contains(505710, 11, 12)));
+    }
+
+    // ─── Fautes de frappe ─────────────────────────────────────────────────────
+
+    @Test
+    void uneFauteDeFrappeTrouveQuandMemeLeTitre() throws Exception {
+        // TMDB exige chaque mot : « tous » au lieu de « tout » ne renvoie rien…
+        WIREMOCK.stubFor(get(urlPathEqualTo("/tmdb/search/movie")).willReturn(okJson("{\"results\": []}")));
+        // … mais sans ce mot, le film sort, avec un homonyme éloigné qui doit être écarté.
+        WIREMOCK.stubFor(get(urlPathEqualTo("/tmdb/search/movie"))
+                .withQueryParam("query", equalTo("le diable le temps"))
+                .willReturn(okJson("""
+                        {"page": 1, "total_pages": 1, "results": [
+                          {"id": 499932, "title": "Le Diable, tout le temps", "popularity": 9},
+                          {"id": 350, "title": "Le Diable s'habille en Prada", "popularity": 40}]}
+                        """)));
+
+        mvc.perform(as(user, MockMvcRequestBuilders.get("/api/v1/search?type=movie")
+                        .param("q", "le diable tous le temps")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.titles[*].id", contains("movie-499932")))
+                .andExpect(jsonPath("$.totalPages").value(1));
+        // Les pages suivantes ne relancent pas les variantes.
+        mvc.perform(as(user, MockMvcRequestBuilders.get("/api/v1/search?type=movie&page=2")
+                        .param("q", "le diable tous le temps")))
+                .andExpect(jsonPath("$.titles", hasSize(0)));
+    }
+
+    @Test
+    void uneVarianteEnEchecEstIgnoree() throws Exception {
+        WIREMOCK.stubFor(get(urlPathEqualTo("/tmdb/search/movie")).willReturn(okJson("{\"results\": []}")));
+        WIREMOCK.stubFor(get(urlPathEqualTo("/tmdb/search/movie"))
+                .withQueryParam("query", equalTo("diable tout"))
+                .willReturn(serverError()));
+        WIREMOCK.stubFor(get(urlPathEqualTo("/tmdb/search/movie"))
+                .withQueryParam("query", equalTo("le tout"))
+                .willReturn(okJson("""
+                        {"page": 1, "total_pages": 1, "results": [{"id": 499932, "title": "Le Diable, tout le temps"}]}
+                        """)));
+
+        mvc.perform(as(user, MockMvcRequestBuilders.get("/api/v1/search?type=movie").param("q", "le diable tout")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.titles[*].id", contains("movie-499932")));
+    }
+
+    @Test
+    void assezDeResultatsPasDeVariante() throws Exception {
+        WIREMOCK.stubFor(get(urlPathEqualTo("/tmdb/search/movie")).willReturn(okJson("""
+                {"page": 1, "total_pages": 3, "results": [
+                  {"id": 1, "title": "Dune A"}, {"id": 2, "title": "Dune B"}, {"id": 3, "title": "Dune C"},
+                  {"id": 4, "title": "Dune D"}, {"id": 5, "title": "Dune E"}]}
+                """)));
+
+        mvc.perform(as(user, MockMvcRequestBuilders.get("/api/v1/search?type=movie").param("q", "dune part")))
+                .andExpect(jsonPath("$.titles", hasSize(5)));
+        WIREMOCK.verify(1, getRequestedFor(urlPathEqualTo("/tmdb/search/movie")));
     }
 
     // ─── Badges ───────────────────────────────────────────────────────────────
