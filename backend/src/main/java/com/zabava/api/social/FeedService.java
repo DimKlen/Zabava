@@ -58,7 +58,7 @@ public class FeedService {
     // ─── Fil ──────────────────────────────────────────────────────────────────
 
     /**
-     * Activités des comptes que je suis (abonnement accepté), plus récentes d'abord, sans les
+     * Activités de mes amis, plus récentes d'abord, sans les
      * comptes bloqués dans un sens ou dans l'autre (auteur ou personne suivie).
      */
     public Page<Activity> feed(UUID me, String cursor, Integer limit) {
@@ -129,17 +129,12 @@ public class FeedService {
 
     // ─── Fiches ───────────────────────────────────────────────────────────────
 
-    /**
-     * « Tes abonnements » : mes abonnements (acceptés) qui ont ce titre, quel que soit son statut,
-     * dernière action d'abord. « Ils l'ont vu » : profils publics qui l'ont vu (film vu, série en
-     * cours ou terminée), hors moi, mes abonnements, mes demandes et les comptes bloqués, par titres
-     * en commun décroissants, 10 au plus.
-     */
+    /** Mes amis qui ont ce titre, quel que soit son statut, dernière action d'abord. */
     public TitleSocial titleSocial(UUID me, String type, int tmdbId) {
         MediaType mediaType = MediaType.parse(type);
         TitleRow title = titles.find(mediaType.tmdbType(), tmdbId).orElse(null);
-        if (title == null) return new TitleSocial(List.of(), List.of());
-        return new TitleSocial(following(me, title), saw(me, title));
+        if (title == null) return new TitleSocial(List.of());
+        return new TitleSocial(following(me, title));
     }
 
     private List<FollowingStatus> following(UUID me, TitleRow title) {
@@ -155,30 +150,6 @@ public class FeedService {
         return statuses(me, followees, title).stream()
                 .sorted(Comparator.comparing(FollowingStatus::date).reversed()
                         .thenComparing(status -> status.user().username()))
-                .toList();
-    }
-
-    /**
-     * Même forme que « Tes abonnements » : suivre quelqu'un depuis « Ils l'ont vu » le fait passer
-     * dans « Tes abonnements » tout de suite, avec son statut sur le titre.
-     */
-    private List<FollowingStatus> saw(UUID me, TitleRow title) {
-        List<UUID> candidates = db.sql("""
-                with seen as (%s)
-                select s.user_id from seen s join profiles p on p.id = s.user_id
-                where s.title_id = :title and s.user_id <> :me and not p.is_private and p.username is not null
-                  and not exists (select 1 from follows f where f.follower_id = :me and f.followee_id = s.user_id)
-                  and %s
-                """.formatted(SocialStore.seen("ut.title_id = :title"),
-                        SocialStore.notBlocked("s.user_id")))
-                .param("me", me)
-                .param("title", title.id())
-                .query(UUID.class)
-                .list();
-        return statuses(me, candidates, title).stream()
-                .sorted(Comparator.comparingInt((FollowingStatus status) -> status.user().commonCount()).reversed()
-                        .thenComparing(status -> status.user().username()))
-                .limit(SAW_MAX)
                 .toList();
     }
 

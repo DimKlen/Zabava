@@ -14,7 +14,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-/** Pseudos, recherche, listes d'un profil, titres en commun, blocs des fiches, profils visités. */
+/** Pseudos, recherche, listes d'un ami, titres en commun, blocs des fiches, profils visités. */
 class UserIT extends SocialTest {
 
     private UUID dim;
@@ -48,36 +48,27 @@ class UserIT extends SocialTest {
     }
 
     @Test
-    void changerDePseudoUneFoisTousLes30Jours() throws Exception {
+    void lePseudoEstDefinitifApresLInscription() throws Exception {
         UUID nouveau = createUser("nouveau@example.com");
-        // Premier choix (onboarding) : ne compte pas comme un changement.
         mvc.perform(json(nouveau, put("/api/v1/me/profile"),
-                        "{\"username\": \"eloise\", \"isPrivate\": true, \"onboardedAt\": \"" + NOW + "\"}"))
-                .andExpect(jsonPath("$.username").value("eloise"))
-                .andExpect(jsonPath("$.isPrivate").value(true))
-                .andExpect(jsonPath("$.usernameChangedAt").doesNotExist());
+                        "{\"username\": \"eloise\", \"onboardedAt\": \"" + NOW + "\"}"))
+                .andExpect(jsonPath("$.username").value("eloise"));
         mvc.perform(json(nouveau, put("/api/v1/me/profile"), "{\"username\": \"eloise.b\"}"))
-                .andExpect(jsonPath("$.username").value("eloise.b"))
-                .andExpect(jsonPath("$.usernameChangedAt").value("2026-10-11T12:00:00Z"));
-        mvc.perform(json(nouveau, put("/api/v1/me/profile"), "{\"username\": \"eloise.c\"}"))
-                .andExpect(status().isTooManyRequests())
-                .andExpect(jsonPath("$.error.code").value("username_change_too_soon"))
-                .andExpect(jsonPath("$.error.nextChangeAt").value("2026-11-10T12:00:00Z"));
-
-        // L'ancien pseudo reste réservé et son lien mène au nouveau profil.
-        mvc.perform(json(dim, put("/api/v1/me/profile"), "{\"username\": \"eloise\"}"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.error.code").value("username_taken"));
-        mvc.perform(as(dim, get("/api/v1/users/eloise"))).andExpect(jsonPath("$.username").value("eloise.b"));
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("username_locked"));
+        // Renvoyer le même pseudo ne change rien et ne refuse rien.
+        mvc.perform(json(nouveau, put("/api/v1/me/profile"), "{\"username\": \"eloise\"}"))
+                .andExpect(status().isOk());
+        mvc.perform(as(nouveau, get("/api/v1/me/profile"))).andExpect(jsonPath("$.username").value("eloise"));
     }
 
     @Test
     void pendantLOnboardingChangerDePseudoEstLibre() throws Exception {
         UUID nouveau = createUser("nouveau@example.com");
         mvc.perform(json(nouveau, put("/api/v1/me/profile"), "{\"username\": \"eloise\"}"));
-        // Retour à l'étape du pseudo : ni délai de 30 jours ni ancien pseudo réservé.
+        // Retour à l'étape du pseudo : l'ancien choix est aussitôt libre pour les autres.
         mvc.perform(json(nouveau, put("/api/v1/me/profile"), "{\"username\": \"eloise.b\"}"))
-                .andExpect(jsonPath("$.usernameChangedAt").doesNotExist());
+                .andExpect(jsonPath("$.username").value("eloise.b"));
         mvc.perform(json(nouveau, put("/api/v1/me/profile"), "{\"username\": \"eloise.c\"}"))
                 .andExpect(status().isOk());
         mvc.perform(as(dim, get("/api/v1/users/username-available?u=eloise"))).andExpect(jsonPath("$.available").value(true));
@@ -94,18 +85,13 @@ class UserIT extends SocialTest {
     }
 
     @Test
-    void nomAfficheEtPhoto() throws Exception {
-        mvc.perform(json(dim, put("/api/v1/me/profile"), "{\"displayName\": \"  Dimitri K.  \"}"))
-                .andExpect(jsonPath("$.displayName").value("Dimitri K."));
-        mvc.perform(json(dim, put("/api/v1/me/profile"), "{\"displayName\": \"   \"}")).andExpect(status().isBadRequest());
-        mvc.perform(json(dim, put("/api/v1/me/profile"), "{\"avatarUrl\": \"https://pistage.example.com/x.jpg\"}"))
-                .andExpect(status().isBadRequest());
-        String storage = WIREMOCK.baseUrl() + "/supabase/storage/v1/object/public/avatars/" + dim + ".jpg";
-        mvc.perform(json(dim, put("/api/v1/me/profile"), "{\"avatarUrl\": \"" + storage + "\"}"))
-                .andExpect(jsonPath("$.avatarUrl").value(storage));
-        // Vide : retour à la photo du compte (absente dans le JWT de test).
-        mvc.perform(json(dim, put("/api/v1/me/profile"), "{\"avatarUrl\": \"\"}"))
-                .andExpect(jsonPath("$.avatarUrl").doesNotExist());
+    void nomEtPhotoDuCompteNonModifiables() throws Exception {
+        db.sql("update profiles set avatar_url = 'https://oauth.example.com/dim.jpg' where id = :id").param("id", dim).update();
+        mvc.perform(json(dim, put("/api/v1/me/profile"),
+                        "{\"displayName\": \"Autre nom\", \"avatarUrl\": \"https://pistage.example.com/x.jpg\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.displayName").value("Dim"))
+                .andExpect(jsonPath("$.avatarUrl").value("https://oauth.example.com/dim.jpg"));
     }
 
     // ─── Recherche ────────────────────────────────────────────────────────────
@@ -126,12 +112,12 @@ class UserIT extends SocialTest {
     }
 
     @Test
-    void rechercheExactPuisSuivisParMesAbonnements() throws Exception {
+    void rechercheExactPuisAmisEnCommun() throws Exception {
         UUID max = member("max.dubois", "Max Dubois");
-        member("leandre", "Léandre Roy");
+        UUID leandre = member("leandre", "Léandre Roy");
         member("lea", "Léa Tremblay");
-        follow(dim, "max.dubois");
-        follow(max, "leandre");
+        befriend(dim, "dim.k", max, "max.dubois");
+        befriend(max, "max.dubois", leandre, "leandre");
         mvc.perform(as(dim, get("/api/v1/users/search?q=lea")))
                 .andExpect(jsonPath("$.items[*].username", contains("lea", "leandre", "lea.m")));
     }
@@ -139,7 +125,8 @@ class UserIT extends SocialTest {
     // ─── Listes d'un profil ───────────────────────────────────────────────────
 
     @Test
-    void listesDUnProfilAvecProgressionEtCoche() throws Exception {
+    void listesDUnAmiAvecProgressionEtCoche() throws Exception {
+        befriend(dim, "dim.k", lea, "lea.m");
         addTitle(lea, 603, "movie", "watched");
         addTitle(lea, 1399, "tv", "following");
         markEpisodes(lea, null, episodeId(1399, 1, 1));
@@ -167,6 +154,7 @@ class UserIT extends SocialTest {
 
     @Test
     void lesSeriesAbandonneesNeSontPasMontrees() throws Exception {
+        befriend(dim, "dim.k", lea, "lea.m");
         addTitle(lea, 1399, "tv", "abandoned");
         for (String s : new String[] {"in_progress", "finished", "towatch"}) {
             mvc.perform(as(dim, get("/api/v1/users/lea.m/titles?type=tv&status=" + s)))
@@ -176,6 +164,7 @@ class UserIT extends SocialTest {
 
     @Test
     void titresEnCommun() throws Exception {
+        befriend(dim, "dim.k", lea, "lea.m");
         addTitle(dim, 603, "movie", "watched");
         addTitle(lea, 603, "movie", "watched");
         addTitle(dim, 1399, "tv", "following");
@@ -193,39 +182,32 @@ class UserIT extends SocialTest {
     void blocsSociauxDUneFiche() throws Exception {
         UUID max = member("max.dubois", "Max Dubois");
         UUID sarah = member("sarah.l", "Sarah Lefebvre");
-        UUID camille = member("camille.r", "Camille Roy");
-        makePrivate(camille);
         addTitle(dim, 603, "movie", "towatch");
         addTitle(lea, 603, "movie", "watched");
         addTitle(max, 603, "movie", "towatch");
         addTitle(sarah, 603, "movie", "watched");
-        addTitle(camille, 603, "movie", "watched");
         db.sql("update user_titles set added_at = '2026-10-01T00:00:00Z' where user_id = :m").param("m", max).update();
-        follow(dim, "max.dubois");
+        befriend(dim, "dim.k", max, "max.dubois");
+        // Une demande envoyée ne suffit pas : Sarah n'est pas encore mon amie.
+        follow(dim, "sarah.l");
 
         mvc.perform(as(dim, get("/api/v1/titles/movie/603/social")))
                 .andExpect(jsonPath("$.following[*].user.username", contains("max.dubois")))
                 .andExpect(jsonPath("$.following[0].status").value("towatch"))
-                // Profils publics qui l'ont vu, hors mes abonnements et les profils privés.
-                .andExpect(jsonPath("$.saw[*].user.username", contains("lea.m", "sarah.l")))
-                // Avec leur statut, pour passer dans « Tes abonnements » dès qu'on les suit.
-                .andExpect(jsonPath("$.saw[0].status").value("watched"))
-                .andExpect(jsonPath("$.saw[0].date").value("2026-10-11T12:00:00Z"));
+                .andExpect(jsonPath("$.saw").doesNotExist());
 
-        follow(dim, "lea.m");
+        befriend(dim, "dim.k", lea, "lea.m");
         mvc.perform(as(dim, get("/api/v1/titles/movie/603/social")))
                 .andExpect(jsonPath("$.following[*].user.username", contains("lea.m", "max.dubois")))
                 .andExpect(jsonPath("$.following[0].status").value("watched"))
-                .andExpect(jsonPath("$.following[0].date").value("2026-10-11T12:00:00Z"))
-                .andExpect(jsonPath("$.saw[*].user.username", contains("sarah.l")));
+                .andExpect(jsonPath("$.following[0].date").value("2026-10-11T12:00:00Z"));
         mvc.perform(as(dim, get("/api/v1/titles/movie/999/social")))
-                .andExpect(jsonPath("$.following", hasSize(0)))
-                .andExpect(jsonPath("$.saw", hasSize(0)));
+                .andExpect(jsonPath("$.following", hasSize(0)));
     }
 
     @Test
-    void statutDUneSerieDansTesAbonnements() throws Exception {
-        follow(dim, "lea.m");
+    void statutDUneSerieChezMesAmis() throws Exception {
+        befriend(dim, "dim.k", lea, "lea.m");
         addTitle(lea, 1399, "tv", "following");
         markEpisodes(lea, null, episodeId(1399, 1, 1));
         mvc.perform(as(dim, get("/api/v1/titles/tv/1399/social")))

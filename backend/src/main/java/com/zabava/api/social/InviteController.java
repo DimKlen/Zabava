@@ -1,7 +1,6 @@
 package com.zabava.api.social;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,12 +35,10 @@ public class InviteController {
 
     private final SocialStore store;
     private final AppProperties.App app;
-    private final Clock clock;
 
-    public InviteController(SocialStore store, AppProperties props, Clock clock) {
+    public InviteController(SocialStore store, AppProperties props) {
         this.store = store;
         this.app = props.app();
-        this.clock = clock;
     }
 
     /** App Links Android : l'app signée par ces certificats ouvre les liens du domaine. */
@@ -60,7 +57,7 @@ public class InviteController {
     @GetMapping(value = "/u/{username}", produces = MediaType.TEXT_HTML_VALUE)
     public ResponseEntity<String> profilePage(@PathVariable String username) {
         Optional<ProfileRow> profile = USERNAME.matcher(username).matches()
-                ? store.findByUsername(username, clock.instant())
+                ? store.findByUsername(username)
                 : Optional.empty();
         if (profile.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

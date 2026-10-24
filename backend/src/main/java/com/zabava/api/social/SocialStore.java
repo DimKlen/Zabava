@@ -28,9 +28,7 @@ public class SocialStore {
             String username,
             String displayName,
             String avatarUrl,
-            boolean isPrivate,
-            int followersCount,
-            int followingCount) {}
+            int friendsCount) {}
 
     /**
      * Relation entre moi et un autre compte. {@code myStatus} : mon abonnement (null, pending,
@@ -47,8 +45,12 @@ public class SocialStore {
         }
     }
 
-    /** Membre et sa relation avec moi, sans les titres en commun. */
-    public record MemberRow(ProfileRow profile, String myStatus, boolean followsMe, boolean iBlocked) {}
+    /**
+     * Membre et sa relation avec moi, sans les titres en commun. {@code requestedMe} : il m'a envoyé
+     * une demande d'ami pas encore acceptée.
+     */
+    public record MemberRow(
+            ProfileRow profile, String myStatus, boolean followsMe, boolean requestedMe, boolean iBlocked) {}
 
     /** Titre de la liste d'un utilisateur. */
     public record ListRow(long titleId, String mediaType, String status, Instant addedAt, Instant watchedAt) {}
@@ -78,7 +80,7 @@ public class SocialStore {
     }
 
     private static final String PROFILE = """
-            select p.id, p.username, p.display_name, p.avatar_url, p.is_private, p.followers_count, p.following_count
+            select p.id, p.username, p.display_name, p.avatar_url, p.following_count
             from profiles p
             """;
 
@@ -90,20 +92,10 @@ public class SocialStore {
 
     // ─── Profils ──────────────────────────────────────────────────────────────
 
-    /** Par pseudo actuel, ou par ancien pseudo encore réservé (les liens redirigent pendant 30 jours). */
-    public Optional<ProfileRow> findByUsername(String raw, Instant now) {
-        String username = raw.toLowerCase(Locale.ROOT);
-        Optional<ProfileRow> current = db.sql(PROFILE + " where p.username = :u")
-                .param("u", username)
-                .query(SocialStore::profile)
-                .optional();
-        if (current.isPresent()) return current;
-        return db.sql(PROFILE + """
-                 join username_history h on h.user_id = p.id
-                where h.username = :u and h.released_at > :now and p.username is not null
-                """)
-                .param("u", username)
-                .param("now", Timestamp.from(now))
+    /** Par pseudo (sans tenir compte de la casse). */
+    public Optional<ProfileRow> findByUsername(String raw) {
+        return db.sql(PROFILE + " where p.username = :u")
+                .param("u", raw.toLowerCase(Locale.ROOT))
                 .query(SocialStore::profile)
                 .optional();
     }
@@ -136,9 +128,10 @@ public class SocialStore {
         if (ids.isEmpty()) return Map.of();
         Map<UUID, MemberRow> result = new HashMap<>();
         db.sql("""
-                select p.id, p.username, p.display_name, p.avatar_url, p.is_private, p.followers_count,
-                  p.following_count, mine.status as my_status,
+                select p.id, p.username, p.display_name, p.avatar_url, p.following_count,
+                  mine.status as my_status,
                   coalesce(theirs.status = 'accepted', false) as follows_me,
+                  coalesce(theirs.status = 'pending', false) as requested_me,
                   exists (select 1 from blocks b where b.blocker_id = :me and b.blocked_id = p.id) as i_blocked
                 from profiles p
                 left join follows mine on mine.follower_id = :me and mine.followee_id = p.id
@@ -148,7 +141,8 @@ public class SocialStore {
                 .param("me", me)
                 .param("ids", ids)
                 .query((rs, n) -> result.put(rs.getObject("id", UUID.class), new MemberRow(
-                        profile(rs, n), rs.getString("my_status"), rs.getBoolean("follows_me"), rs.getBoolean("i_blocked"))))
+                        profile(rs, n), rs.getString("my_status"), rs.getBoolean("follows_me"),
+                        rs.getBoolean("requested_me"), rs.getBoolean("i_blocked"))))
                 .list();
         return result;
     }
@@ -167,8 +161,8 @@ public class SocialStore {
                 join seen m on m.title_id = o.title_id and m.user_id = :me
                 join profiles p on p.id = o.user_id
                 where o.user_id <> :me
-                  and (not p.is_private or exists (select 1 from follows f
-                    where f.follower_id = :me and f.followee_id = o.user_id and f.status = 'accepted'))
+                  and exists (select 1 from follows f
+                    where f.follower_id = :me and f.followee_id = o.user_id and f.status = 'accepted')
                   and %s
                 group by o.user_id
                 """.formatted(notBlocked("o.user_id")))
@@ -284,8 +278,6 @@ public class SocialStore {
                 rs.getString("username"),
                 rs.getString("display_name"),
                 rs.getString("avatar_url"),
-                rs.getBoolean("is_private"),
-                rs.getInt("followers_count"),
                 rs.getInt("following_count"));
     }
 

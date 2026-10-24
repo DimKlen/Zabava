@@ -24,17 +24,18 @@ import com.zabava.api.social.dto.SocialDtos.MemberLite;
 import com.zabava.api.social.dto.SocialDtos.Page;
 
 /**
- * Suivre, se désabonner, retirer un abonné, demandes, blocage et signalement
- * (specs/social/docs/01 §4–6, docs/06 §4).
+ * Amis réciproques (retours du 2026-10-24, à la place du suivi de specs/social/docs/01 §4) : une
+ * demande est un abonnement {@code pending} ; acceptée, elle devient une amitié, soit deux
+ * abonnements {@code accepted}, un dans chaque sens. Aussi : blocage et signalement (docs/01 §5–6).
  */
 @Service
 public class FollowService {
 
-    /** Limite anti-abus : nouveaux abonnements (et demandes) par jour UTC. */
+    /** Limite anti-abus : demandes d'ami par jour UTC. */
     static final int DAILY_LIMIT = 200;
     /**
-     * Délai pendant lequel « Annuler » rétablit un abonnement retiré tel qu'il était (mêmes
-     * dates, accepté même si le profil est privé), sans compter dans la limite du jour.
+     * Délai pendant lequel « Annuler » rétablit une amitié retirée telle qu'elle était (mêmes
+     * dates), sans compter dans la limite du jour.
      */
     static final Duration RESTORE_WINDOW = Duration.ofMinutes(10);
     private static final int REQUESTS_PAGE = 50;
@@ -44,71 +45,57 @@ public class FollowService {
     private final JdbcClient db;
     private final SocialStore store;
     private final Members members;
-    private final ActivityService activities;
     private final SocialNotifications notifications;
     private final Clock clock;
 
-    public FollowService(JdbcClient db, SocialStore store, Members members, ActivityService activities,
-            SocialNotifications notifications, Clock clock) {
+    public FollowService(JdbcClient db, SocialStore store, Members members, SocialNotifications notifications,
+            Clock clock) {
         this.db = db;
         this.store = store;
         this.members = members;
-        this.activities = activities;
         this.notifications = notifications;
         this.clock = clock;
     }
 
-    // ─── Suivre ───────────────────────────────────────────────────────────────
+    // ─── Amis ────────────────────────────────────────────────────────────────
 
-    /** Idempotent : renvoie l'état actuel si j'ai déjà un abonnement ou une demande. */
+    /**
+     * « Ajouter en ami » : envoie une demande ; si l'autre m'en a déjà envoyé une, nous voilà amis.
+     * Idempotent : renvoie l'état actuel si nous sommes déjà amis ou si ma demande est envoyée.
+     */
     @Transactional
     public FollowResult follow(UUID me, String username) {
         ProfileRow target = other(me, username);
         Relation relation = store.relation(me, target.id());
         if (relation.blockedEitherWay()) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "blocked", "Impossible de suivre ce profil");
+            throw new ApiException(HttpStatus.FORBIDDEN, "blocked", "Impossible d'ajouter ce profil");
         }
         if (relation.myStatus() != null) return new FollowResult(relation.myStatus());
-
-        Instant now = clock.instant();
-        Optional<Removal> removal = takeRemoval(me, target.id(), me);
-        if (removal.isPresent() && removal.get().acceptedAt() != null) {
-            insert(me, target.id(), "accepted", removal.get().createdAt(), removal.get().acceptedAt());
+        if ("pending".equals(statusOf(target.id(), me))) {
+            acceptFrom(List.of(target.id()), me);
             return new FollowResult("accepted");
         }
+        // « Annuler » après « Retirer de mes amis » : l'amitié revient telle qu'elle était.
+        Optional<Removal> mine = takeRemoval(me, target.id(), me);
+        Optional<Removal> theirs = takeRemoval(target.id(), me, me);
+        if (mine.isPresent() && theirs.isPresent()) {
+            insert(me, target.id(), "accepted", mine.get().createdAt(), mine.get().acceptedAt());
+            insert(target.id(), me, "accepted", theirs.get().createdAt(), theirs.get().acceptedAt());
+            return new FollowResult("accepted");
+        }
+        Instant now = clock.instant();
         consumeQuota(me, now);
-        String status = target.isPrivate() ? "pending" : "accepted";
-        insert(me, target.id(), status, now, "accepted".equals(status) ? now : null);
-        // « Annuler » un désabonnement (ci-dessus) ne prévient personne ; un vrai abonnement, si.
-        if ("accepted".equals(status)) notifications.newFollower(me, target.id());
-        else notifications.followRequest(me, target.id());
-        return new FollowResult(status);
+        insert(me, target.id(), "pending", now, null);
+        notifications.followRequest(me, target.id());
+        return new FollowResult("pending");
     }
 
-    /** Se désabonner ou annuler une demande. */
+    /** Retirer de mes amis (les deux sens, sans prévenir), ou annuler ma demande. */
     @Transactional
     public void unfollow(UUID me, String username) {
         ProfileRow target = other(me, username);
         removeFollow(me, target.id(), me);
-    }
-
-    /** Retirer un de mes abonnés, sans le prévenir. */
-    @Transactional
-    public void removeFollower(UUID me, String username) {
-        ProfileRow follower = other(me, username);
-        String status = statusOf(follower.id(), me);
-        if ("accepted".equals(status)) removeFollow(follower.id(), me, me);
-    }
-
-    /** « Annuler » après avoir retiré un abonné : l'abonnement revient tel qu'il était. */
-    @Transactional
-    public void restoreFollower(UUID me, String username) {
-        ProfileRow follower = other(me, username);
-        if (store.relation(me, follower.id()).blockedEitherWay() || statusOf(follower.id(), me) != null) return;
-        Removal removal = takeRemoval(follower.id(), me, me)
-                .filter(r -> r.acceptedAt() != null)
-                .orElseThrow(() -> ApiException.notFound("Aucun abonné à rétablir"));
-        insert(follower.id(), me, "accepted", removal.createdAt(), removal.acceptedAt());
+        removeFollow(target.id(), me, me);
     }
 
     // ─── Demandes ─────────────────────────────────────────────────────────────
@@ -144,7 +131,7 @@ public class FollowService {
                 .update();
     }
 
-    /** Accepte toutes mes demandes (aussi au passage de privé à public). Renvoie leur nombre. */
+    /** Accepte toutes mes demandes d'ami. Renvoie leur nombre. */
     @Transactional
     public int acceptAll(UUID me) {
         List<UUID> pending = db.sql("select follower_id from follows where followee_id = :me and status = 'pending'")
@@ -157,7 +144,7 @@ public class FollowService {
 
     // ─── Blocage et signalement ───────────────────────────────────────────────
 
-    /** Retire les abonnements et demandes dans les deux sens, puis bloque. */
+    /** Retire l'amitié ou les demandes dans les deux sens, puis bloque. */
     @Transactional
     public void block(UUID me, String username) {
         ProfileRow target = other(me, username);
@@ -170,7 +157,6 @@ public class FollowService {
                     .param("a", pair[0])
                     .param("b", pair[1])
                     .update();
-            activities.unfollowed(pair[0], pair[1]);
         }
         db.sql("insert into blocks (blocker_id, blocked_id) values (:me, :b) on conflict do nothing")
                 .param("me", me)
@@ -178,7 +164,7 @@ public class FollowService {
                 .update();
     }
 
-    /** Débloquer ne rétablit pas les anciens abonnements. */
+    /** Débloquer ne rétablit pas l'ancienne amitié. */
     @Transactional
     public void unblock(UUID me, String username) {
         ProfileRow target = other(me, username);
@@ -213,7 +199,7 @@ public class FollowService {
 
     /** Profil d'un autre ; introuvable s'il n'existe pas ou s'il m'a bloqué. */
     ProfileRow other(UUID me, String username) {
-        ProfileRow target = store.findByUsername(username, clock.instant())
+        ProfileRow target = store.findByUsername(username)
                 .orElseThrow(() -> ApiException.notFound("Profil introuvable"));
         if (target.id().equals(me)) throw ApiException.badRequest("Action impossible sur son propre profil");
         return target;
@@ -229,7 +215,7 @@ public class FollowService {
     }
 
     private void insert(UUID follower, UUID followee, String status, Instant createdAt, Instant acceptedAt) {
-        int inserted = db.sql("""
+        db.sql("""
                 insert into follows (follower_id, followee_id, status, created_at, accepted_at)
                 values (:f, :e, :status, :created, :accepted)
                 on conflict do nothing
@@ -240,10 +226,9 @@ public class FollowService {
                 .param("created", Timestamp.from(createdAt))
                 .param("accepted", acceptedAt == null ? null : Timestamp.from(acceptedAt))
                 .update();
-        if (inserted > 0 && acceptedAt != null) activities.followed(follower, followee, acceptedAt);
     }
 
-    /** Supprime l'abonnement ; s'il était accepté, le garde de côté pour « Annuler ». */
+    /** Supprime l'abonnement ; s'il était accepté (amitié), le garde de côté pour « Annuler ». */
     private void removeFollow(UUID follower, UUID followee, UUID removedBy) {
         db.sql("""
                 with removed as (
@@ -260,14 +245,14 @@ public class FollowService {
                 .param("by", removedBy)
                 .param("now", Timestamp.from(clock.instant()))
                 .update();
-        activities.unfollowed(follower, followee);
     }
 
-    /** Abonnement retiré récemment par {@code removedBy}, consommé. */
+    /** Abonnement accepté retiré récemment par {@code removedBy}, consommé. */
     private Optional<Removal> takeRemoval(UUID follower, UUID followee, UUID removedBy) {
         return db.sql("""
                 delete from follow_removals
                 where follower_id = :f and followee_id = :e and removed_by = :by and removed_at > :since
+                  and accepted_at is not null
                 returning created_at, accepted_at
                 """)
                 .param("f", follower)
@@ -290,13 +275,21 @@ public class FollowService {
                 .param("me", me)
                 .param("ids", followers)
                 .update();
-        followers.forEach(follower -> {
-            activities.followed(follower, me, now);
-            notifications.followAccepted(follower, me);
-        });
+        // L'amitié dans l'autre sens ; ma propre demande en attente, s'il y en a une, est acceptée.
+        db.sql("""
+                insert into follows (follower_id, followee_id, status, created_at, accepted_at)
+                select :me, id, 'accepted', :now, :now from unnest(cast(:ids as uuid[])) as id
+                on conflict (follower_id, followee_id) do update set status = 'accepted', accepted_at = :now
+                where follows.status = 'pending'
+                """)
+                .param("me", me)
+                .param("now", Timestamp.from(now))
+                .param("ids", followers.toArray(UUID[]::new))
+                .update();
+        followers.forEach(follower -> notifications.followAccepted(follower, me));
     }
 
-    /** Compte un nouvel abonnement du jour ; au-delà de la limite, {@code 429}. */
+    /** Compte une nouvelle demande du jour ; au-delà de la limite, {@code 429}. */
     private void consumeQuota(UUID me, Instant now) {
         Integer count = db.sql("""
                 insert into follow_quota (user_id, day, count) values (:me, :day, 1)
@@ -312,7 +305,7 @@ public class FollowService {
                 .orElse(null);
         if (count == null) {
             throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "follow_limit",
-                    "Tu as atteint la limite de 200 abonnements par jour");
+                    "Tu as atteint la limite de 200 demandes d'ami par jour");
         }
     }
 

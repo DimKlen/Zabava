@@ -136,12 +136,12 @@ class ActivityIT extends SocialTest {
     }
 
     @Test
-    void leFilMontreSeulementLesComptesSuivis() throws Exception {
+    void leFilMontreSeulementMesAmis() throws Exception {
         UUID max = member("max.dubois", "Max Dubois");
         addTitle(lea, 603, "movie", "towatch");
         addTitle(max, 603, "movie", "watched");
         addTitle(dim, 603, "movie", "towatch");
-        follow(dim, "lea.m");
+        befriend(dim, "dim.k", lea, "lea.m");
 
         mvc.perform(as(dim, get("/api/v1/me/feed")))
                 .andExpect(jsonPath("$.items", hasSize(1)))
@@ -150,15 +150,16 @@ class ActivityIT extends SocialTest {
                 .andExpect(jsonPath("$.items[0].title.id").value("movie-603"))
                 .andExpect(jsonPath("$.items[0].inMyList").value(true));
 
-        // Max suit Léa : « Max suit maintenant Léa » apparaît une fois que je suis Max.
-        follow(max, "lea.m");
+        // Une demande envoyée à Max ne suffit pas ; une fois amis, son activité apparaît. Devenir
+        // amis n'est pas une activité.
         follow(dim, "max.dubois");
+        mvc.perform(as(dim, get("/api/v1/me/feed"))).andExpect(jsonPath("$.items", hasSize(1)));
+        befriend(max, "max.dubois", lea, "lea.m");
+        mvc.perform(as(max, post("/api/v1/me/follow-requests/dim.k/accept")));
         mvc.perform(as(dim, get("/api/v1/me/feed")))
-                .andExpect(jsonPath("$.items[*].type", contains("followed", "watched_movie", "added")));
-        mvc.perform(as(dim, get("/api/v1/me/feed")))
-                .andExpect(jsonPath("$.items[?(@.type == 'followed')].target.username").value("lea.m"));
+                .andExpect(jsonPath("$.items[*].type", contains("watched_movie", "added")));
 
-        // Bloquer Léa la retire du fil, y compris comme personne suivie.
+        // Bloquer Léa la retire du fil.
         mvc.perform(as(dim, post("/api/v1/users/lea.m/block")));
         mvc.perform(as(dim, get("/api/v1/me/feed")))
                 .andExpect(jsonPath("$.items[*].type", contains("watched_movie")));
@@ -166,7 +167,7 @@ class ActivityIT extends SocialTest {
 
     @Test
     void leFilEstPagineParCurseur() throws Exception {
-        follow(dim, "lea.m");
+        befriend(dim, "dim.k", lea, "lea.m");
         addTitle(lea, 1399, "tv", "following");
         addAiredEpisodes(1399, 2, 3);
         for (int n = 1; n <= 3; n++) {
@@ -188,8 +189,7 @@ class ActivityIT extends SocialTest {
     }
 
     @Test
-    void lesActivitesDUnProfilPriveNeSontLuesQueParSesAbonnes() throws Exception {
-        makePrivate(lea);
+    void lesActivitesNeSontLuesQueParLesAmis() throws Exception {
         addTitle(lea, 603, "movie", "towatch");
         follow(dim, "lea.m");
         mvc.perform(as(dim, get("/api/v1/me/feed"))).andExpect(jsonPath("$.items", hasSize(0)));

@@ -22,14 +22,13 @@ public final class MeDtos {
 
     private MeDtos() {}
 
-    /** {@code newFollower} et {@code followRequests} : notifications sociales (specs/social/docs/05 §5). */
+    /** {@code followRequests} : demandes d'ami reçues et acceptées (notifications sociales). */
     public record NotificationPrefs(
             boolean episodes,
             boolean cinema,
             boolean streaming,
             boolean seasons,
             int digestHour,
-            boolean newFollower,
             boolean followRequests) {}
 
     public record Profile(
@@ -46,15 +45,12 @@ public final class MeDtos {
             Instant onboardedAt,
             List<Integer> providerIds,
             String username,
-            Instant usernameChangedAt,
-            boolean isPrivate,
-            int followersCount,
-            int followingCount,
+            int friendsCount,
             int followRequestsCount) {}
 
     /**
-     * Champs absents = inchangés. Valeurs permises : specs/docs/05 et 09, specs/social/docs/04 §4.3.
-     * {@code avatarUrl} vide : retour à la photo du compte OAuth.
+     * Champs absents = inchangés. Valeurs permises : specs/docs/05 et 09. Le nom et la photo sont
+     * ceux du compte Google ou Apple ; le pseudo ne se choisit qu'à l'inscription.
      */
     public record ProfileUpdate(
             @Pattern(regexp = "CA|FR|BE|CH|US") String region,
@@ -62,10 +58,7 @@ public final class MeDtos {
             Boolean spoilerProtection,
             @Valid NotificationPrefsUpdate notificationPrefs,
             Instant onboardedAt,
-            String username,
-            @Size(max = 200) String displayName,
-            Boolean isPrivate,
-            @Size(max = 1000) String avatarUrl) {}
+            String username) {}
 
     public record NotificationPrefsUpdate(
             Boolean episodes,
@@ -73,7 +66,6 @@ public final class MeDtos {
             Boolean streaming,
             Boolean seasons,
             @Min(0) @Max(23) Integer digestHour,
-            Boolean newFollower,
             Boolean followRequests) {}
 
     public record ProvidersUpdate(@NotNull @Size(max = 50) List<Integer> providerIds) {}

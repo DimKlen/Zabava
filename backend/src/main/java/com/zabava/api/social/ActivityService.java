@@ -98,31 +98,6 @@ public class ActivityService {
         episodesByDay(userId, titleId, zone, now);
     }
 
-    /** Abonnement accepté : « suit maintenant ». {@code at} : date d'acceptation. */
-    public void followed(UUID follower, UUID followee, Instant at) {
-        ZoneId zone = zone(follower);
-        db.sql("""
-                insert into activities (user_id, type, target_user_id, activity_date, created_at, updated_at)
-                values (:user, 'followed', :target, :day, :at, :at)
-                on conflict (user_id, target_user_id) where type = 'followed'
-                do update set activity_date = excluded.activity_date, created_at = excluded.created_at,
-                  updated_at = excluded.updated_at
-                """)
-                .param("user", follower)
-                .param("target", followee)
-                .param("day", day(at, zone))
-                .param("at", Timestamp.from(at))
-                .update();
-    }
-
-    /** Abonnement supprimé (désabonnement, abonné retiré, blocage). */
-    public void unfollowed(UUID follower, UUID followee) {
-        db.sql("delete from activities where type = 'followed' and user_id = :user and target_user_id = :target")
-                .param("user", follower)
-                .param("target", followee)
-                .update();
-    }
-
     /** Rétention de 180 jours (tâche planifiée). */
     public int purge() {
         return db.sql("delete from activities where updated_at < :limit")

@@ -5,7 +5,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,14 +25,7 @@ import com.zabava.api.notifications.NotificationStore.Recipient;
 @Service
 public class SocialNotifications {
 
-    /** Plus de 3 nouveaux abonnés en moins d'une heure : une seule notification groupée. */
-    static final int GROUP_ABOVE = 3;
-    static final Duration GROUP_WINDOW = Duration.ofHours(1);
-    /** Une notification « nouvel abonné » par paire de comptes et par 24 h. */
-    static final Duration PAIR_WINDOW = Duration.ofHours(24);
-
     public enum Type {
-        NEW_FOLLOWER("new_follower"),
         FOLLOW_REQUEST("follow_request"),
         FOLLOW_ACCEPTED("follow_accepted");
 
@@ -50,7 +42,7 @@ public class SocialNotifications {
     }
 
     /**
-     * Évènement en attente. {@code valid} : l'abonnement (accepté) ou la demande existe toujours, et
+     * Évènement en attente. {@code valid} : la demande d'ami ou l'amitié existe toujours, et
      * l'auteur a un pseudo et n'est pas bloqué.
      */
     record Pending(long id, Type type, String username, String displayName, Instant createdAt, boolean valid) {}
@@ -68,29 +60,12 @@ public class SocialNotifications {
 
     // ─── Mise en file ─────────────────────────────────────────────────────────
 
-    /** {@code follower} suit {@code followee} (profil public) ; une fois par paire et par 24 h. */
-    public void newFollower(UUID follower, UUID followee) {
-        Instant now = clock.instant();
-        db.sql("""
-                insert into social_notifications (user_id, actor_id, type, created_at)
-                select :to, :from, 'new_follower', :now
-                where not exists (
-                  select 1 from social_notifications
-                  where user_id = :to and actor_id = :from and type = 'new_follower' and created_at > :since)
-                """)
-                .param("to", followee)
-                .param("from", follower)
-                .param("now", Timestamp.from(now))
-                .param("since", Timestamp.from(now.minus(PAIR_WINDOW)))
-                .update();
-    }
-
-    /** {@code follower} demande à suivre {@code followee} (profil privé). */
+    /** {@code follower} envoie une demande d'ami à {@code followee}. */
     public void followRequest(UUID follower, UUID followee) {
         enqueue(followee, follower, Type.FOLLOW_REQUEST);
     }
 
-    /** {@code followee} accepte la demande de {@code follower}. */
+    /** {@code followee} accepte la demande d'ami de {@code follower}. */
     public void followAccepted(UUID follower, UUID followee) {
         enqueue(follower, followee, Type.FOLLOW_ACCEPTED);
     }
@@ -108,7 +83,7 @@ public class SocialNotifications {
 
     /**
      * Messages des évènements en attente de chaque destinataire. Tous sont marqués envoyés, même
-     * ceux qui sont écartés (interrupteur coupé, abonnement retiré, aucun appareil) : ils ne
+     * ceux qui sont écartés (interrupteur coupé, demande retirée, aucun appareil) : ils ne
      * partiront jamais plus tard.
      */
     public List<PushMessage> dispatch(List<Recipient> recipients, Function<UUID, Settings> settings) {
@@ -118,7 +93,7 @@ public class SocialNotifications {
         for (UUID userId : pendingRecipients()) {
             List<Pending> pending = pending(userId);
             List<Pending> valid = pending.stream().filter(Pending::valid).toList();
-            for (Planned p : plan(valid, settings.apply(userId), clock.instant())) {
+            for (Planned p : plan(valid, settings.apply(userId))) {
                 for (String token : tokens.getOrDefault(userId, List.of())) {
                     messages.add(new PushMessage(token, p.body(), p.url()));
                 }
@@ -132,40 +107,17 @@ public class SocialNotifications {
     /** Ce qui compte pour un destinataire : son pseudo (liens) et ses interrupteurs. */
     public record Settings(String username, NotificationPrefs prefs) {}
 
-    /**
-     * Règles : interrupteurs (« Nouvel abonné » couvre aussi les regroupements, « Demandes
-     * d'abonnement » couvre aussi « Demande acceptée ») ; plus de 3 nouveaux abonnés en moins
-     * d'une heure → « Léa et 4 autres te suivent » (le plus récent nommé).
-     */
-    static List<Planned> plan(List<Pending> pending, Settings settings, Instant now) {
-        NotificationPrefs prefs = settings.prefs();
+    /** Interrupteur « Demandes d'amis » : demandes reçues et demandes acceptées. */
+    static List<Planned> plan(List<Pending> pending, Settings settings) {
         List<Planned> out = new ArrayList<>();
-        List<Pending> followers = pending.stream()
-                .filter(p -> p.type() == Type.NEW_FOLLOWER && prefs.newFollower())
-                .sorted(Comparator.comparing(Pending::createdAt).reversed())
-                .toList();
-        long recent = followers.stream().filter(p -> p.createdAt().isAfter(now.minus(GROUP_WINDOW))).count();
-        if (recent > GROUP_ABOVE && settings.username() != null) {
-            Pending latest = followers.getFirst();
-            out.add(new Planned(
-                    firstName(latest) + " et " + (followers.size() - 1) + " autres te suivent",
-                    "zabava://u/" + settings.username() + "/connections?tab=followers",
-                    followers.stream().map(Pending::id).toList()));
-        } else {
-            for (Pending p : followers) {
-                out.add(new Planned(firstName(p) + " (@" + p.username() + ") te suit", "zabava://u/" + p.username(),
+        if (!settings.prefs().followRequests()) return out;
+        for (Pending p : pending) {
+            if (p.type() == Type.FOLLOW_REQUEST) {
+                out.add(new Planned(firstName(p) + " (@" + p.username() + ") t'a envoyé une demande d'ami",
+                        "zabava://follow-requests", List.of(p.id())));
+            } else if (p.type() == Type.FOLLOW_ACCEPTED) {
+                out.add(new Planned(firstName(p) + " a accepté ta demande d'ami", "zabava://u/" + p.username(),
                         List.of(p.id())));
-            }
-        }
-        if (prefs.followRequests()) {
-            for (Pending p : pending) {
-                if (p.type() == Type.FOLLOW_REQUEST) {
-                    out.add(new Planned(firstName(p) + " (@" + p.username() + ") veut te suivre",
-                            "zabava://follow-requests", List.of(p.id())));
-                } else if (p.type() == Type.FOLLOW_ACCEPTED) {
-                    out.add(new Planned(firstName(p) + " a accepté ta demande", "zabava://u/" + p.username(),
-                            List.of(p.id())));
-                }
             }
         }
         return out;
@@ -191,8 +143,7 @@ public class SocialNotifications {
                     or (b.blocker_id = n.actor_id and b.blocked_id = :me))
                   and exists (
                     select 1 from follows f where
-                      (n.type = 'new_follower' and f.follower_id = n.actor_id and f.followee_id = :me and f.status = 'accepted')
-                      or (n.type = 'follow_request' and f.follower_id = n.actor_id and f.followee_id = :me and f.status = 'pending')
+                      (n.type = 'follow_request' and f.follower_id = n.actor_id and f.followee_id = :me and f.status = 'pending')
                       or (n.type = 'follow_accepted' and f.follower_id = :me and f.followee_id = n.actor_id and f.status = 'accepted'))
                   as valid
                 from social_notifications n join profiles p on p.id = n.actor_id
