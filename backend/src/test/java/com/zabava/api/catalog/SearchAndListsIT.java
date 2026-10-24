@@ -4,6 +4,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
@@ -143,6 +144,23 @@ class SearchAndListsIT extends IntegrationTest {
         mvc.perform(as(user, MockMvcRequestBuilders.get("/api/v1/search?type=movie&page=2")
                         .param("q", "le diable tous le temps")))
                 .andExpect(jsonPath("$.titles", hasSize(0)));
+    }
+
+    @Test
+    void uneVarianteEnEchecEstIgnoree() throws Exception {
+        WIREMOCK.stubFor(get(urlPathEqualTo("/tmdb/search/movie")).willReturn(okJson("{\"results\": []}")));
+        WIREMOCK.stubFor(get(urlPathEqualTo("/tmdb/search/movie"))
+                .withQueryParam("query", equalTo("diable tout"))
+                .willReturn(serverError()));
+        WIREMOCK.stubFor(get(urlPathEqualTo("/tmdb/search/movie"))
+                .withQueryParam("query", equalTo("le tout"))
+                .willReturn(okJson("""
+                        {"page": 1, "total_pages": 1, "results": [{"id": 499932, "title": "Le Diable, tout le temps"}]}
+                        """)));
+
+        mvc.perform(as(user, MockMvcRequestBuilders.get("/api/v1/search?type=movie").param("q", "le diable tout")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.titles[*].id", contains("movie-499932")));
     }
 
     @Test
