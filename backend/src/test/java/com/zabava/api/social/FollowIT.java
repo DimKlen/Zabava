@@ -226,6 +226,14 @@ class FollowIT extends SocialTest {
     }
 
     @Test
+    void annulerSansDemandeNeRefusePasLaSienne() throws Exception {
+        follow(lea, "dim.k");
+        mvc.perform(as(dim, delete("/api/v1/users/lea.m/follow"))).andExpect(status().isNoContent());
+        mvc.perform(as(dim, get("/api/v1/me/follow-requests")))
+                .andExpect(jsonPath("$.items[*].username", contains("lea.m")));
+    }
+
+    @Test
     void toutAccepter() throws Exception {
         follow(dim, "lea.m");
         follow(max, "lea.m");

@@ -95,7 +95,8 @@ public class FollowService {
     public void unfollow(UUID me, String username) {
         ProfileRow target = other(me, username);
         removeFollow(me, target.id(), me);
-        removeFollow(target.id(), me, me);
+        // Sa demande reçue, elle, reste : seule une amitié se retire dans les deux sens.
+        if ("accepted".equals(statusOf(target.id(), me))) removeFollow(target.id(), me, me);
     }
 
     // ─── Demandes ─────────────────────────────────────────────────────────────
