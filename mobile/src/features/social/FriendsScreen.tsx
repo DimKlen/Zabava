@@ -10,8 +10,8 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useProfile } from '@/api/profile';
-import { flatItems, useConnections, useUserProfile, type ConnectionsKind } from '@/api/social';
-import { removeFollower } from '@/api/socialActions';
+import { flatItems, useFriends, useUserProfile } from '@/api/social';
+import { removeFriend } from '@/api/socialActions';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
 import { LoadError, showsLoadError } from '@/components/LoadError';
@@ -20,36 +20,28 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { SkeletonMemberRow } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { TextField } from '@/components/TextField';
-import { UnderlineTabs } from '@/components/UnderlineTabs';
-import type { Member } from '@/domain/social/members';
+import { firstName, type Member } from '@/domain/social/members';
 import { stripAccents } from '@/domain/social/username';
 import { goBack } from '@/lib/navigation';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
-import { openActionSheet, openInviteSheet } from '@/store/ui';
+import { openActionSheet } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
 import { openUser } from './navigation';
 
-const TABS = [
-  { key: 'followers', label: 'Abonnés' },
-  { key: 'following', label: 'Abonnements' },
-] as const;
-
 /** Au-delà, le filtre passe par le serveur (`?q=`). */
 const LOCAL_FILTER_MAX = 200;
 const FILTER_DELAY_MS = 300;
 
-type Props = { username: string; initialTab: ConnectionsKind };
-
-/** Abonnés / Abonnements (specs/social/docs/04 §4.5). */
-export function ConnectionsScreen({ username, initialTab }: Props) {
+/** Amis d'un profil (specs/social/docs/04 §4.5, une seule liste depuis les amis réciproques). */
+export function FriendsScreen({ username }: { username: string }) {
   const insets = useSafeAreaInsets();
-  const [tab, setTab] = useState<ConnectionsKind>(initialTab);
   const [filter, setFilter] = useState('');
   const me = useProfile().data?.username;
   const owner = useUserProfile(username).data;
   const isMine = username === me;
+  const title = isMine ? 'Mes amis' : owner ? `Amis de ${firstName(owner.displayName)}` : '';
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -65,10 +57,9 @@ export function ConnectionsScreen({ username, initialTab }: Props) {
           onPress={goBack}
         />
         <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
-          {owner?.displayName ?? ''}
+          {title}
         </Text>
       </View>
-      <UnderlineTabs tabs={TABS} value={tab} onChange={setTab} />
       <View style={styles.filter}>
         <TextField
           height={40}
@@ -82,37 +73,28 @@ export function ConnectionsScreen({ username, initialTab }: Props) {
           accessibilityLabel="Filtrer"
         />
       </View>
-      <ConnectionsList
-        key={tab}
-        username={username}
-        kind={tab}
-        filter={filter}
-        me={me}
-        isMine={isMine}
-      />
+      <FriendsList username={username} filter={filter} me={me} isMine={isMine} />
     </View>
   );
 }
 
-function ConnectionsList({
+function FriendsList({
   username,
-  kind,
   filter,
   me,
   isMine,
 }: {
   username: string;
-  kind: ConnectionsKind;
   filter: string;
   me: string | undefined;
   isMine: boolean;
 }) {
-  const all = useConnections(username, kind, '');
+  const all = useFriends(username, '');
   const loaded = flatItems(all.data?.pages);
   // Tout est chargé et la liste est courte : filtre local, sans requête.
   const local = Boolean(all.data) && !all.hasNextPage && loaded.length <= LOCAL_FILTER_MAX;
   const query = stripAccents(useDebouncedValue(filter, FILTER_DELAY_MS).trim());
-  const remote = useConnections(username, kind, local ? '' : query);
+  const remote = useFriends(username, local ? '' : query);
   const source = local || !query ? all : remote;
 
   const needle = stripAccents(filter.trim());
@@ -132,7 +114,7 @@ function ConnectionsList({
     openActionSheet({
       title: `@${member.username}`,
       options: [
-        { label: 'Retirer cet abonné', icon: UserMinusIcon, onPress: () => removeFollower(member) },
+        { label: 'Retirer de mes amis', icon: UserMinusIcon, onPress: () => removeFriend(member) },
       ],
     });
 
@@ -147,45 +129,27 @@ function ConnectionsList({
           member={item}
           isMe={item.username === me}
           onPress={() => openUser(item.username)}
-          onMore={isMine && kind === 'followers' ? () => more(item) : undefined}
+          onMore={isMine ? () => more(item) : undefined}
         />
       )}
       onEndReached={() => {
         if (source.hasNextPage && !source.isFetchingNextPage) void source.fetchNextPage();
       }}
       onEndReachedThreshold={0.5}
-      ListEmptyComponent={<Empty kind={kind} isMine={isMine} filtered={Boolean(needle)} />}
+      ListEmptyComponent={<Empty isMine={isMine} filtered={Boolean(needle)} />}
     />
   );
 }
 
-/** États vides (specs/social/docs/04 §4.5). */
-function Empty({
-  kind,
-  isMine,
-  filtered,
-}: {
-  kind: ConnectionsKind;
-  isMine: boolean;
-  filtered: boolean;
-}) {
+function Empty({ isMine, filtered }: { isMine: boolean; filtered: boolean }) {
   if (filtered) return <EmptyState icon={UsersThreeIcon} title="Aucun membre ne correspond" />;
   if (!isMine) return <EmptyState icon={UsersThreeIcon} title="Rien ici pour l'instant" />;
-  if (kind === 'followers') {
-    return (
-      <EmptyState
-        icon={UsersThreeIcon}
-        title="Personne ne te suit encore"
-        action={{ label: 'Inviter', onPress: openInviteSheet }}
-      />
-    );
-  }
   return (
     <EmptyState
       icon={UsersThreeIcon}
-      title="Tu ne suis personne pour l'instant"
+      title="Tu n'as pas encore d'amis"
       action={{
-        label: 'Trouver des membres',
+        label: 'Ajouter un ami',
         onPress: () => router.push({ pathname: '/search', params: { tab: 'members' } }),
       }}
     />

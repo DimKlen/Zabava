@@ -1,6 +1,6 @@
 /**
- * Blocs sociaux d'une fiche : « Tes abonnements » et « Ils l'ont vu » — specs/social/docs/03
- * (FollowingCard, FollowingSheet, SawCard), docs/04 §4.9 (`A.titleSoc`, `A.socStatus`).
+ * Bloc social d'une fiche : « Tes amis » — specs/social/docs/03 (FollowingCard, FollowingSheet),
+ * docs/04 §4.9, sans « Ils l'ont vu » depuis les amis réciproques (seuls mes amis sont visibles).
  */
 import { formatShortDate } from '../format';
 import type { MediaType } from '../types';
@@ -19,11 +19,9 @@ export type TitleHolder = {
   date: string;
 };
 
-export type TitleSocial = { following: TitleHolder[]; saw: TitleHolder[] };
+export type TitleSocial = { following: TitleHolder[] };
 
-/** « Ils l'ont vu » n'apparaît qu'à partir de 3 profils. */
-export const MIN_SAW = 3;
-/** Avatars empilés de la carte « Tes abonnements ». */
+/** Avatars empilés de la carte « Tes amis ». */
 export const STACK_MAX = 5;
 
 /** 1 « Léa » · 2 « Léa et Max » · 3 « Léa, Max et Sarah » · ≥ 4 « Léa, Max et 5 autres ». */
@@ -62,24 +60,9 @@ export function followingStatus(holder: TitleHolder, type: MediaType): string {
   }
 }
 
-/**
- * Ce qu'affichent les blocs, d'après l'état de suivi en cache : quelqu'un que je viens de suivre
- * depuis « Ils l'ont vu » passe aussitôt dans « Tes abonnements » ; un abonnement que je viens de
- * quitter (ou bloquer) en sort.
- */
-export function titleSocialView(data: TitleSocial): {
-  following: TitleHolder[];
-  saw: TitleHolder[];
-  showsSaw: boolean;
-} {
-  const followed = data.saw.filter(({ user }) => user.followState === 'following');
-  const following = [
-    ...data.following.filter(({ user }) => user.followState === 'following'),
-    ...followed,
-  ].sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
-  // Bloqué ou demande en attente : ni dans l'un ni dans l'autre.
-  const saw = data.saw.filter(({ user }) => user.followState === 'none');
-  return { following, saw, showsSaw: saw.length >= MIN_SAW };
+/** Mes amis sur ce titre, d'après le cache : un ami que je viens de retirer (ou bloquer) en sort. */
+export function friendsOnTitle(data: TitleSocial): TitleHolder[] {
+  return data.following.filter(({ user }) => user.followState === 'following');
 }
 
 /** Prénoms de la carte, dans l'ordre de la liste. */

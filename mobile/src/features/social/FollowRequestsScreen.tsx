@@ -20,7 +20,7 @@ import { openUser } from './navigation';
 
 const SKELETONS = 3;
 
-/** Demandes d'abonnement (specs/social/docs/04 §4.12), plus récentes d'abord. */
+/** Demandes d'ami reçues (specs/social/docs/04 §4.12), plus récentes d'abord. */
 export function FollowRequestsScreen() {
   const insets = useSafeAreaInsets();
   const requests = useFollowRequests();
@@ -83,7 +83,7 @@ export function FollowRequestsScreen() {
           onPress={goBack}
         />
         <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
-          Demandes d&apos;abonnement
+          Demandes d&apos;amis
         </Text>
       </View>
       {body}

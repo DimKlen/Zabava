@@ -3,7 +3,7 @@ import {
   followingNames,
   followingStatus,
   followingText,
-  titleSocialView,
+  friendsOnTitle,
   type TitleHolder,
 } from '../followingSummary';
 import type { FollowState } from '../members';
@@ -17,7 +17,6 @@ const holder = (
   user: {
     username,
     displayName,
-    isPrivate: false,
     followState,
     followsMe: false,
     commonCount: 0,
@@ -28,7 +27,7 @@ const holder = (
 });
 
 describe('followingText', () => {
-  it('1, 2, 3 et 7 abonnements', () => {
+  it('1, 2, 3 et 7 amis', () => {
     expect(followingText(['Léa'])).toBe('Léa');
     expect(followingText(['Léa', 'Max'])).toBe('Léa et Max');
     expect(followingText(['Léa', 'Max', 'Sarah'])).toBe('Léa, Max et Sarah');
@@ -66,35 +65,13 @@ describe('followingStatus', () => {
   });
 });
 
-describe('titleSocialView', () => {
-  const saw = [
-    holder('sarah.l', 'Sarah', { date: '2026-10-20T10:00:00Z' }, 'none'),
-    holder('hugo.p', 'Hugo', {}, 'none'),
-    holder('nora.k', 'Nora', {}, 'none'),
-  ];
-
-  it('moins de 3 profils : « Ils l’ont vu » masqué', () => {
-    expect(titleSocialView({ following: [], saw }).showsSaw).toBe(true);
-    expect(titleSocialView({ following: [], saw: saw.slice(0, 2) }).showsSaw).toBe(false);
-  });
-
-  it('suivre depuis « Ils l’ont vu » fait passer la personne dans « Tes abonnements »', () => {
-    const lea = holder('lea.m', 'Léa', { date: '2026-10-01T10:00:00Z' });
-    const followed = saw.map((h, i) =>
-      i === 0 ? { ...h, user: { ...h.user, followState: 'following' as const } } : h,
-    );
-    const view = titleSocialView({ following: [lea], saw: followed });
-    // La plus récente d'abord.
-    expect(view.following.map((h) => h.user.username)).toEqual(['sarah.l', 'lea.m']);
-    expect(view.saw.map((h) => h.user.username)).toEqual(['hugo.p', 'nora.k']);
-    expect(view.showsSaw).toBe(false);
-  });
-
-  it('se désabonner ou bloquer retire la personne des deux blocs', () => {
-    const lea = holder('lea.m', 'Léa', {}, 'none');
-    const blocked = { ...saw[1]!, user: { ...saw[1]!.user, followState: 'blocked' as const } };
-    const view = titleSocialView({ following: [lea], saw: [saw[0]!, blocked, saw[2]!] });
-    expect(view.following).toEqual([]);
-    expect(view.saw.map((h) => h.user.username)).toEqual(['sarah.l', 'nora.k']);
+describe('friendsOnTitle', () => {
+  it('retirer un ami ou le bloquer le fait sortir de « Tes amis »', () => {
+    const lea = holder('lea.m', 'Léa');
+    const max = holder('max.dubois', 'Max', {}, 'none');
+    const hugo = holder('hugo.p', 'Hugo', {}, 'blocked');
+    expect(friendsOnTitle({ following: [lea, max, hugo] }).map((h) => h.user.username)).toEqual([
+      'lea.m',
+    ]);
   });
 });

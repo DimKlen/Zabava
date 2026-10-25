@@ -16,12 +16,9 @@ type Props = { activity: FeedActivity; sentence: ActivitySentence; now: Date };
 
 /** Carte du carrousel de Découvrir (specs/social/docs/03 › ActivityCard). */
 export function ActivityCard({ activity, sentence, now }: Props) {
-  const { actor, title, target } = activity;
-  // Toute la carte ouvre la cible : la fiche, ou le profil de la personne suivie.
-  const openTarget = () => {
-    if (title) openTitle(previewOf(title));
-    else if (target) openUser(target.username);
-  };
+  const { actor, title } = activity;
+  // Toute la carte ouvre la fiche du titre.
+  const openTarget = () => openTitle(previewOf(title));
   return (
     <Pressable
       accessibilityRole="button"

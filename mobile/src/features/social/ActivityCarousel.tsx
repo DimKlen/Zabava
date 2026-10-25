@@ -15,7 +15,7 @@ import { useActivitySentence } from './useActivitySentence';
 const CARDS = 6;
 
 /**
- * « Activité de tes abonnements » en haut de chaque onglet de Découvrir (specs/social/docs/04
+ * « Activité de tes amis » en haut de chaque onglet de Découvrir (specs/social/docs/04
  * §4.10). Masqué si le fil est vide, ou hors ligne sans cache.
  */
 export function ActivityCarousel() {
@@ -28,7 +28,7 @@ export function ActivityCarousel() {
     <View style={styles.section}>
       <View style={styles.header}>
         <Text accessibilityRole="header" style={styles.title}>
-          Activité de tes abonnements
+          Activité de tes amis
         </Text>
         <Button
           variant="ghost"

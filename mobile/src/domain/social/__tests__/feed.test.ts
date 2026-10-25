@@ -12,7 +12,6 @@ import type { Member } from '../members';
 const member = (username: string, displayName: string): Member => ({
   username,
   displayName,
-  isPrivate: false,
   followState: 'following',
   followsMe: false,
   commonCount: 0,
@@ -94,20 +93,6 @@ describe('activitySentence', () => {
         false,
       ),
     ).toMatchObject({ verb: 'a vu S01 E02 de', visual: 'poster' });
-  });
-
-  it('« suit maintenant » : prénom de la personne suivie, avatar', () => {
-    expect(
-      activitySentence(
-        activity({
-          type: 'followed',
-          title: undefined,
-          target: member('max.dubois', 'Max Dubois'),
-        }),
-        none,
-        false,
-      ),
-    ).toEqual({ name: 'Léa', verb: 'suit maintenant', title: 'Max', tail: '', visual: 'avatar' });
   });
 });
 

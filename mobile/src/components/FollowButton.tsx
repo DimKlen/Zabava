@@ -21,27 +21,26 @@ const ICONS = {
 type Props = {
   member: Member;
   /**
-   * `normal` : 44 de haut, pleine largeur (profils) ; `compact` : 32 (listes) ;
-   * `card` : 32, libellé seul, pleine largeur (cartes « Ils l'ont vu »).
+   * `normal` : 44 de haut, pleine largeur (profils) ; `compact` : 32 (listes).
    */
-  size: 'normal' | 'compact' | 'card';
+  size: 'normal' | 'compact';
 };
 
-/** Bouton de suivi : 5 états (specs/social/docs/03 › FollowButton). */
+/** Bouton d'ami : 5 états (specs/social/docs/03 › FollowButton, revu pour les amis). */
 export function FollowButton({ member, size }: Props) {
   const state = followButtonState(member);
-  const compact = size !== 'normal';
+  const compact = size === 'compact';
   return (
     <Button
       variant={state.variant}
       height={compact ? 32 : 44}
       label={state.label}
-      icon={size === 'card' ? undefined : ICONS[state.icon]}
+      icon={ICONS[state.icon]}
       iconSize={compact ? 15 : 18}
       fontSize={compact ? 13 : 14}
       accessibilityLabel={followButtonA11y(state.kind, member.username)}
       onPress={() => pressFollow(member)}
-      style={size === 'compact' ? styles.compact : styles.wide}
+      style={compact ? styles.compact : styles.wide}
     />
   );
 }

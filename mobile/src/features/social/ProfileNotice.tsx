@@ -7,7 +7,7 @@ import { fonts } from '@/theme/typography';
 
 type Props = { kind: 'locked' | 'blocked'; username: string };
 
-/** À la place des listes : profil privé non suivi, ou bloqué par moi (docs/03 › LockedState). */
+/** À la place des listes : pas encore amis, ou bloqué par moi (docs/03 › LockedState). */
 export function ProfileNotice({ kind, username }: Props) {
   const Icon = kind === 'locked' ? LockSimpleIcon : ProhibitIcon;
   return (
@@ -16,12 +16,12 @@ export function ProfileNotice({ kind, username }: Props) {
         <Icon size={26} color={colors.text} />
       </View>
       <Text style={styles.title}>
-        {kind === 'locked' ? 'Ce profil est privé' : 'Tu as bloqué ce profil'}
+        {kind === 'locked' ? 'Réservé à ses amis' : 'Tu as bloqué ce profil'}
       </Text>
       <Text style={styles.text}>
         {kind === 'locked'
-          ? `Suis @${username} pour voir ses listes`
-          : 'Débloque-le pour voir ses listes et vous suivre à nouveau.'}
+          ? `Ajoute @${username} en ami pour voir ses listes`
+          : 'Débloque-le pour voir ses listes et redevenir amis.'}
       </Text>
     </View>
   );

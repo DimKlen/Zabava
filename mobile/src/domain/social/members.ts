@@ -1,22 +1,24 @@
 /**
- * Membres, bouton de suivi, compteurs, visibilité — specs/social/docs/03 et docs/07 §1
- * (`A.fb`, `A.profVM` du prototype).
+ * Membres, bouton d'ami, compteur, visibilité — specs/social/docs/03 et docs/07 §1, revus pour les
+ * amis réciproques (retours du 2026-10-24) : une demande, acceptée, rend amis dans les deux sens.
  */
 
-/** Mon abonnement à ce membre, ou `blocked` si je l'ai bloqué. */
-export type FollowState = 'none' | 'pending' | 'following' | 'blocked';
+/**
+ * `following` : amis ; `pending` : ma demande envoyée ; `requested` : sa demande reçue ;
+ * `blocked` : je l'ai bloqué.
+ */
+export type FollowState = 'none' | 'pending' | 'requested' | 'following' | 'blocked';
 
 export type Member = {
   username: string;
   displayName: string;
   avatarUrl?: string;
-  isPrivate: boolean;
   followState: FollowState;
   followsMe: boolean;
   commonCount: number;
 };
 
-export type FollowButtonKind = 'follow' | 'followBack' | 'requested' | 'following' | 'blocked';
+export type FollowButtonKind = 'add' | 'accept' | 'requested' | 'friends' | 'blocked';
 
 export type FollowButtonState = {
   kind: FollowButtonKind;
@@ -25,42 +27,41 @@ export type FollowButtonState = {
   variant: 'primary' | 'secondary';
 };
 
-/** blocked › following › pending › followsMe › none (specs/social/docs/03 › FollowButton). */
-export function followButtonState({
-  followState,
-  followsMe,
-}: Pick<Member, 'followState' | 'followsMe'>): FollowButtonState {
+/** Bouton d'ami selon la relation (specs/social/docs/03 › FollowButton, revu pour les amis). */
+export function followButtonState({ followState }: Pick<Member, 'followState'>): FollowButtonState {
   switch (followState) {
     case 'blocked':
       return { kind: 'blocked', label: 'Débloquer', icon: 'prohibit', variant: 'secondary' };
     case 'following':
-      return { kind: 'following', label: 'Abonné', icon: 'check', variant: 'secondary' };
+      return { kind: 'friends', label: 'Amis', icon: 'check', variant: 'secondary' };
     case 'pending':
-      return { kind: 'requested', label: 'Demandé', icon: 'clock', variant: 'secondary' };
+      return { kind: 'requested', label: 'Demande envoyée', icon: 'clock', variant: 'secondary' };
+    case 'requested':
+      return { kind: 'accept', label: 'Accepter', icon: 'userPlus', variant: 'primary' };
     default:
-      return followsMe
-        ? { kind: 'followBack', label: 'Suivre en retour', icon: 'userPlus', variant: 'primary' }
-        : { kind: 'follow', label: 'Suivre', icon: 'userPlus', variant: 'primary' };
+      return { kind: 'add', label: 'Ajouter en ami', icon: 'userPlus', variant: 'primary' };
   }
 }
 
 /** Libellé d'accessibilité du bouton (specs/social/etapes/07 §2). */
 export function followButtonA11y(kind: FollowButtonKind, username: string): string {
   switch (kind) {
-    case 'following':
-      return `Abonné à @${username}, toucher pour se désabonner`;
+    case 'friends':
+      return `Ami avec @${username}, toucher pour le retirer`;
     case 'requested':
       return `Demande envoyée à @${username}, toucher pour l'annuler`;
+    case 'accept':
+      return `Accepter la demande de @${username}`;
     case 'blocked':
       return `Débloquer @${username}`;
     default:
-      return `Suivre @${username}`;
+      return `Ajouter @${username} en ami`;
   }
 }
 
-/** État après « Suivre » : demande si le profil est privé. */
-export function stateAfterFollow(member: Pick<Member, 'isPrivate'>): FollowState {
-  return member.isPrivate ? 'pending' : 'following';
+/** État après « Ajouter en ami » : amis s'il m'avait déjà envoyé une demande, sinon demande. */
+export function stateAfterFollow(member: Pick<Member, 'followState'>): FollowState {
+  return member.followState === 'requested' ? 'following' : 'pending';
 }
 
 /** Nombre abrégé à partir de 10 000 : « 12,4 k ». */
@@ -70,10 +71,9 @@ export function formatCount(n: number): string {
   return `${thousands.toLocaleString('fr-CA', { maximumFractionDigits: 1 })} k`;
 }
 
-/** Libellé d'un compteur : singulier pour 0 et 1. */
-export function counterLabel(n: number, kind: 'followers' | 'following'): string {
-  const singular = kind === 'followers' ? 'abonné' : 'abonnement';
-  return n > 1 ? `${singular}s` : singular;
+/** Libellé du compteur d'amis : singulier pour 0 et 1. */
+export function friendsLabel(n: number): string {
+  return n > 1 ? 'amis' : 'ami';
 }
 
 /** « 12 titres en commun » (« Aucun titre en commun » pour 0, « 1 titre en commun »). */
@@ -88,25 +88,18 @@ export function showsCommon(n: number): boolean {
   return n >= 3;
 }
 
-/** Ce que je vois d'un profil (`A.profVM`). */
-export function profileAccess(profile: {
+/** Ce que je vois d'un profil : ses listes et ses amis seulement si nous sommes amis. */
+export function profileAccess(profile: { isMe: boolean; followState: FollowState }): {
   isMe: boolean;
-  isPrivate: boolean;
-  followState: FollowState;
-}): { isMe: boolean; blocked: boolean; locked: boolean } {
+  blocked: boolean;
+  locked: boolean;
+} {
   const blocked = !profile.isMe && profile.followState === 'blocked';
-  const locked =
-    !profile.isMe && !blocked && profile.isPrivate && profile.followState !== 'following';
+  const locked = !profile.isMe && !blocked && profile.followState !== 'following';
   return { isMe: profile.isMe, blocked, locked };
 }
 
 /** Prénom = premier mot du nom affiché. */
 export function firstName(displayName: string): string {
   return displayName.trim().split(/\s+/)[0] ?? displayName;
-}
-
-/** Passage de privé à public : « 3 demandes acceptées automatiquement » ; null sans demande. */
-export function autoAcceptedLabel(n: number): string | null {
-  if (n <= 0) return null;
-  return n === 1 ? '1 demande acceptée automatiquement' : `${n} demandes acceptées automatiquement`;
 }

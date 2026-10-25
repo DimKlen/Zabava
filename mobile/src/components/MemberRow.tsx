@@ -13,9 +13,9 @@ import { Text } from './Text';
 type Props = {
   member: Member;
   onPress: () => void;
-  /** Ma propre ligne : jamais de bouton de suivi. */
+  /** Ma propre ligne : jamais de bouton d'ami. */
   isMe?: boolean;
-  /** Menu « … » (ma liste d'abonnés). */
+  /** Menu « … » (ma liste d'amis). */
   onMore?: () => void;
 };
 

@@ -26,15 +26,15 @@ const STACK_OVERLAP = -10;
 
 type Props = { holders: TitleHolder[]; type: MediaType; title: string };
 
-/** « Tes abonnements » d'une fiche, puis la sheet de leurs statuts (specs/social/docs/03). */
+/** « Tes amis » d'une fiche, puis la sheet de leurs statuts (specs/social/docs/03). */
 export function FollowingCard({ holders, type, title }: Props) {
   const [open, setOpen] = useState(false);
   const text = followingText(followingNames(holders));
   return (
-    <InfoSection title="Tes abonnements">
+    <InfoSection title="Tes amis">
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Tes abonnements : ${text}`}
+        accessibilityLabel={`Tes amis : ${text}`}
         onPress={() => setOpen(true)}
         style={({ pressed }) => [styles.card, pressed && styles.pressed]}
       >
@@ -76,7 +76,7 @@ function FollowingSheet({
       <SheetHandle />
       <View style={styles.header}>
         <Text accessibilityRole="header" style={styles.sheetTitle}>
-          Tes abonnements
+          Tes amis
         </Text>
         <Text style={styles.sheetSubtitle}>{title}</Text>
       </View>

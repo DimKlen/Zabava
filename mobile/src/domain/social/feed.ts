@@ -9,7 +9,7 @@ import type { MediaType } from '../types';
 import { firstName, type Member } from './members';
 
 export type ActivityType =
-  'added' | 'watched_movie' | 'started_show' | 'watched_episodes' | 'finished_show' | 'followed';
+  'added' | 'watched_movie' | 'started_show' | 'watched_episodes' | 'finished_show';
 
 export type ActivityTitle = {
   id: string;
@@ -33,24 +33,22 @@ export type FeedActivity = {
   createdAt: string;
   actor: Member;
   type: ActivityType;
-  title?: ActivityTitle;
+  title: ActivityTitle;
   episode?: ActivityEpisode;
   /** Épisodes vus ce jour-là (`watched_episodes`). */
   count: number;
-  /** Personne suivie (`followed`). */
-  target?: Member;
   /** Le titre est aussi dans ma liste : pastille de coche sur l'affiche. */
   inMyList: boolean;
 };
 
-/** Visuel de droite : affiche du titre, vignette de l'épisode ou avatar de la personne suivie. */
-export type ActivityVisual = 'poster' | 'still' | 'avatar';
+/** Visuel de droite : affiche du titre ou vignette de l'épisode. */
+export type ActivityVisual = 'poster' | 'still';
 
 /** Phrase « **Léa** a vu S03 E04 « Titre » de **The Bear** » découpée pour la mise en forme. */
 export type ActivitySentence = {
   name: string;
   verb: string;
-  /** En gras : titre de l'œuvre, ou prénom de la personne suivie. */
+  /** En gras : titre de l'œuvre. */
   title: string;
   tail: string;
   visual: ActivityVisual;
@@ -66,7 +64,7 @@ export function activitySentence(
   spoilerProtection: boolean,
 ): ActivitySentence {
   const name = firstName(activity.actor.displayName);
-  const title = activity.title?.title ?? '';
+  const title = activity.title.title;
   const base = { name, title, tail: '', visual: 'poster' as ActivityVisual };
   switch (activity.type) {
     case 'added':
@@ -77,13 +75,6 @@ export function activitySentence(
       return { ...base, verb: 'a commencé' };
     case 'finished_show':
       return { ...base, verb: 'a terminé' };
-    case 'followed':
-      return {
-        ...base,
-        verb: 'suit maintenant',
-        title: activity.target ? firstName(activity.target.displayName) : '',
-        visual: 'avatar',
-      };
     case 'watched_episodes':
       return { ...base, ...episodesVerb(activity, myWatchedEpisodes, spoilerProtection) };
   }

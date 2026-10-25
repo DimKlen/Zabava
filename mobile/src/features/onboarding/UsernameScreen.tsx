@@ -13,7 +13,6 @@ import { showToast } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
-import { PrivateProfileCard } from '../social/PrivateProfileCard';
 import { useUsernameCheck } from '../social/useUsernameCheck';
 import { OnboardingFooter } from './OnboardingFooter';
 import { StepIntro } from './StepIntro';
@@ -46,7 +45,6 @@ function UsernameForm({ profile, variant }: { profile: Profile } & Props) {
   const name = profile.displayName || profile.email || '';
   const [value, setValue] = useState(() => profile.username ?? proposeUsername(name));
   const [touched, setTouched] = useState(false);
-  const [isPrivate, setPrivate] = useState(profile.isPrivate ?? false);
   const check = useUsernameCheck(value, profile.username);
   const updateProfile = useUpdateProfile();
   const scroll = useRef<ScrollView>(null);
@@ -65,15 +63,21 @@ function UsernameForm({ profile, variant }: { profile: Profile } & Props) {
     setValue(next);
   };
 
+  const next = () =>
+    variant === 'onboarding'
+      ? router.push('/onboarding/region')
+      : router.replace('/(tabs)/watchlist');
+
   const submit = () => {
-    const changed = value !== profile.username;
+    // Retour sur l'étape sans rien changer : rien à enregistrer.
+    if (value === profile.username) {
+      next();
+      return;
+    }
     updateProfile.mutate(
-      { ...(changed ? { username: value } : {}), isPrivate },
+      { username: value },
       {
-        onSuccess: () =>
-          variant === 'onboarding'
-            ? router.push('/onboarding/region')
-            : router.replace('/(tabs)/watchlist'),
+        onSuccess: next,
         onError: (error) => {
           // Pris entre-temps (409) ou devenu invalide (422) : la vérification affiche pourquoi.
           if (error instanceof ApiError && (error.status === 409 || error.status === 422)) {
@@ -101,7 +105,7 @@ function UsernameForm({ profile, variant }: { profile: Profile } & Props) {
         </View>
         <StepIntro
           title="Choisis ton pseudo"
-          text="C'est ton identifiant sur Zabava. Tes amis te trouveront avec."
+          text="C'est ton identifiant sur Zabava. Tes amis te trouveront avec. Tu ne pourras plus le changer."
           textMarginBottom={20}
         />
         <View onLayout={(event) => (fieldY.current = event.nativeEvent.layout.y)}>
@@ -112,9 +116,6 @@ function UsernameForm({ profile, variant }: { profile: Profile } & Props) {
             suggestions={check.suggestions}
             onFocus={() => setTimeout(revealField, KEYBOARD_DELAY_MS)}
           />
-        </View>
-        <View style={styles.privacy}>
-          <PrivateProfileCard value={isPrivate} onChange={setPrivate} />
         </View>
       </ScrollView>
       <OnboardingFooter
@@ -145,8 +146,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 15 * 1.4,
     color: colors.neutral300,
-  },
-  privacy: {
-    marginTop: 24,
   },
 });

@@ -132,22 +132,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/me/followers/{username}/restore': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['restoreFollower'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/api/v1/me/follow-requests/{username}/decline': {
     parameters: {
       query?: never;
@@ -260,30 +244,14 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/users/{username}/following': {
+  '/api/v1/users/{username}/friends': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations['following'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/v1/users/{username}/followers': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['followers'];
+    get: operations['friends'];
     put?: never;
     post?: never;
     delete?: never;
@@ -612,22 +580,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/me/followers/{username}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post?: never;
-    delete: operations['removeFollower'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -642,7 +594,6 @@ export interface components {
       seasons?: boolean;
       /** Format: int32 */
       digestHour?: number;
-      newFollower?: boolean;
       followRequests?: boolean;
     };
     ProfileUpdate: {
@@ -653,9 +604,6 @@ export interface components {
       /** Format: date-time */
       onboardedAt?: string;
       username?: string;
-      displayName?: string;
-      isPrivate?: boolean;
-      avatarUrl?: string;
     };
     NotificationPrefs: {
       episodes?: boolean;
@@ -664,7 +612,6 @@ export interface components {
       seasons?: boolean;
       /** Format: int32 */
       digestHour?: number;
-      newFollower?: boolean;
       followRequests?: boolean;
     };
     Profile: {
@@ -682,13 +629,8 @@ export interface components {
       onboardedAt?: string;
       providerIds?: number[];
       username?: string;
-      /** Format: date-time */
-      usernameChangedAt?: string;
-      isPrivate?: boolean;
       /** Format: int32 */
-      followersCount?: number;
-      /** Format: int32 */
-      followingCount?: number;
+      friendsCount?: number;
       /** Format: int32 */
       followRequestsCount?: number;
     };
@@ -722,7 +664,6 @@ export interface components {
       username?: string;
       displayName?: string;
       avatarUrl?: string;
-      isPrivate?: boolean;
       followState?: string;
       followsMe?: boolean;
       /** Format: int32 */
@@ -752,15 +693,12 @@ export interface components {
       username?: string;
       displayName?: string;
       avatarUrl?: string;
-      isPrivate?: boolean;
       followState?: string;
       followsMe?: boolean;
       /** Format: int32 */
       commonCount?: number;
       /** Format: int32 */
-      followersCount?: number;
-      /** Format: int32 */
-      followingCount?: number;
+      friendsCount?: number;
       canSeeLists?: boolean;
       isMe?: boolean;
     };
@@ -926,7 +864,6 @@ export interface components {
     };
     TitleSocial: {
       following?: components['schemas']['FollowingStatus'][];
-      saw?: components['schemas']['FollowingStatus'][];
     };
     Episode: {
       /** Format: int64 */
@@ -1374,26 +1311,6 @@ export interface operations {
       };
     };
   };
-  restoreFollower: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        username: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description No Content */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
   decline: {
     parameters: {
       query?: never;
@@ -1592,32 +1509,7 @@ export interface operations {
       };
     };
   };
-  following: {
-    parameters: {
-      query?: {
-        q?: string;
-        cursor?: string;
-      };
-      header?: never;
-      path: {
-        username: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          '*/*': components['schemas']['PageMemberLite'];
-        };
-      };
-    };
-  };
-  followers: {
+  friends: {
     parameters: {
       query?: {
         q?: string;
@@ -2091,26 +1983,6 @@ export interface operations {
       query?: never;
       header?: never;
       path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description No Content */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  removeFollower: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        username: string;
-      };
       cookie?: never;
     };
     requestBody?: never;
