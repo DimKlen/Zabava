@@ -68,22 +68,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/users/{username}/block': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['block'];
-    delete: operations['unblock'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/api/v1/me/titles': {
     parameters: {
       query?: never;
@@ -508,22 +492,6 @@ export interface paths {
       cookie?: never;
     };
     get: operations['feed'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/v1/me/blocks': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['blocks'];
     put?: never;
     post?: never;
     delete?: never;
@@ -1162,46 +1130,6 @@ export interface operations {
     };
   };
   unfollow: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        username: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description No Content */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  block: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        username: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description No Content */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  unblock: {
     parameters: {
       query?: never;
       header?: never;
@@ -1889,26 +1817,6 @@ export interface operations {
         };
         content: {
           '*/*': components['schemas']['PageActivity'];
-        };
-      };
-    };
-  };
-  blocks: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          '*/*': components['schemas']['MemberLite'][];
         };
       };
     };

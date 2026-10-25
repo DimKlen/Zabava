@@ -120,7 +120,7 @@ public abstract class IntegrationTest {
         db.sql("""
                 truncate table auth.users, profiles, user_providers, push_tokens, titles, seasons, episodes,
                   release_dates, title_availability, providers, provider_regions, user_titles, user_episodes,
-                  notifications_log, follows, follow_removals, follow_quota, blocks, reports,
+                  notifications_log, follows, follow_removals, follow_quota, reports,
                   activities, recent_profile_visits restart identity cascade
                 """).update();
     }

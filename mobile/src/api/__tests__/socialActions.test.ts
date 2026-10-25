@@ -9,7 +9,6 @@ import { queryClient } from '../queryClient';
 import { followRequestsKey, friendsKey, userKey, type UserProfile } from '../social';
 import {
   acceptRequest,
-  blockMember,
   declineRequest,
   followMember,
   patchMemberEverywhere,
@@ -285,43 +284,5 @@ describe('actions simultanées', () => {
 
     expect(cachedLea()?.followState).toBe('none');
     expect(cachedMax()?.followState).toBe('pending');
-  });
-});
-
-describe('bloquer', () => {
-  it('dialogue de confirmation, puis blocage et toast', async () => {
-    const friend = { ...lea, followState: 'following' as const, followsMe: true };
-    queryClient.setQueryData(userKey('lea.m'), friend);
-    blockMember(friend);
-    const dialog = useUiStore.getState().dialog;
-    expect(dialog?.title).toBe('Bloquer @lea.m ?');
-    expect(dialog?.body).toBe(
-      "Vous ne serez plus amis et vous n'apparaîtrez plus dans vos recherches ni sur vos fiches. Léa ne sera pas prévenu·e.",
-    );
-    dialog?.actions.find((action) => action.label === 'Bloquer')?.onPress?.();
-    expect(cachedLea()).toMatchObject({
-      followState: 'blocked',
-      followsMe: false,
-      friendsCount: 4,
-    });
-    expect(myProfile()?.friendsCount).toBe(1);
-    await flush();
-    expect(mockApi).toHaveBeenCalledWith('/users/lea.m/block', { method: 'POST' });
-    expect(toast()?.message).toBe('@lea.m est bloqué·e');
-  });
-
-  it('bloquer quelqu’un dont j’ai reçu la demande la retire de mes demandes', () => {
-    const requested = { ...lea, followState: 'requested' as const };
-    queryClient.setQueryData(followRequestsKey, {
-      pages: [{ items: [requested] }],
-      pageParams: [undefined],
-    });
-    blockMember(requested);
-    useUiStore
-      .getState()
-      .dialog?.actions.find((action) => action.label === 'Bloquer')
-      ?.onPress?.();
-    expect(myRequests()?.pages[0]?.items).toEqual([]);
-    expect(myProfile()?.followRequestsCount).toBe(0);
   });
 });

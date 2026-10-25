@@ -43,7 +43,7 @@ public class SocialNotifications {
 
     /**
      * Évènement en attente. {@code valid} : la demande d'ami ou l'amitié existe toujours, et
-     * l'auteur a un pseudo et n'est pas bloqué.
+     * l'auteur a un pseudo.
      */
     record Pending(long id, Type type, String username, String displayName, Instant createdAt, boolean valid) {}
 
@@ -139,8 +139,6 @@ public class SocialNotifications {
         return db.sql("""
                 select n.id, n.type, p.username, p.display_name, n.created_at,
                   p.username is not null
-                  and not exists (select 1 from blocks b where (b.blocker_id = :me and b.blocked_id = n.actor_id)
-                    or (b.blocker_id = n.actor_id and b.blocked_id = :me))
                   and exists (
                     select 1 from follows f where
                       (n.type = 'follow_request' and f.follower_id = n.actor_id and f.followee_id = :me and f.status = 'pending')

@@ -179,13 +179,6 @@ describe('UserProfileScreen', () => {
     );
   });
 
-  it('profil bloqué par moi : « Débloquer » et pas de listes', async () => {
-    profile = { ...LEA, followState: 'blocked', followsMe: false, canSeeLists: false };
-    await renderScreen();
-    expect(screen.getByText('Débloquer')).toBeTruthy();
-    expect(screen.getByText('Tu as bloqué ce profil')).toBeTruthy();
-  });
-
   it('profil introuvable : message et « Retour »', async () => {
     const { ApiError } = jest.requireMock<{ ApiError: new (code: number) => Error }>('@/api/http');
     mockApi.mockImplementation(async () => {

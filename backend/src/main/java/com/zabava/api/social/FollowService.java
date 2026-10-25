@@ -26,7 +26,7 @@ import com.zabava.api.social.dto.SocialDtos.Page;
 /**
  * Amis réciproques (retours du 2026-10-24, à la place du suivi de specs/social/docs/01 §4) : une
  * demande est un abonnement {@code pending} ; acceptée, elle devient une amitié, soit deux
- * abonnements {@code accepted}, un dans chaque sens. Aussi : blocage et signalement (docs/01 §5–6).
+ * abonnements {@code accepted}, un dans chaque sens. Aussi : signalement (docs/01 §6).
  */
 @Service
 public class FollowService {
@@ -67,9 +67,6 @@ public class FollowService {
     public FollowResult follow(UUID me, String username) {
         ProfileRow target = other(me, username);
         Relation relation = store.relation(me, target.id());
-        if (relation.blockedEitherWay()) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "blocked", "Impossible d'ajouter ce profil");
-        }
         if (relation.myStatus() != null) return new FollowResult(relation.myStatus());
         if ("pending".equals(statusOf(target.id(), me))) {
             acceptFrom(List.of(target.id()), me);
@@ -105,10 +102,10 @@ public class FollowService {
         int offset = Cursors.offset(cursor);
         List<UUID> ids = db.sql("""
                 select f.follower_id from follows f
-                where f.followee_id = :me and f.status = 'pending' and %s
+                where f.followee_id = :me and f.status = 'pending'
                 order by f.created_at desc, f.follower_id
                 limit :limit offset :offset
-                """.formatted(SocialStore.notBlocked("f.follower_id")))
+                """)
                 .param("me", me)
                 .param("limit", REQUESTS_PAGE + 1)
                 .param("offset", offset)
@@ -143,45 +140,7 @@ public class FollowService {
         return pending.size();
     }
 
-    // ─── Blocage et signalement ───────────────────────────────────────────────
-
-    /** Retire l'amitié ou les demandes dans les deux sens, puis bloque. */
-    @Transactional
-    public void block(UUID me, String username) {
-        ProfileRow target = other(me, username);
-        for (UUID[] pair : new UUID[][] {{me, target.id()}, {target.id(), me}}) {
-            db.sql("delete from follows where follower_id = :a and followee_id = :b")
-                    .param("a", pair[0])
-                    .param("b", pair[1])
-                    .update();
-            db.sql("delete from follow_removals where follower_id = :a and followee_id = :b")
-                    .param("a", pair[0])
-                    .param("b", pair[1])
-                    .update();
-        }
-        db.sql("insert into blocks (blocker_id, blocked_id) values (:me, :b) on conflict do nothing")
-                .param("me", me)
-                .param("b", target.id())
-                .update();
-    }
-
-    /** Débloquer ne rétablit pas l'ancienne amitié. */
-    @Transactional
-    public void unblock(UUID me, String username) {
-        ProfileRow target = other(me, username);
-        db.sql("delete from blocks where blocker_id = :me and blocked_id = :b")
-                .param("me", me)
-                .param("b", target.id())
-                .update();
-    }
-
-    public List<MemberLite> blocks(UUID me) {
-        List<UUID> ids = db.sql("select blocked_id from blocks where blocker_id = :me order by created_at desc")
-                .param("me", me)
-                .query(UUID.class)
-                .list();
-        return members.of(me, ids);
-    }
+    // ─── Signalement ──────────────────────────────────────────────────────────
 
     /** Une fois par motif et par profil (signaler à nouveau ne fait rien). */
     public void report(UUID me, String username, String reason) {
@@ -198,7 +157,7 @@ public class FollowService {
 
     // ─── Détail ───────────────────────────────────────────────────────────────
 
-    /** Profil d'un autre ; introuvable s'il n'existe pas ou s'il m'a bloqué. */
+    /** Profil d'un autre ; introuvable s'il n'existe pas. */
     ProfileRow other(UUID me, String username) {
         ProfileRow target = store.findByUsername(username)
                 .orElseThrow(() -> ApiException.notFound("Profil introuvable"));

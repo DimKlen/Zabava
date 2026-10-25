@@ -120,24 +120,7 @@ public class SocialController {
         return new AcceptAllResult(follows.acceptAll(user.id()));
     }
 
-    // ─── Blocage et signalement ───────────────────────────────────────────────
-
-    @PostMapping("/users/{username}/block")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void block(CurrentUser user, @PathVariable String username) {
-        follows.block(user.id(), username);
-    }
-
-    @DeleteMapping("/users/{username}/block")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void unblock(CurrentUser user, @PathVariable String username) {
-        follows.unblock(user.id(), username);
-    }
-
-    @GetMapping("/me/blocks")
-    public List<MemberLite> blocks(CurrentUser user) {
-        return follows.blocks(user.id());
-    }
+    // ─── Signalement ──────────────────────────────────────────────────────────
 
     @PostMapping("/users/{username}/report")
     @ResponseStatus(HttpStatus.NO_CONTENT)

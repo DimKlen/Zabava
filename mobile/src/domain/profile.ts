@@ -1,5 +1,23 @@
 /** Profil — specs/docs/09 §9.2. */
+import { COUNTRY_NAMES } from './availability';
 import { isGroupSelected, type ProviderGroup } from './providers';
+
+/**
+ * Région du profil (le pays) : dates de sortie, classification, et pays affiché à côté d'une
+ * plateforme qui ne propose le titre qu'ailleurs (« Netflix (France) »). Valeurs du serveur.
+ */
+export const REGIONS: readonly { value: string; label: string }[] = [
+  'CA',
+  'FR',
+  'BE',
+  'CH',
+  'US',
+].map((code) => ({ value: code, label: COUNTRY_NAMES[code] ?? code }));
+
+/** « Canada » ; le code tel quel s'il est inconnu, rien sans région. */
+export function regionLabel(region: string | undefined): string {
+  return region ? (COUNTRY_NAMES[region] ?? region) : '';
+}
 
 export type NotificationSwitch = {
   key: 'episodes' | 'cinema' | 'streaming' | 'seasons' | 'followRequests';

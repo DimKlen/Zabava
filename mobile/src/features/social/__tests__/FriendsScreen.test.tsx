@@ -104,9 +104,10 @@ describe('FriendsScreen', () => {
     expect(screen.getByText('Aucun membre ne correspond')).toBeTruthy();
   });
 
-  it('mes amis : « … » → « Retirer de mes amis »', async () => {
+  it('mes amis : pas de « … » ; « Amis » → « Retirer de mes amis »', async () => {
     await show('dim.k');
-    await fireEvent.press(await screen.findByLabelText('Options pour @lea.m'));
+    await fireEvent.press(await screen.findByLabelText('Ami avec @lea.m, toucher pour le retirer'));
+    expect(screen.queryByLabelText('Options pour @lea.m')).toBeNull();
     const sheet = useUiStore.getState().actionSheet;
     expect(sheet?.options.map((option) => option.label)).toEqual(['Retirer de mes amis']);
     sheet?.options[0]?.onPress();

@@ -3,7 +3,7 @@ import { profileKey, type Profile } from '@/api/profile';
 import { queryClient } from '@/api/queryClient';
 import { showToast } from '@/store/ui';
 
-import { changeLanguage, toggleProvider, updatePreference } from '../profileActions';
+import { changeCatalogSetting, toggleProvider, updatePreference } from '../profileActions';
 
 jest.mock('@/api/http', () => ({ api: jest.fn() }));
 // Le client de l'app garde ses requêtes 7 jours : ses minuteurs empêcheraient Jest de finir.
@@ -53,13 +53,13 @@ beforeEach(() => {
   queryClient.setQueryData(profileKey, PROFILE);
 });
 
-describe('changeLanguage', () => {
+describe('changeCatalogSetting', () => {
   it('ne change la langue qu’après l’enregistrement, puis recharge le catalogue', async () => {
     const put = deferred<Profile>();
     mockApi.mockReturnValueOnce(put.promise);
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
 
-    const done = changeLanguage({ language: 'en-US' });
+    const done = changeCatalogSetting({ language: 'en-US' });
     await Promise.resolve();
     // Pendant l'envoi : toujours l'ancienne langue.
     expect(profile()?.language).toBe('fr-CA');
@@ -72,9 +72,19 @@ describe('changeLanguage', () => {
     invalidate.mockRestore();
   });
 
+  it('région : enregistrée, puis tout le catalogue rechargé (dates, badges, pays des offres)', async () => {
+    mockApi.mockResolvedValueOnce({ ...PROFILE, region: 'FR' });
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    await expect(changeCatalogSetting({ region: 'FR' })).resolves.toBe(true);
+    expect(mockApi).toHaveBeenCalledWith('/me/profile', { method: 'PUT', body: { region: 'FR' } });
+    expect(profile()?.region).toBe('FR');
+    expect(invalidate).toHaveBeenCalled();
+    invalidate.mockRestore();
+  });
+
   it('échec : profil inchangé et toast', async () => {
     mockApi.mockRejectedValueOnce(new Error('réseau'));
-    await expect(changeLanguage({ language: 'en-US' })).resolves.toBe(false);
+    await expect(changeCatalogSetting({ language: 'en-US' })).resolves.toBe(false);
     expect(profile()?.language).toBe('fr-CA');
     expect(showToast).toHaveBeenCalledWith("Impossible d'enregistrer, réessaie");
   });

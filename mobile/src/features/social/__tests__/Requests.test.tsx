@@ -10,7 +10,6 @@ import { queryClient } from '@/api/queryClient';
 import { watchlistKey } from '@/api/watchlist';
 import { useUiStore } from '@/store/ui';
 
-import { BlockedScreen } from '../BlockedScreen';
 import { FollowRequestsScreen } from '../FollowRequestsScreen';
 
 jest.mock('expo-router', () => ({
@@ -163,15 +162,5 @@ describe('FollowRequestsScreen', () => {
       pathname: '/u/[username]',
       params: { username: 'lea.m' },
     });
-  });
-});
-
-describe('BlockedScreen', () => {
-  it('« Débloquer » : la ligne disparaît, toast « @x.y est débloqué·e »', async () => {
-    await show(<BlockedScreen />);
-    await fireEvent.press(await screen.findByLabelText('Débloquer @x.y'));
-    expect(await screen.findByText('Aucun compte bloqué')).toBeTruthy();
-    expect(mockApi).toHaveBeenCalledWith('/users/x.y/block', { method: 'DELETE' });
-    await waitFor(() => expect(useUiStore.getState().toast?.message).toBe('@x.y est débloqué·e'));
   });
 });

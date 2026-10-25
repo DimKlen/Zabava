@@ -66,11 +66,10 @@ describe('followingStatus', () => {
 });
 
 describe('friendsOnTitle', () => {
-  it('retirer un ami ou le bloquer le fait sortir de « Tes amis »', () => {
+  it('retirer un ami le fait sortir de « Tes amis »', () => {
     const lea = holder('lea.m', 'Léa');
     const max = holder('max.dubois', 'Max', {}, 'none');
-    const hugo = holder('hugo.p', 'Hugo', {}, 'blocked');
-    expect(friendsOnTitle({ following: [lea, max, hugo] }).map((h) => h.user.username)).toEqual([
+    expect(friendsOnTitle({ following: [lea, max] }).map((h) => h.user.username)).toEqual([
       'lea.m',
     ]);
   });

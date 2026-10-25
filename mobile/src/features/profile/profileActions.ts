@@ -82,17 +82,20 @@ function stripUndefined<T extends object>(value: T): Partial<T> {
   return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as Partial<T>;
 }
 
-/** Tout sauf le profil : les titres et leurs descriptions dépendent de la langue. */
+/** Tout sauf le profil : titres, descriptions, dates et badges dépendent de la langue et de la région. */
 function invalidateCatalog(): void {
   void queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] !== 'profile' });
 }
 
 /**
- * Langue : pas d'affichage optimiste. Le serveur lit la langue du profil : une requête partie
- * avant l'enregistrement rangerait des données de l'ancienne langue sous la nouvelle. On attend
- * donc la réponse, puis on recharge tout le catalogue (titres et descriptions traduits).
+ * Langue ou région : pas d'affichage optimiste. Le serveur les lit dans le profil : une requête
+ * partie avant l'enregistrement rangerait des données de l'ancien réglage sous le nouveau. On
+ * attend donc la réponse, puis on recharge tout le catalogue (textes traduits, dates de sortie,
+ * classifications et badges de la région).
  */
-export async function changeLanguage(update: Pick<ProfileUpdate, 'language'>): Promise<boolean> {
+export async function changeCatalogSetting(
+  update: Pick<ProfileUpdate, 'language' | 'region'>,
+): Promise<boolean> {
   try {
     const profile = await enqueue(() =>
       api<Profile>('/me/profile', { method: 'PUT', body: update }),

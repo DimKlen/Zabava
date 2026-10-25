@@ -77,9 +77,7 @@ public class ProfileService {
                 select id, display_name, avatar_url, email, auth_provider, region, language,
                        spoiler_protection, notification_prefs::text as prefs, timezone, onboarded_at,
                        username, following_count,
-                       (select count(*) from follows f where f.followee_id = profiles.id and f.status = 'pending'
-                          and not exists (select 1 from blocks b where b.blocker_id = profiles.id
-                            and b.blocked_id = f.follower_id)) as requests
+                       (select count(*) from follows f where f.followee_id = profiles.id and f.status = 'pending') as requests
                 from profiles where id = :id
                 """)
                 .param("id", userId)

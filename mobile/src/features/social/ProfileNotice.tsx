@@ -1,28 +1,19 @@
-import { LockSimpleIcon, ProhibitIcon } from 'phosphor-react-native';
+import { LockSimpleIcon } from 'phosphor-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Text';
 import { colors, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
-type Props = { kind: 'locked' | 'blocked'; username: string };
-
-/** À la place des listes : pas encore amis, ou bloqué par moi (docs/03 › LockedState). */
-export function ProfileNotice({ kind, username }: Props) {
-  const Icon = kind === 'locked' ? LockSimpleIcon : ProhibitIcon;
+/** À la place des listes d'un membre qui n'est pas encore un ami (docs/03 › LockedState). */
+export function ProfileNotice({ username }: { username: string }) {
   return (
     <View style={styles.card}>
       <View style={styles.circle}>
-        <Icon size={26} color={colors.text} />
+        <LockSimpleIcon size={26} color={colors.text} />
       </View>
-      <Text style={styles.title}>
-        {kind === 'locked' ? 'Réservé à ses amis' : 'Tu as bloqué ce profil'}
-      </Text>
-      <Text style={styles.text}>
-        {kind === 'locked'
-          ? `Ajoute @${username} en ami pour voir ses listes`
-          : 'Débloque-le pour voir ses listes et redevenir amis.'}
-      </Text>
+      <Text style={styles.title}>Réservé à ses amis</Text>
+      <Text style={styles.text}>{`Ajoute @${username} en ami pour voir ses listes`}</Text>
     </View>
   );
 }

@@ -1,17 +1,11 @@
 import { router } from 'expo-router';
-import {
-  CaretLeftIcon,
-  MagnifyingGlassIcon,
-  UserMinusIcon,
-  UsersThreeIcon,
-} from 'phosphor-react-native';
+import { CaretLeftIcon, MagnifyingGlassIcon, UsersThreeIcon } from 'phosphor-react-native';
 import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useProfile } from '@/api/profile';
 import { flatItems, useFriends, useUserProfile } from '@/api/social';
-import { removeFriend } from '@/api/socialActions';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
 import { LoadError, showsLoadError } from '@/components/LoadError';
@@ -20,11 +14,10 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { SkeletonMemberRow } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { TextField } from '@/components/TextField';
-import { firstName, type Member } from '@/domain/social/members';
+import { firstName } from '@/domain/social/members';
 import { stripAccents } from '@/domain/social/username';
 import { goBack } from '@/lib/navigation';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
-import { openActionSheet } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
@@ -110,14 +103,6 @@ function FriendsList({
   if (showsLoadError(source)) return <LoadError onRetry={() => void source.refetch()} />;
   if (!source.data) return <RowsSkeleton />;
 
-  const more = (member: Member) =>
-    openActionSheet({
-      title: `@${member.username}`,
-      options: [
-        { label: 'Retirer de mes amis', icon: UserMinusIcon, onPress: () => removeFriend(member) },
-      ],
-    });
-
   return (
     <FlatList
       data={members}
@@ -129,7 +114,6 @@ function FriendsList({
           member={item}
           isMe={item.username === me}
           onPress={() => openUser(item.username)}
-          onMore={isMine ? () => more(item) : undefined}
         />
       )}
       onEndReached={() => {

@@ -85,7 +85,6 @@ export default function RootLayout() {
             <Stack.Screen name="u/[username]/friends" options={pushOptions} />
             <Stack.Screen name="feed" options={pushOptions} />
             <Stack.Screen name="follow-requests" options={pushOptions} />
-            <Stack.Screen name="settings/blocked" options={pushOptions} />
             <Stack.Screen
               name="scan"
               options={{ presentation: 'fullScreenModal', animation: 'fade' }}

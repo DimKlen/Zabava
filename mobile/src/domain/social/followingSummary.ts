@@ -60,7 +60,7 @@ export function followingStatus(holder: TitleHolder, type: MediaType): string {
   }
 }
 
-/** Mes amis sur ce titre, d'après le cache : un ami que je viens de retirer (ou bloquer) en sort. */
+/** Mes amis sur ce titre, d'après le cache : un ami que je viens de retirer en sort. */
 export function friendsOnTitle(data: TitleSocial): TitleHolder[] {
   return data.following.filter(({ user }) => user.followState === 'following');
 }

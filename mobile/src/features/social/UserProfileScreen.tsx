@@ -108,13 +108,12 @@ function OtherProfile({ profile }: { profile: UserProfile }) {
   const [tab, setTab] = useState<MediaType>('movie');
   const [segment, setSegment] = useState<ProfileSegment>(defaultSegment('movie'));
   const access = profileAccess(profile);
-  const visible = !access.locked && !access.blocked;
+  const visible = !access.locked;
   const titles = useUserTitles(profile.username, tab, segment, visible);
 
-  // Amis d'un profil qui n'est pas un ami, ou bloqué : pas de liste, un toast.
+  // Amis d'un membre qui n'est pas un ami : pas de liste, un toast.
   const friends = () => {
     if (access.locked) showToast('Réservé à ses amis');
-    else if (access.blocked) showToast('Tu as bloqué ce profil');
     else openFriends(profile.username);
   };
 
@@ -129,13 +128,7 @@ function OtherProfile({ profile }: { profile: UserProfile }) {
           </View>
         </>
       }
-      notice={
-        access.blocked ? (
-          <ProfileNotice kind="blocked" username={profile.username} />
-        ) : access.locked ? (
-          <ProfileNotice kind="locked" username={profile.username} />
-        ) : null
-      }
+      notice={access.locked ? <ProfileNotice username={profile.username} /> : null}
       tab={tab}
       segment={segment}
       onTab={(next) => {

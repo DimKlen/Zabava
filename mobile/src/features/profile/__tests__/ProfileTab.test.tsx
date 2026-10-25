@@ -77,11 +77,9 @@ const PROVIDERS = [
 ];
 
 let profile: Record<string, unknown> = PROFILE;
-let blocked: unknown[] = [];
 
 function route(path: string): unknown {
   if (path === '/me/profile') return profile;
-  if (path === '/me/blocks') return blocked;
   if (path === '/providers') return PROVIDERS;
   return undefined;
 }
@@ -109,7 +107,6 @@ function pressDialogAction(label: string) {
 beforeEach(async () => {
   jest.clearAllMocks();
   profile = PROFILE;
-  blocked = [];
   mockApi.mockImplementation(async (path) => route(path));
   await act(() => useUiStore.setState({ dialog: null, dialogOpen: false }));
 });
@@ -282,17 +279,30 @@ describe('onglet Profil', () => {
     );
   });
 
-  it('confidentialité : comptes bloqués « Aucun », puis leur nombre ; la ligne ouvre l’écran', async () => {
+  it('région : les 5 pays, la mienne cochée ; en choisir une l’enregistre', async () => {
+    profile = { ...PROFILE, region: 'CA' };
     await renderProfile();
-    expect(await screen.findByText('Aucun')).toBeTruthy();
-    // Plus de profil public ni privé : seuls les amis voient listes et activité.
+    expect(screen.getByText('Canada')).toBeTruthy();
+    expect(screen.queryByLabelText('Comptes bloqués')).toBeNull();
     expect(screen.queryByLabelText('Profil privé')).toBeNull();
-    await fireEvent.press(screen.getByLabelText('Comptes bloqués'));
-    expect(router.push).toHaveBeenCalledWith('/settings/blocked');
-
-    blocked = [{ username: 'x.y', displayName: 'X', followState: 'blocked' }];
-    await act(() => queryClient.invalidateQueries({ queryKey: ['blocks'] }));
-    expect(await screen.findByText('1')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Région'));
+    const sheet = useUiStore.getState().actionSheet;
+    expect(sheet?.title).toBe('Région');
+    expect(sheet?.options.map((option) => option.label)).toEqual([
+      'Canada',
+      'France',
+      'Belgique',
+      'Suisse',
+      'États-Unis',
+    ]);
+    expect(sheet?.options[0]?.icon).toBeDefined();
+    await act(() => sheet?.options[1]?.onPress());
+    await waitFor(() =>
+      expect(mockApi).toHaveBeenCalledWith('/me/profile', {
+        method: 'PUT',
+        body: { region: 'FR' },
+      }),
+    );
   });
 
   it('anti-spoiler : son propre groupe, « Protection anti-spoiler »', async () => {

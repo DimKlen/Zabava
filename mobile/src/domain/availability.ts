@@ -92,7 +92,7 @@ export function whereToWatch(
 }
 
 /** Noms des pays proposés par le serveur. */
-const COUNTRY_NAMES: Record<string, string> = {
+export const COUNTRY_NAMES: Record<string, string> = {
   CA: 'Canada',
   FR: 'France',
   BE: 'Belgique',

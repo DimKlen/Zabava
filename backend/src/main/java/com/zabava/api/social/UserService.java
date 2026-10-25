@@ -59,22 +59,20 @@ public class UserService {
         this.clock = clock;
     }
 
-    /** Ce que je vois d'un profil ; {@code 404} s'il n'existe pas ou s'il m'a bloqué. */
+    /** Ce que je vois d'un profil ; {@code 404} s'il n'existe pas. */
     record Viewed(ProfileRow profile, Relation relation, boolean isMe) {
 
-        /** Listes, amis et activité visibles : moi, ou un ami que je n'ai pas bloqué. */
+        /** Listes, amis et activité visibles : moi, ou un ami. */
         boolean canSeeLists() {
-            return isMe || (!relation.iBlocked() && relation.following());
+            return isMe || relation.following();
         }
     }
 
     Viewed view(UUID me, String username) {
         ProfileRow profile = store.findByUsername(username)
                 .orElseThrow(() -> ApiException.notFound("Profil introuvable"));
-        if (profile.id().equals(me)) return new Viewed(profile, new Relation(null, false, false, false), true);
-        Relation relation = store.relation(me, profile.id());
-        if (relation.blockedMe()) throw ApiException.notFound("Profil introuvable");
-        return new Viewed(profile, relation, false);
+        if (profile.id().equals(me)) return new Viewed(profile, new Relation(null, false), true);
+        return new Viewed(profile, store.relation(me, profile.id()), false);
     }
 
     public UserProfile profile(UUID me, String username) {
@@ -158,23 +156,19 @@ public class UserService {
 
     // ─── Amis ─────────────────────────────────────────────────────────────────
 
-    /**
-     * Amis d'un profil, plus récents d'abord. Les comptes bloqués avec moi (dans un sens ou dans
-     * l'autre) sont masqués. Filtre {@code q} sur le pseudo et le nom, sans accents ni casse.
-     */
+    /** Amis d'un profil, plus récents d'abord. Filtre {@code q} sur le pseudo et le nom, sans accents ni casse. */
     public Page<MemberLite> friends(UUID me, String username, String q, String cursor) {
         Viewed v = readable(me, username);
         String query = Usernames.searchQuery(q);
         int offset = Cursors.offset(cursor);
         List<UUID> ids = db.sql("""
                 select f.followee_id from follows f join profiles p on p.id = f.followee_id
-                where f.follower_id = :user and f.status = 'accepted' and p.username is not null and %s
+                where f.follower_id = :user and f.status = 'accepted' and p.username is not null
                   and (:q = '' or strpos(lower(extensions.unaccent(p.username || ' ' || coalesce(p.display_name, ''))), :q) > 0)
                 order by f.accepted_at desc, f.followee_id
                 limit :limit offset :offset
-                """.formatted(SocialStore.notBlocked("f.followee_id")))
+                """)
                 .param("user", v.profile().id())
-                .param("me", me)
                 .param("q", query)
                 .param("limit", CONNECTIONS_PAGE + 1)
                 .param("offset", offset)
@@ -195,7 +189,7 @@ public class UserService {
         int offset = Cursors.offset(cursor);
         List<UUID> ids = db.sql("""
                 select p.id from profiles p
-                where p.username is not null and p.id <> :me and %s
+                where p.username is not null and p.id <> :me
                   and (starts_with(p.username, :q)
                     or strpos(' ' || lower(extensions.unaccent(coalesce(p.display_name, ''))), ' ' || :q) > 0)
                 order by (p.username = :q) desc,
@@ -204,7 +198,7 @@ public class UserService {
                    where mine.follower_id = :me and mine.status = 'accepted') desc,
                   p.followers_count desc, p.username
                 limit :limit offset :offset
-                """.formatted(SocialStore.notBlocked("p.id")))
+                """)
                 .param("me", me)
                 .param("q", query)
                 .param("limit", SEARCH_PAGE + 1)
@@ -219,10 +213,10 @@ public class UserService {
     public List<MemberLite> recentProfiles(UUID me) {
         List<UUID> ids = db.sql("""
                 select v.visited_id from recent_profile_visits v
-                where v.user_id = :me and %s
+                where v.user_id = :me
                 order by v.visited_at desc
                 limit :limit
-                """.formatted(SocialStore.notBlocked("v.visited_id")))
+                """)
                 .param("me", me)
                 .param("limit", RECENT_PROFILES)
                 .query(UUID.class)
@@ -257,13 +251,11 @@ public class UserService {
 
     // ─── Détail ───────────────────────────────────────────────────────────────
 
-    /** Profil dont je peux voir les listes ; {@code 403} s'il est privé non suivi ou si je l'ai bloqué. */
+    /** Profil dont je peux voir les listes ; {@code 403} si ce n'est pas un ami. */
     private Viewed readable(UUID me, String username) {
         Viewed v = view(me, username);
         if (!v.canSeeLists()) {
-            throw v.relation().iBlocked()
-                    ? new ApiException(HttpStatus.FORBIDDEN, "blocked", "Tu as bloqué ce profil")
-                    : new ApiException(HttpStatus.FORBIDDEN, "private_profile", "Ce profil est privé");
+            throw new ApiException(HttpStatus.FORBIDDEN, "private_profile", "Réservé à ses amis");
         }
         return v;
     }
