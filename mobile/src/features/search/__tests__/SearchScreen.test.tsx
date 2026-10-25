@@ -220,17 +220,19 @@ describe('SearchScreen', () => {
     expect(useRecentSearches.getState().recents).toEqual([]);
   });
 
-  it('« Chercher un membre » remplit « @ » et ouvre Membres', async () => {
+  it('« Chercher un membre » ouvre Membres avec un champ vide', async () => {
     await renderSearch();
     await fireEvent.press(screen.getByText('Chercher un membre'));
-    expect(screen.getByLabelText('Rechercher').props.value).toBe('@');
+    expect(screen.getByLabelText('Rechercher').props.value).toBe('');
     expect(await screen.findByText('Tape au moins 2 caractères du pseudo ou du nom.')).toBeTruthy();
   });
 
   it('?tab=members ouvre directement sur Membres', async () => {
     mockParams = { tab: 'members' };
     await renderSearch();
-    expect(screen.getByLabelText('Rechercher').props.value).toBe('@');
+    expect(screen.getByLabelText('Rechercher').props.value).toBe('');
     expect(screen.getByText('Membres')).toBeTruthy();
+    await fireEvent.changeText(screen.getByLabelText('Rechercher'), 'le');
+    expect(await screen.findByText('Léa Martin')).toBeTruthy();
   });
 });

@@ -86,7 +86,10 @@ export function groupSeries<T extends LibrarySeries>(
   const groups = new Map<SeriesSection, SeriesEntry<T>[]>();
   for (const series of list) {
     const info = seriesInfo(series.episodes, now);
-    const key = seriesSection(series.userTitle, info, series.ended, now);
+    // TMDB marque « terminée » des animés dont la suite est annoncée plus tard : on ne les
+    // range jamais dans Terminées, pour ne rien promettre ni dans un sens ni dans l'autre.
+    const ended = series.type === 'anime' ? false : series.ended;
+    const key = seriesSection(series.userTitle, info, ended, now);
     if (key) groups.set(key, [...(groups.get(key) ?? []), { series, info }]);
   }
   return SERIES_SECTIONS.flatMap(({ key, title, kind }) => {
@@ -128,9 +131,7 @@ export function compactRowLabel(section: SeriesSection, info: SeriesInfo): strin
       return `Abandonnée · ${info.watchedCount}/${info.aired.length} vus`;
     default: {
       const date = info.upcoming ? episodeAirDate(info.upcoming) : undefined;
-      return date
-        ? `Prochain épisode le ${formatShortDate(date)}`
-        : `En attente de la saison ${info.lastAiredSeason + 1}`;
+      return date ? `Prochain épisode le ${formatShortDate(date)}` : 'En attente de la suite';
     }
   }
 }

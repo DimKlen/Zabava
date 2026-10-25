@@ -31,6 +31,13 @@ describe('filterSeries', () => {
 });
 
 describe('groupSeries', () => {
+  it('un animé « terminé » selon TMDB reste dans À jour, jamais dans Terminées', () => {
+    const andor = protoSeries('andor');
+    expect(groupSeries([andor], TODAY).map((g) => g.key)).toEqual(['done']);
+    const anime = { ...andor, type: 'anime' as const };
+    expect(groupSeries([anime], TODAY).map((g) => g.key)).toEqual(['uptodate']);
+  });
+
   it('Séries du prototype : sections dans l’ordre, vides absentes', () => {
     const groups = groupSeries(PROTOTYPE_TV, TODAY);
     expect(groups.map((g) => [g.title, g.entries.map((e) => e.series.title)])).toEqual([
@@ -106,9 +113,9 @@ describe('libellés', () => {
     expect(compactRowLabel('uptodate', info)).toBe('Prochain épisode le 14 oct.');
   });
 
-  it('À jour sans épisode daté : « En attente de la saison {n+1} »', () => {
+  it('À jour sans épisode daté : « En attente de la suite »', () => {
     const info = seriesInfo(protoSeries('severance').episodes, TODAY);
-    expect(compactRowLabel('uptodate', info)).toBe('En attente de la saison 3');
+    expect(compactRowLabel('uptodate', info)).toBe('En attente de la suite');
   });
 
   it('Terminées et Abandonnées', () => {
