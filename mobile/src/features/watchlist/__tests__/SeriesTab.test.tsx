@@ -89,7 +89,7 @@ describe('SeriesTab', () => {
     }
     expect(screen.getAllByTestId('next-episode-card')).toHaveLength(3);
     expect(screen.getByText('Prochain épisode le 14 oct.')).toBeTruthy();
-    expect(screen.getByText('En attente de la saison 3')).toBeTruthy();
+    expect(screen.getByText('En attente de la suite')).toBeTruthy();
     // Repliées par défaut.
     expect(screen.queryByText('Terminée · 24 épisodes vus')).toBeNull();
     expect(screen.queryByText('Abandonnée · 21/42 vus')).toBeNull();

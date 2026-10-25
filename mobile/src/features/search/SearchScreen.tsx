@@ -22,9 +22,6 @@ import { SearchResults } from './SearchResults';
 import { openTitle, previewOf } from '../title/openTitle';
 import { openPerson } from '../person/openPerson';
 
-/** Champ d'une recherche de membres (specs/social/docs/04 §4.6). */
-const MEMBER_PREFIX = '@';
-
 /**
  * Recherche (specs/docs/08 §8.1). Requête, onglet et filtres avancés vivent le temps
  * de l'écran ; seules les recherches récentes sont persistées. `?tab=members` ouvre
@@ -34,8 +31,8 @@ export function SearchScreen() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ tab?: string }>();
   const startOnMembers = params.tab === 'members';
-  const [text, setText] = useState(startOnMembers ? MEMBER_PREFIX : '');
-  const [query, setQuery] = useState(startOnMembers ? MEMBER_PREFIX : '');
+  const [text, setText] = useState('');
+  const [query, setQuery] = useState('');
   const [tab, setTab] = useState<SearchTab>(startOnMembers ? 'members' : 'all');
   const [filters, setFilters] = useState<AdvancedFilters>(() => defaultFilters(new Date()));
   const [appliedFilters, setAppliedFilters] = useState<AdvancedFilters | null>(null);
@@ -66,11 +63,11 @@ export function SearchScreen() {
     if (tab !== 'members') addRecent(text);
   };
 
-  /** « Chercher un membre » : le champ vaut « @ » et l'onglet Membres est actif. */
+  /** « Chercher un membre » : champ vide, onglet Membres actif (pas de « @ » à taper). */
   const searchMembers = () => {
     clearTimeout(debounce.current);
-    setText(MEMBER_PREFIX);
-    setQuery(MEMBER_PREFIX);
+    setText('');
+    setQuery('');
     setTab('members');
     field.current?.focus();
   };
@@ -104,7 +101,7 @@ export function SearchScreen() {
         onExit={() => setAppliedFilters(null)}
       />
     );
-  } else if (!text.trim()) {
+  } else if (!text.trim() && tab !== 'members') {
     body = (
       <SearchIdle
         onSearchMembers={searchMembers}
