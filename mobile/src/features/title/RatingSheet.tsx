@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { setMovieReview, setMovieWatched } from '@/api/libraryActions';
 import { BottomSheet, SheetHandle } from '@/components/BottomSheet';
@@ -7,6 +7,7 @@ import { Button } from '@/components/Button';
 import { StarRating } from '@/components/StarRating';
 import { Text } from '@/components/Text';
 import { TextField } from '@/components/TextField';
+import { useKeyboardHeight } from '@/lib/useKeyboardHeight';
 import { closeRatingSheet, useUiStore, type RatingSheetState } from '@/store/ui';
 import { colors, durations } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
@@ -27,6 +28,7 @@ function RatingSheet({ sheet, open }: { sheet: RatingSheetState; open: boolean }
   const [comment, setComment] = useState(sheet.comment ?? '');
   const [done, setDone] = useState(false);
   const watch = sheet.mode === 'watch';
+  const keyboard = useKeyboardHeight();
 
   // Une seule fois par ouverture : « Enregistrer », « Passer », ou fermeture de la sheet.
   const finish = (review?: { rating?: number; comment?: string }) => {
@@ -44,7 +46,7 @@ function RatingSheet({ sheet, open }: { sheet: RatingSheetState; open: boolean }
       onClose={() => finish()}
       enterDuration={durations.sheetPlatforms}
     >
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={{ paddingBottom: keyboard }}>
         <SheetHandle />
         <View style={styles.content}>
           <Text accessibilityRole="header" style={styles.title}>
@@ -85,7 +87,7 @@ function RatingSheet({ sheet, open }: { sheet: RatingSheetState; open: boolean }
             />
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </BottomSheet>
   );
 }
