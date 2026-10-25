@@ -241,8 +241,8 @@ export function removeFriend(member: Member): void {
     revert: () => {
       patchMemberEverywhere(member.username, { followState: 'following', followsMe: true });
       countFriend(member.username, 1);
+      // Sans recharger : une relecture avant la fin de la restauration reviendrait sans lui.
       for (const [key, data] of lists) queryClient.setQueryData(key, data);
-      reloadMyFriends();
     },
     request: () => api(`/users/${member.username}/follow`, { method: 'DELETE' }),
   };
@@ -251,7 +251,11 @@ export function removeFriend(member: Member): void {
     showToast(`@${member.username} ne fait plus partie de tes amis`, () => {
       if (!requireOnline()) return;
       // Le serveur rétablit l'amitié d'origine (mêmes dates).
-      void send(inverse(change, () => api(`/users/${member.username}/follow`, { method: 'POST' })));
+      void send(
+        inverse(change, () =>
+          api(`/users/${member.username}/follow`, { method: 'POST' }).then(reloadMyFriends),
+        ),
+      );
     });
   });
 }

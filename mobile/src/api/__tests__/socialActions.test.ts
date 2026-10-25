@@ -200,6 +200,25 @@ describe('retirer de mes amis', () => {
     await flush();
     expect(mockApi).toHaveBeenLastCalledWith('/users/lea.m/follow', { method: 'POST' });
   });
+
+  it('« Annuler » ne recharge ma liste qu’une fois l’amitié rétablie sur le serveur', async () => {
+    queryClient.setQueryData(userKey('lea.m'), friend);
+    queryClient.setQueryData(friendsKey('dim.k', ''), {
+      pages: [{ items: [friend] }],
+      pageParams: [undefined],
+    });
+    removeFriend(friend);
+    await flush();
+    let restore: (value: unknown) => void = () => undefined;
+    mockApi.mockImplementationOnce(() => new Promise((resolve) => (restore = resolve)));
+
+    useUiStore.getState().undoToast();
+    // Recharger maintenant relirait la liste d'avant la restauration, sans Léa.
+    expect(queryClient.getQueryState(friendsKey('dim.k', ''))?.isInvalidated).toBe(false);
+    restore(undefined);
+    await flush();
+    expect(queryClient.getQueryState(friendsKey('dim.k', ''))?.isInvalidated).toBe(true);
+  });
 });
 
 describe('demandes reçues', () => {

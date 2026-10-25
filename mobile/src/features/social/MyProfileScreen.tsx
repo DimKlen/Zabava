@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import {
   CaretRightIcon,
   MagnifyingGlassIcon,
@@ -7,7 +7,7 @@ import {
   UserPlusIcon,
   UsersThreeIcon,
 } from 'phosphor-react-native';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -35,6 +35,13 @@ export function MyProfileScreen() {
   const insets = useSafeAreaInsets();
   const query = useProfile();
   const profile = query.data;
+  const { refetch } = query;
+  // Mes amis et mes demandes changent par les actions des autres : relus à chaque retour sur l'onglet.
+  useFocusEffect(
+    useCallback(() => {
+      void refetch();
+    }, [refetch]),
+  );
   const [refreshing, setRefreshing] = useState(false);
   const refresh = () => {
     setRefreshing(true);

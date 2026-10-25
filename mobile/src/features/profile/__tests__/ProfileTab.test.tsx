@@ -14,6 +14,8 @@ import { MyProfileScreen } from '../../social/MyProfileScreen';
 jest.mock('@/api/http', () => ({ api: jest.fn() }));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true },
+  // L'onglet prend le focus une fois, au montage.
+  useFocusEffect: (effect: () => void) => jest.requireActual('react').useEffect(effect, [effect]),
 }));
 // Le client de l'app garde ses requêtes 7 jours : ses minuteurs empêcheraient Jest de finir.
 jest.mock('@/api/queryClient', () => {
@@ -130,6 +132,22 @@ describe('onglet Profil', () => {
     expect(screen.getByText('Version 1.0.0')).toBeTruthy();
     expect(screen.getByLabelText('TMDB')).toBeTruthy();
     expect(screen.getByLabelText('JustWatch')).toBeTruthy();
+  });
+
+  it('revenir sur l’onglet relit mes amis et mes demandes (changés par les autres)', async () => {
+    queryClient.clear();
+    // Profil en cache d'une visite précédente : sans relecture, il resterait affiché.
+    queryClient.setQueryData(['profile'], { ...PROFILE, friendsCount: 0, followRequestsCount: 0 });
+    profile = { ...PROFILE, friendsCount: 1, followRequestsCount: 1 };
+    await render(
+      <SafeAreaProvider initialMetrics={METRICS}>
+        <QueryClientProvider client={queryClient}>
+          <MyProfileScreen />
+        </QueryClientProvider>
+      </SafeAreaProvider>,
+    );
+    expect(await screen.findByLabelText("Demandes d'amis, 1")).toBeTruthy();
+    expect(screen.getByLabelText('Mes amis, 1')).toBeTruthy();
   });
 
   it('« Mes amis » ouvre ma liste d’amis', async () => {
