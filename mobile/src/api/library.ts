@@ -2,11 +2,15 @@ import type { MediaType, UserTitle } from '@/domain/types';
 
 import { api } from './http';
 
-/** Valeurs d'origine renvoyées par « Annuler » après un retrait. */
+/** Ma note d'un film : remplace la note et le commentaire (absents = effacés). */
+export type Review = { rating?: number; comment?: string };
+
+/** Valeurs d'origine renvoyées par « Annuler » après un retrait ; note donnée en marquant vu. */
 export type AddTitleExtras = {
   addedAt?: string;
   watchedAt?: string;
   notificationsEnabled?: boolean;
+  review?: Review;
 };
 
 /** Ajoute un titre à la liste (`POST /me/titles`). */
@@ -24,9 +28,10 @@ export type TitlePatch = {
   status?: UserTitle['status'];
   watchedAt?: string;
   notificationsEnabled?: boolean;
+  review?: Review;
 };
 
-/** Change le statut ou les alertes d'un titre de la liste (`PATCH /me/titles/{id}`). */
+/** Change le statut, les alertes ou ma note d'un titre de la liste (`PATCH /me/titles/{id}`). */
 export async function patchTitle(titleId: string, patch: TitlePatch) {
   await api(`/me/titles/${encodeURIComponent(titleId)}`, { method: 'PATCH', body: patch });
 }

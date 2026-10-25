@@ -5,6 +5,8 @@
 import type { Icon } from 'phosphor-react-native';
 import { create } from 'zustand';
 
+import type { ListTitle } from '@/api/libraryActions';
+
 import type { SeriesSection } from '@/domain/series';
 import { DEFAULT_COLLAPSED } from '@/domain/seriesList';
 import type { MediaType } from '@/domain/types';
@@ -41,6 +43,17 @@ export type DialogState = {
   actions: DialogAction[];
 };
 
+/**
+ * Sheet « Ta note » d'un film : `watch` le marque vu en l'ouvrant (« Passer » sans note), `edit`
+ * change la note d'un film déjà vu. Note et commentaire d'avant pour pré-remplir.
+ */
+export type RatingSheetState = {
+  title: ListTitle;
+  mode: 'watch' | 'edit';
+  rating?: number;
+  comment?: string;
+};
+
 type UiState = {
   toast: ToastState | null;
   /** Contenu conservé après fermeture, pour l'animation de sortie. */
@@ -48,6 +61,9 @@ type UiState = {
   actionSheetOpen: boolean;
   dialog: DialogState | null;
   dialogOpen: boolean;
+  /** Contenu conservé après fermeture, pour l'animation de sortie ; `seq` change à chaque ouverture. */
+  ratingSheet: (RatingSheetState & { seq: number }) | null;
+  ratingSheetOpen: boolean;
   /** Carte « prochain épisode » ouverte par un swipe (une seule à la fois). */
   swipedCardId: string | null;
   /** Ma liste : onglet, segment, filtre et tri des films, gardés pendant la session. */
@@ -106,6 +122,8 @@ export const useUiStore = create<UiState>()((set, get) => ({
   actionSheetOpen: false,
   dialog: null,
   dialogOpen: false,
+  ratingSheet: null,
+  ratingSheetOpen: false,
   swipedCardId: null,
   watchlistTab: 'movie',
   filmSegment: 'towatch',
@@ -173,6 +191,13 @@ export const showToast = (message: string, undo?: () => void) =>
 export const openActionSheet = (sheet: ActionSheetState) =>
   useUiStore.getState().openActionSheet(sheet);
 export const openDialog = (dialog: DialogState) => useUiStore.getState().openDialog(dialog);
+
+let ratingSeq = 0;
+export const openRatingSheet = (sheet: RatingSheetState) => {
+  ratingSeq += 1;
+  useUiStore.setState({ ratingSheet: { ...sheet, seq: ratingSeq }, ratingSheetOpen: true });
+};
+export const closeRatingSheet = () => useUiStore.setState({ ratingSheetOpen: false });
 
 export const openInviteSheet = () => useUiStore.setState({ inviteOpen: true });
 export const closeInviteSheet = () => useUiStore.setState({ inviteOpen: false });

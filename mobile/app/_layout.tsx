@@ -26,6 +26,7 @@ import { ActionSheetHost } from '@/components/ActionSheet';
 import { DialogHost } from '@/components/Dialog';
 import { ToastHost } from '@/components/Toast';
 import { InviteSheetHost } from '@/features/social/InviteSheet';
+import { RatingSheetHost } from '@/features/title/RatingSheet';
 import { colors, durations } from '@/theme/tokens';
 
 // Le splash reste affiché jusqu'au chargement des polices Inter.
@@ -98,6 +99,7 @@ export default function RootLayout() {
           </Stack>
           {/* Empilement : écran < Toast < ActionSheet / sheets < Dialog. */}
           <InviteSheetHost />
+          <RatingSheetHost />
           <ToastHost />
           <ActionSheetHost />
           <DialogHost />

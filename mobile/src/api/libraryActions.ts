@@ -12,6 +12,7 @@ import { hapticLight } from '@/lib/haptics';
 import { showToast, useUiStore } from '@/store/ui';
 
 import { episodesKey } from './episodes';
+import type { Review } from './library';
 import { cancelGroup, enqueue, SAVE_FAILED, type Op } from './mutationQueue';
 import { queryClient } from './queryClient';
 import { titleKey, type TitleDetail } from './titles';
@@ -203,6 +204,7 @@ function sync(
           notificationsEnabled: to.notificationsEnabled,
           ...(restore ? { addedAt: to.addedAt } : {}),
           ...(restore || to.status === 'watched' ? { watchedAt: to.watchedAt } : {}),
+          ...(hasReview(to) ? { review: reviewOf(to) } : {}),
         },
       },
     ];
@@ -210,10 +212,22 @@ function sync(
   const status = from.status !== to.status ? to.status : undefined;
   const notificationsEnabled =
     from.notificationsEnabled !== to.notificationsEnabled ? to.notificationsEnabled : undefined;
-  if (status === undefined && notificationsEnabled === undefined) return [];
+  const review =
+    from.rating !== to.rating || from.comment !== to.comment ? reviewOf(to) : undefined;
+  if (status === undefined && notificationsEnabled === undefined && review === undefined) return [];
   const watchedAt = status === 'watched' ? to.watchedAt : undefined;
-  return [{ kind: 'patch', titleId: title.id, patch: { status, watchedAt, notificationsEnabled } }];
+  return [
+    {
+      kind: 'patch',
+      titleId: title.id,
+      patch: { status, watchedAt, notificationsEnabled, review },
+    },
+  ];
 }
+
+const hasReview = ({ rating, comment }: UserTitle) => rating !== undefined || comment !== undefined;
+
+const reviewOf = ({ rating, comment }: UserTitle) => ({ rating, comment });
 
 /** Épisodes par requête : une saison de 300 épisodes part en tranches courtes, pas d'un bloc. */
 const EPISODES_PER_REQUEST = 100;
@@ -377,15 +391,38 @@ export function removeFromList(title: ListTitle, message = 'Retiré de ma liste'
   change({ title, next: undefined, message, undoable: true });
 }
 
-/** Film vu / remis dans À voir. Un film hors liste marqué vu y entre directement en Vu. */
-export function setMovieWatched(title: ListTitle, watched: boolean): void {
+/**
+ * Film vu / remis dans À voir. Un film hors liste marqué vu y entre directement en Vu. `review` :
+ * la note et le commentaire donnés en le marquant vu ; sans elle, ceux d'avant restent.
+ */
+export function setMovieWatched(title: ListTitle, watched: boolean, review?: Review): void {
   if (watched) hapticLight();
+  const current = currentUserTitle(title);
+  const next = newUserTitle(title, watched ? 'watched' : 'towatch', current);
   change({
     title,
-    next: newUserTitle(title, watched ? 'watched' : 'towatch', currentUserTitle(title)),
+    next: { ...next, ...reviewFields(review ?? current) },
     message: watched ? 'Marqué comme vu' : 'Remis dans À voir',
     undoable: true,
   });
+}
+
+/** Change ma note et mon commentaire d'un film vu (fiche › « Ma note »). */
+export function setMovieReview(title: ListTitle, review: Review): void {
+  const current = currentUserTitle(title);
+  if (!current) return;
+  change({
+    title,
+    next: { ...current, ...reviewFields(review) },
+    message: 'Note enregistrée',
+    undoable: true,
+  });
+}
+
+/** Note de 1 à 10 et commentaire non vide, sinon absents. */
+function reviewFields(review: Review | undefined): Pick<UserTitle, 'rating' | 'comment'> {
+  const comment = review?.comment?.trim();
+  return { rating: review?.rating, comment: comment ? comment : undefined };
 }
 
 /** Série abandonnée (swipe, menu) ou suivi repris. */

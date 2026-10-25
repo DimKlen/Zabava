@@ -12,6 +12,7 @@ import {
   currentUserTitle,
   removeFromList,
   setEpisodesWatched,
+  setMovieReview,
   setMovieWatched,
   setSeriesAbandoned,
   setTitleAlerts,
@@ -235,6 +236,94 @@ describe('setMovieWatched', () => {
     expect(addTitle).toHaveBeenCalledWith(693134, 'movie', 'watched', {
       notificationsEnabled: true,
       watchedAt: currentUserTitle(dune)?.watchedAt,
+    });
+  });
+
+  it('avec une note : une seule requête, « Annuler » efface aussi la note', async () => {
+    setMovieWatched(film, true, { rating: 8, comment: '  Superbe.  ' });
+    await flush();
+    expect(currentUserTitle(film)).toMatchObject({
+      status: 'watched',
+      rating: 8,
+      comment: 'Superbe.',
+    });
+    expect(patchTitle).toHaveBeenCalledTimes(1);
+    expect(patchTitle).toHaveBeenCalledWith('movie-1', {
+      status: 'watched',
+      watchedAt: currentUserTitle(film)?.watchedAt,
+      review: { rating: 8, comment: 'Superbe.' },
+    });
+
+    undo();
+    await flush();
+    expect(currentUserTitle(film)?.rating).toBeUndefined();
+    expect(patchTitle).toHaveBeenLastCalledWith('movie-1', {
+      status: 'towatch',
+      review: { rating: undefined, comment: undefined },
+    });
+  });
+
+  it('hors liste, avec une note : la note part avec l’ajout', async () => {
+    setMovieWatched(dune, true, { rating: 6 });
+    await flush();
+    expect(addTitle).toHaveBeenCalledWith(693134, 'movie', 'watched', {
+      notificationsEnabled: true,
+      watchedAt: currentUserTitle(dune)?.watchedAt,
+      review: { rating: 6, comment: undefined },
+    });
+  });
+
+  it('« Passer » garde la note d’avant (film déjà noté, remis dans À voir)', async () => {
+    queryClient.setQueryData(watchlistKey('movie'), [
+      { ...monteCristo, userTitle: { ...monteCristo.userTitle, rating: 7, comment: 'Revu' } },
+    ]);
+    setMovieWatched(film, true);
+    await flush();
+    expect(currentUserTitle(film)).toMatchObject({ status: 'watched', rating: 7, comment: 'Revu' });
+    expect(patchTitle).toHaveBeenCalledWith('movie-1', {
+      status: 'watched',
+      watchedAt: currentUserTitle(film)?.watchedAt,
+    });
+  });
+});
+
+describe('setMovieReview', () => {
+  const film = asTitle(monteCristo);
+
+  it('change ma note d’un film vu, « Annuler » remet l’ancienne', async () => {
+    queryClient.setQueryData(watchlistKey('movie'), [
+      { ...monteCristo, userTitle: { ...monteCristo.userTitle, status: 'watched', rating: 7 } },
+    ]);
+    setMovieReview(film, { rating: 9, comment: 'Encore mieux revu' });
+    await flush();
+    expect(useUiStore.getState().toast?.message).toBe('Note enregistrée');
+    expect(patchTitle).toHaveBeenCalledWith('movie-1', {
+      review: { rating: 9, comment: 'Encore mieux revu' },
+    });
+
+    undo();
+    await flush();
+    expect(currentUserTitle(film)?.rating).toBe(7);
+    expect(currentUserTitle(film)?.comment).toBeUndefined();
+    expect(patchTitle).toHaveBeenLastCalledWith('movie-1', {
+      review: { rating: 7, comment: undefined },
+    });
+  });
+
+  it('hors ligne : la note s’affiche tout de suite et part au retour du réseau', async () => {
+    queryClient.setQueryData(watchlistKey('movie'), [
+      { ...monteCristo, userTitle: { ...monteCristo.userTitle, status: 'watched' } },
+    ]);
+    onlineManager.setOnline(false);
+    setMovieReview(film, { rating: 4 });
+    await flush();
+    expect(currentUserTitle(film)?.rating).toBe(4);
+    expect(patchTitle).not.toHaveBeenCalled();
+    onlineManager.setOnline(true);
+    await flush();
+    await flush();
+    expect(patchTitle).toHaveBeenCalledWith('movie-1', {
+      review: { rating: 4, comment: undefined },
     });
   });
 });
