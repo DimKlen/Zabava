@@ -21,6 +21,7 @@ import com.zabava.api.me.LibraryStore.UserTitleRow;
 import com.zabava.api.me.ProfileService.Prefs;
 import com.zabava.api.me.dto.MeDtos.AddTitleRequest;
 import com.zabava.api.me.dto.MeDtos.PatchTitleRequest;
+import com.zabava.api.me.dto.MeDtos.Review;
 import com.zabava.api.social.ActivityService;
 
 /** Ajout, statut, retrait d'un titre et cochage des épisodes (specs/docs/01 §3–4). */
@@ -62,6 +63,7 @@ public class LibraryService {
                 watchedAt,
                 request.addedAt() == null ? null : notAfter(request.addedAt(), now),
                 request.notificationsEnabled());
+        review(prefs.userId(), row, request.review());
         activities.syncTitle(prefs.userId(), row.id());
         return current(prefs.userId(), row);
     }
@@ -81,6 +83,7 @@ public class LibraryService {
             }
         }
         library.update(userId, row.id(), request.status(), watchedAt, request.notificationsEnabled());
+        review(userId, row, request.review());
         if (request.status() != null) activities.syncTitle(userId, row.id());
         return current(userId, row);
     }
@@ -116,6 +119,14 @@ public class LibraryService {
         List<EpisodeRow> episodes = store.episodesByIds(distinct);
         if (episodes.size() != distinct.size()) throw ApiException.notFound("Épisode introuvable");
         return episodes;
+    }
+
+    /** Note et commentaire : films seulement ; un commentaire vide est effacé. */
+    private void review(UUID userId, TitleRow row, Review review) {
+        if (review == null) return;
+        if (row.type().isSeries()) throw ApiException.badRequest("Seul un film peut être noté");
+        String comment = review.comment() == null || review.comment().isBlank() ? null : review.comment().strip();
+        library.review(userId, row.id(), review.rating(), comment);
     }
 
     private TitleRow row(String titleId) {

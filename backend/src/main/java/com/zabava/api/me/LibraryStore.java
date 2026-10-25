@@ -19,7 +19,13 @@ import org.springframework.stereotype.Repository;
 public class LibraryStore {
 
     public record UserTitleRow(
-            long titleId, String status, Instant addedAt, Instant watchedAt, boolean notificationsEnabled) {}
+            long titleId,
+            String status,
+            Instant addedAt,
+            Instant watchedAt,
+            boolean notificationsEnabled,
+            Integer rating,
+            String comment) {}
 
     private final JdbcClient db;
 
@@ -95,6 +101,16 @@ public class LibraryStore {
                 .update();
     }
 
+    /** Remplace ma note et mon commentaire du titre (nuls : effacés). */
+    public void review(UUID userId, long titleId, Integer rating, String comment) {
+        db.sql("update user_titles set rating = :rating, comment = :comment where user_id = :user and title_id = :title")
+                .param("rating", rating)
+                .param("comment", comment)
+                .param("user", userId)
+                .param("title", titleId)
+                .update();
+    }
+
     /** Retire le titre et les épisodes vus de ce titre (specs/docs/11 §3). */
     public void delete(UUID userId, long titleId) {
         db.sql("""
@@ -151,7 +167,7 @@ public class LibraryStore {
     }
 
     private static final String SELECT = """
-            select title_id, status, added_at, watched_at, notifications_enabled from user_titles
+            select title_id, status, added_at, watched_at, notifications_enabled, rating, comment from user_titles
             """;
 
     private static UserTitleRow row(ResultSet rs, int n) throws SQLException {
@@ -161,7 +177,9 @@ public class LibraryStore {
                 rs.getString("status"),
                 rs.getTimestamp("added_at").toInstant(),
                 watched == null ? null : watched.toInstant(),
-                rs.getBoolean("notifications_enabled"));
+                rs.getBoolean("notifications_enabled"),
+                rs.getObject("rating", Integer.class),
+                rs.getString("comment"));
     }
 
     private static Timestamp ts(Instant instant) {

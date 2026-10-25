@@ -591,7 +591,13 @@ public class TitleService {
 
     public static UserTitle userTitle(MediaType type, int tmdbId, UserTitleRow row) {
         return new UserTitle(
-                TitleRef.format(type, tmdbId), row.status(), row.addedAt(), row.watchedAt(), row.notificationsEnabled());
+                TitleRef.format(type, tmdbId),
+                row.status(),
+                row.addedAt(),
+                row.watchedAt(),
+                row.notificationsEnabled(),
+                row.rating(),
+                row.comment());
     }
 
     private static Integer year(JsonNode d, boolean movie) {
