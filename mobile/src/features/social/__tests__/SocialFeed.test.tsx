@@ -46,7 +46,6 @@ const METRICS = {
 const member = (username: string, displayName: string, extra: object = {}) => ({
   username,
   displayName,
-  isPrivate: false,
   followState: 'following',
   followsMe: false,
   commonCount: 0,
@@ -138,11 +137,11 @@ describe('FeedScreen', () => {
     expect(await screen.findByText(/« Tonnerre »/)).toBeTruthy();
   });
 
-  it('vide : « Suis des membres… » et « Trouver des membres »', async () => {
+  it('vide : « Ajoute des amis… » et « Ajouter un ami »', async () => {
     routeFeed([]);
     await show(<FeedScreen />);
-    expect(await screen.findByText("Suis des membres pour voir ce qu'ils regardent")).toBeTruthy();
-    await fireEvent.press(screen.getByText('Trouver des membres'));
+    expect(await screen.findByText("Ajoute des amis pour voir ce qu'ils regardent")).toBeTruthy();
+    await fireEvent.press(screen.getByText('Ajouter un ami'));
     expect(router.push).toHaveBeenCalledWith({ pathname: '/search', params: { tab: 'members' } });
   });
 });
@@ -152,14 +151,14 @@ describe('ActivityCarousel', () => {
     routeFeed([]);
     await show(<ActivityCarousel />);
     await settled(feedKey);
-    expect(screen.queryByText('Activité de tes abonnements')).toBeNull();
+    expect(screen.queryByText('Activité de tes amis')).toBeNull();
   });
 
   it('6 dernières activités et « Tout voir » vers le fil', async () => {
     const many = Array.from({ length: 8 }, (_, i) => ({ ...ACTIVITIES[1], id: String(i) }));
     routeFeed(many);
     await show(<ActivityCarousel />);
-    expect(await screen.findByText('Activité de tes abonnements')).toBeTruthy();
+    expect(await screen.findByText('Activité de tes amis')).toBeTruthy();
     expect(screen.getAllByText('Max')).toHaveLength(6);
     await fireEvent.press(screen.getByText('Tout voir'));
     expect(router.push).toHaveBeenCalledWith('/feed');
@@ -170,7 +169,7 @@ describe('ActivityCarousel', () => {
     await show(<ActivityCarousel />);
     await settled(feedKey);
     expect(queryClient.getQueryState(feedKey)?.status).toBe('error');
-    expect(screen.queryByText('Activité de tes abonnements')).toBeNull();
+    expect(screen.queryByText('Activité de tes amis')).toBeNull();
   });
 });
 
@@ -180,43 +179,32 @@ describe('TitleSocialBlocks', () => {
     status: 'watched',
     date,
   });
-  const SAW = [
-    holder('sarah.l', 'Sarah Lefebvre', 'none', '2026-10-20T20:00:00Z'),
-    holder('hugo.p', 'Hugo Pelletier', 'none', '2026-10-19T20:00:00Z'),
-    holder('nora.k', 'Nora Khalil', 'none', '2026-10-18T20:00:00Z'),
-  ];
 
   function routeSocial(social: unknown) {
     mockApi.mockImplementation(async (path) => {
       if (path === '/titles/movie/693134/social') return social;
-      if (path === '/users/sarah.l/follow') return new Promise(() => undefined);
       throw new Error(`Route non simulée : ${path}`);
     });
   }
 
-  it('moins de 3 profils : pas de « Ils l’ont vu » ; aucun abonnement : pas de carte', async () => {
-    routeSocial({ following: [], saw: SAW.slice(0, 2) });
+  it('aucun ami sur ce titre : pas de carte', async () => {
+    routeSocial({ following: [] });
     await show(<TitleSocialBlocks type="movie" tmdbId={693134} title="Dune 3" />);
     await settled(['title', 'movie', 693134, 'social']);
+    expect(screen.queryByText('Tes amis')).toBeNull();
     expect(screen.queryByText("Ils l'ont vu")).toBeNull();
-    expect(screen.queryByText('Tes abonnements')).toBeNull();
   });
 
-  it('« Suivre » depuis « Ils l’ont vu » fait passer la personne dans « Tes abonnements »', async () => {
+  it('« Tes amis » : prénoms, puis la sheet de leurs statuts', async () => {
     routeSocial({
-      following: [holder('lea.m', 'Léa Martin', 'following', '2026-10-12T20:00:00Z')],
-      saw: [...SAW, holder('zoe.l', 'Zoé Lavoie', 'none', '2026-10-17T20:00:00Z')],
+      following: [
+        holder('sarah.l', 'Sarah Lefebvre', 'following', '2026-10-20T20:00:00Z'),
+        holder('lea.m', 'Léa Martin', 'following', '2026-10-12T20:00:00Z'),
+      ],
     });
     await show(<TitleSocialBlocks type="movie" tmdbId={693134} title="Dune 3" />);
-    expect(await screen.findByText("Ils l'ont vu")).toBeTruthy();
-    expect(screen.getByText('Léa')).toBeTruthy();
-
-    await fireEvent.press(screen.getByLabelText('Suivre @sarah.l'));
-    expect(await screen.findByText('Sarah et Léa')).toBeTruthy();
-    expect(screen.queryByText('@sarah.l')).toBeNull();
-
-    // La sheet : statut de chacun, plus récent d'abord.
-    await fireEvent.press(screen.getByLabelText('Tes abonnements : Sarah et Léa'));
+    expect(await screen.findByText('Tes amis')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Tes amis : Sarah et Léa'));
     expect(await screen.findByText('Sarah Lefebvre')).toBeTruthy();
     expect(screen.getAllByText(/^Vu le /)).toHaveLength(2);
   });

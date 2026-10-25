@@ -11,7 +11,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import com.zabava.api.IntegrationTest;
 
-/** Outils communs des tests sociaux : membres avec pseudo, abonnements, suivi de titres. */
+/** Outils communs des tests sociaux : membres avec pseudo, amis, suivi de titres. */
 abstract class SocialTest extends IntegrationTest {
 
     /** Crée un compte avec ce pseudo et le nom affiché donné. */
@@ -25,12 +25,16 @@ abstract class SocialTest extends IntegrationTest {
         return id;
     }
 
-    protected void makePrivate(UUID id) {
-        db.sql("update profiles set is_private = true where id = :id").param("id", id).update();
-    }
-
+    /** « Ajouter en ami » : une demande, ou l'amitié si l'autre m'a déjà envoyé la sienne. */
     protected ResultActions follow(UUID me, String username) throws Exception {
         return mvc.perform(as(me, post("/api/v1/users/" + username + "/follow")));
+    }
+
+    /** {@code a} et {@code b} deviennent amis : demande de {@code a}, acceptée par {@code b}. */
+    protected void befriend(UUID a, String aUsername, UUID b, String bUsername) throws Exception {
+        follow(a, bUsername).andExpect(status().isOk());
+        mvc.perform(as(b, post("/api/v1/me/follow-requests/" + aUsername + "/accept")))
+                .andExpect(status().isNoContent());
     }
 
     protected MockHttpServletRequestBuilder json(UUID me, MockHttpServletRequestBuilder request, String body) {

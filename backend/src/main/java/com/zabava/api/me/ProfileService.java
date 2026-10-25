@@ -16,13 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.zabava.api.auth.CurrentUser;
 import com.zabava.api.common.ApiException;
-import com.zabava.api.config.AppProperties;
 import com.zabava.api.me.dto.MeDtos.NotificationPrefs;
 import com.zabava.api.me.dto.MeDtos.NotificationPrefsUpdate;
 import com.zabava.api.me.dto.MeDtos.Profile;
 import com.zabava.api.me.dto.MeDtos.ProfileUpdate;
 import com.zabava.api.me.dto.MeDtos.PushTokenRequest;
-import com.zabava.api.social.FollowService;
 import com.zabava.api.social.UsernameService;
 
 import tools.jackson.databind.JsonNode;
@@ -37,27 +35,18 @@ public class ProfileService {
 
     /** Heures proposées pour le récapitulatif quotidien (specs/docs/09 §9.2). */
     private static final Set<Integer> DIGEST_HOURS = Set.of(8, 9, 12, 18, 20);
-    /** Nom affiché : 1 à 40 caractères (specs/social/docs/04 §4.3). */
-    private static final int DISPLAY_NAME_MAX = 40;
-
     private final JdbcClient db;
     private final JsonMapper json;
     private final SupabaseAdminClient supabase;
     private final UsernameService usernames;
-    private final FollowService follows;
-    /** Préfixe des photos envoyées par l'app (Supabase Storage, dossier avatars). */
-    private final String avatarPrefix;
     /** Profils dont l'existence est déjà vérifiée : évite une écriture à chaque requête. */
     private final Set<UUID> known = ConcurrentHashMap.newKeySet();
 
-    public ProfileService(JdbcClient db, JsonMapper json, SupabaseAdminClient supabase, UsernameService usernames,
-            FollowService follows, AppProperties properties) {
+    public ProfileService(JdbcClient db, JsonMapper json, SupabaseAdminClient supabase, UsernameService usernames) {
         this.db = db;
         this.json = json;
         this.supabase = supabase;
         this.usernames = usernames;
-        this.follows = follows;
-        this.avatarPrefix = properties.supabase().url() + "/storage/v1/object/public/avatars/";
     }
 
     /** Crée le profil s'il manque (normalement fait par le trigger Supabase). */
@@ -87,7 +76,7 @@ public class ProfileService {
         return db.sql("""
                 select id, display_name, avatar_url, email, auth_provider, region, language,
                        spoiler_protection, notification_prefs::text as prefs, timezone, onboarded_at,
-                       username, username_changed_at, is_private, followers_count, following_count,
+                       username, following_count,
                        (select count(*) from follows f where f.followee_id = profiles.id and f.status = 'pending'
                           and not exists (select 1 from blocks b where b.blocker_id = profiles.id
                             and b.blocked_id = f.follower_id)) as requests
@@ -108,9 +97,6 @@ public class ProfileService {
                         instant(rs.getTimestamp("onboarded_at")),
                         providerIds(userId),
                         rs.getString("username"),
-                        instant(rs.getTimestamp("username_changed_at")),
-                        rs.getBoolean("is_private"),
-                        rs.getInt("followers_count"),
                         rs.getInt("following_count"),
                         rs.getInt("requests")))
                 .optional()
@@ -130,26 +116,18 @@ public class ProfileService {
                 .orElseThrow(() -> ApiException.notFound("Profil introuvable"));
     }
 
-    /**
-     * {@code oauthAvatarUrl} : photo du compte Google (JWT), seule adresse acceptée en dehors des
-     * photos envoyées dans Supabase Storage. Passer de privé à public accepte les demandes en attente.
-     */
     @Transactional
-    public Profile update(UUID userId, ProfileUpdate update, String oauthAvatarUrl) {
+    public Profile update(UUID userId, ProfileUpdate update) {
         Profile current = get(userId);
         NotificationPrefs prefs = merge(current.notificationPrefs(), update.notificationPrefs());
         if (update.username() != null) usernames.change(userId, update.username());
-        if (current.isPrivate() && Boolean.FALSE.equals(update.isPrivate())) follows.acceptAll(userId);
         db.sql("""
                 update profiles set
                   region = coalesce(cast(:region as text), region),
                   language = coalesce(cast(:language as text), language),
                   spoiler_protection = coalesce(cast(:spoiler as boolean), spoiler_protection),
                   notification_prefs = cast(:prefs as jsonb),
-                  onboarded_at = coalesce(cast(:onboarded as timestamptz), onboarded_at),
-                  display_name = coalesce(cast(:name as text), display_name),
-                  is_private = coalesce(cast(:private as boolean), is_private),
-                  avatar_url = case when cast(:avatar_set as boolean) then cast(:avatar as text) else avatar_url end
+                  onboarded_at = coalesce(cast(:onboarded as timestamptz), onboarded_at)
                 where id = :id
                 """)
                 .param("region", update.region())
@@ -157,10 +135,6 @@ public class ProfileService {
                 .param("spoiler", update.spoilerProtection())
                 .param("prefs", json.writeValueAsString(storedPrefs(prefs)))
                 .param("onboarded", update.onboardedAt() == null ? null : Timestamp.from(update.onboardedAt()))
-                .param("name", displayName(update.displayName()))
-                .param("private", update.isPrivate())
-                .param("avatar_set", update.avatarUrl() != null)
-                .param("avatar", avatar(update.avatarUrl(), oauthAvatarUrl))
                 .param("id", userId)
                 .update();
         return get(userId);
@@ -221,23 +195,6 @@ public class ProfileService {
                 .list();
     }
 
-    private static String displayName(String raw) {
-        if (raw == null) return null;
-        String name = raw.strip();
-        if (name.isEmpty() || name.codePointCount(0, name.length()) > DISPLAY_NAME_MAX) {
-            throw ApiException.badRequest("Le nom affiché doit faire de 1 à 40 caractères");
-        }
-        return name;
-    }
-
-    /** Vide : photo du compte OAuth (ou aucune). Sinon une photo de Storage ou la photo OAuth. */
-    private String avatar(String requested, String oauthAvatarUrl) {
-        if (requested == null) return null;
-        if (requested.isEmpty()) return oauthAvatarUrl;
-        if (requested.startsWith(avatarPrefix) || requested.equals(oauthAvatarUrl)) return requested;
-        throw ApiException.badRequest("Adresse de photo non autorisée");
-    }
-
     private NotificationPrefs prefs(String raw) {
         JsonNode node = json.readTree(raw);
         return new NotificationPrefs(
@@ -246,7 +203,6 @@ public class ProfileService {
                 node.path("streaming").asBoolean(true),
                 node.path("seasons").asBoolean(true),
                 node.path("digest_hour").asInt(9),
-                node.path("new_follower").asBoolean(true),
                 node.path("follow_requests").asBoolean(true));
     }
 
@@ -258,7 +214,6 @@ public class ProfileService {
         stored.put("streaming", prefs.streaming());
         stored.put("seasons", prefs.seasons());
         stored.put("digest_hour", prefs.digestHour());
-        stored.put("new_follower", prefs.newFollower());
         stored.put("follow_requests", prefs.followRequests());
         return stored;
     }
@@ -274,7 +229,6 @@ public class ProfileService {
                 update.streaming() != null ? update.streaming() : current.streaming(),
                 update.seasons() != null ? update.seasons() : current.seasons(),
                 update.digestHour() != null ? update.digestHour() : current.digestHour(),
-                update.newFollower() != null ? update.newFollower() : current.newFollower(),
                 update.followRequests() != null ? update.followRequests() : current.followRequests());
     }
 

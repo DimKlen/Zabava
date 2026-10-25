@@ -6,14 +6,15 @@ import { useUiStore } from '@/store/ui';
 import { api, ApiError } from '../http';
 import { profileKey } from '../profile';
 import { queryClient } from '../queryClient';
-import { connectionsKey, userKey, type UserProfile } from '../social';
+import { followRequestsKey, friendsKey, userKey, type UserProfile } from '../social';
 import {
+  acceptRequest,
   blockMember,
+  declineRequest,
   followMember,
   patchMemberEverywhere,
   pressFollow,
-  removeFollower,
-  unfollowMember,
+  removeFriend,
 } from '../socialActions';
 
 jest.mock('../http', () => {
@@ -42,25 +43,23 @@ const mockApi = api as jest.MockedFunction<typeof api>;
 const lea: UserProfile = {
   username: 'lea.m',
   displayName: 'Léa Martin',
-  isPrivate: false,
   followState: 'none',
   followsMe: false,
   commonCount: 4,
-  followersCount: 5,
-  followingCount: 3,
-  canSeeLists: true,
+  friendsCount: 5,
+  canSeeLists: false,
   isMe: false,
 };
+
+type Pages = { pages: { items: Member[] }[]; pageParams: unknown[] };
 
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 const toast = () => useUiStore.getState().toast;
 const cachedLea = () => queryClient.getQueryData<UserProfile>(userKey('lea.m'));
-const myCounts = () => {
-  const me = queryClient.getQueryData<{ followersCount: number; followingCount: number }>(
-    profileKey,
-  );
-  return [me?.followersCount, me?.followingCount];
-};
+const myProfile = () =>
+  queryClient.getQueryData<{ friendsCount: number; followRequestsCount: number }>(profileKey);
+const myFriends = () => queryClient.getQueryData<Pages>(friendsKey('dim.k', ''));
+const myRequests = () => queryClient.getQueryData<Pages>(followRequestsKey);
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -73,7 +72,11 @@ beforeEach(() => {
     dialog: null,
     dialogOpen: false,
   });
-  queryClient.setQueryData(profileKey, { username: 'dim.k', followersCount: 2, followingCount: 7 });
+  queryClient.setQueryData(profileKey, {
+    username: 'dim.k',
+    friendsCount: 2,
+    followRequestsCount: 1,
+  });
   queryClient.setQueryData(userKey('lea.m'), lea);
   mockApi.mockResolvedValue(undefined);
 });
@@ -84,35 +87,60 @@ describe('patchMemberEverywhere', () => {
   it('met à jour le membre dans les profils et les listes, sans toucher aux autres', () => {
     const max = { ...lea, username: 'max.dubois' };
     const pages = { pages: [{ items: [lea, max] }], pageParams: [undefined] };
-    queryClient.setQueryData(connectionsKey('dim.k', 'following', ''), pages);
+    queryClient.setQueryData(friendsKey('dim.k', ''), pages);
 
     patchMemberEverywhere('lea.m', { followState: 'following' });
 
     expect(cachedLea()?.followState).toBe('following');
-    const list = queryClient.getQueryData<typeof pages>(connectionsKey('dim.k', 'following', ''));
-    expect(list?.pages[0]?.items[0]?.followState).toBe('following');
-    expect(list?.pages[0]?.items[1]).toBe(max);
+    expect(myFriends()?.pages[0]?.items[0]?.followState).toBe('following');
+    expect(myFriends()?.pages[0]?.items[1]).toBe(max);
   });
 });
 
-describe('suivre', () => {
-  it('profil public : « Abonné » tout de suite et compteurs à jour', async () => {
-    mockApi.mockResolvedValue({ status: 'accepted' });
-    followMember(lea);
-    expect(cachedLea()).toMatchObject({ followState: 'following', followersCount: 6 });
-    expect(myCounts()).toEqual([2, 8]);
-    await flush();
-    expect(mockApi).toHaveBeenCalledWith('/users/lea.m/follow', { method: 'POST' });
-    expect(cachedLea()?.followState).toBe('following');
-  });
-
-  it('profil privé : « Demandé » et toast, compteurs inchangés', async () => {
+describe('ajouter en ami', () => {
+  it('envoie une demande : « Demande envoyée », compteurs inchangés', async () => {
     mockApi.mockResolvedValue({ status: 'pending' });
-    followMember({ ...lea, isPrivate: true });
-    expect(cachedLea()).toMatchObject({ followState: 'pending', followersCount: 5 });
+    followMember(lea);
+    expect(cachedLea()).toMatchObject({ followState: 'pending', friendsCount: 5 });
     expect(toast()?.message).toBe('Demande envoyée à @lea.m');
     await flush();
-    expect(myCounts()).toEqual([2, 7]);
+    expect(mockApi).toHaveBeenCalledWith('/users/lea.m/follow', { method: 'POST' });
+    expect(myProfile()?.friendsCount).toBe(2);
+  });
+
+  it('sa demande était reçue : amis tout de suite, et ma liste d’amis est rechargée', async () => {
+    const requested = { ...lea, followState: 'requested' as const };
+    queryClient.setQueryData(userKey('lea.m'), requested);
+    queryClient.setQueryData(followRequestsKey, {
+      pages: [{ items: [requested] }],
+      pageParams: [undefined],
+    });
+    // Ma liste d'amis déjà ouverte, sans Léa : c'est le bug « 2 amis mais liste vide ».
+    queryClient.setQueryData(friendsKey('dim.k', ''), {
+      pages: [{ items: [] }],
+      pageParams: [undefined],
+    });
+    mockApi.mockResolvedValue({ status: 'accepted' });
+
+    followMember(requested);
+    expect(cachedLea()).toMatchObject({
+      followState: 'following',
+      followsMe: true,
+      friendsCount: 6,
+    });
+    expect(myProfile()).toMatchObject({ friendsCount: 3, followRequestsCount: 0 });
+    expect(myRequests()?.pages[0]?.items).toEqual([]);
+    await flush();
+    expect(toast()?.message).toBe('Léa et toi êtes maintenant amis');
+    expect(queryClient.getQueryState(friendsKey('dim.k', ''))?.isInvalidated).toBe(true);
+  });
+
+  it('le serveur répond « amis » alors qu’on attendait une demande : amis', async () => {
+    mockApi.mockResolvedValue({ status: 'accepted' });
+    followMember(lea);
+    await flush();
+    expect(cachedLea()).toMatchObject({ followState: 'following', friendsCount: 6 });
+    expect(myProfile()?.friendsCount).toBe(3);
   });
 
   it('échec : retour à l’état d’avant et message de limite', async () => {
@@ -120,8 +148,7 @@ describe('suivre', () => {
     followMember(lea);
     await flush();
     expect(cachedLea()).toEqual(lea);
-    expect(myCounts()).toEqual([2, 7]);
-    expect(toast()?.message).toBe('Tu as atteint la limite de 200 abonnements par jour');
+    expect(toast()?.message).toBe("Tu as atteint la limite de 200 demandes d'ami par jour");
   });
 
   it('hors ligne : rien ne change, « Connexion requise »', () => {
@@ -133,33 +160,96 @@ describe('suivre', () => {
   });
 });
 
-describe('se désabonner', () => {
-  const following: Member = { ...lea, followState: 'following' };
+describe('retirer de mes amis', () => {
+  const friend: UserProfile = {
+    ...lea,
+    followState: 'following',
+    followsMe: true,
+    friendsCount: 6,
+  };
 
-  it('« Abonné » ouvre « Se désabonner »', () => {
-    pressFollow(following);
+  it('« Amis » ouvre « Retirer de mes amis »', () => {
+    pressFollow(friend);
     const sheet = useUiStore.getState().actionSheet;
     expect(sheet?.title).toBe('@lea.m');
-    expect(sheet?.options.map((option) => option.label)).toEqual(['Se désabonner']);
+    expect(sheet?.options.map((option) => option.label)).toEqual(['Retirer de mes amis']);
   });
 
-  it('toast avec « Annuler », qui rétablit l’abonnement à l’écran et sur le serveur', async () => {
-    queryClient.setQueryData(userKey('lea.m'), {
-      ...lea,
-      followState: 'following',
-      followersCount: 6,
+  it('toast avec « Annuler », qui rétablit l’amitié à l’écran et sur le serveur', async () => {
+    queryClient.setQueryData(userKey('lea.m'), friend);
+    queryClient.setQueryData(friendsKey('dim.k', ''), {
+      pages: [{ items: [friend] }],
+      pageParams: [undefined],
     });
-    unfollowMember(following);
-    expect(cachedLea()).toMatchObject({ followState: 'none', followersCount: 5 });
-    expect(myCounts()).toEqual([2, 6]);
+    removeFriend(friend);
+    expect(cachedLea()).toMatchObject({ followState: 'none', followsMe: false, friendsCount: 5 });
+    expect(myProfile()?.friendsCount).toBe(1);
+    expect(myFriends()?.pages[0]?.items).toEqual([]);
     await flush();
-    expect(toast()?.message).toBe('Tu ne suis plus @lea.m');
+    expect(mockApi).toHaveBeenCalledWith('/users/lea.m/follow', { method: 'DELETE' });
+    expect(toast()?.message).toBe('@lea.m ne fait plus partie de tes amis');
 
     useUiStore.getState().undoToast();
-    expect(cachedLea()).toMatchObject({ followState: 'following', followersCount: 6 });
-    expect(myCounts()).toEqual([2, 7]);
+    expect(cachedLea()).toMatchObject({
+      followState: 'following',
+      followsMe: true,
+      friendsCount: 6,
+    });
+    expect(myProfile()?.friendsCount).toBe(2);
+    expect(myFriends()?.pages[0]?.items).toEqual([friend]);
     await flush();
     expect(mockApi).toHaveBeenLastCalledWith('/users/lea.m/follow', { method: 'POST' });
+  });
+
+  it('« Annuler » ne recharge ma liste qu’une fois l’amitié rétablie sur le serveur', async () => {
+    queryClient.setQueryData(userKey('lea.m'), friend);
+    queryClient.setQueryData(friendsKey('dim.k', ''), {
+      pages: [{ items: [friend] }],
+      pageParams: [undefined],
+    });
+    removeFriend(friend);
+    await flush();
+    let restore: (value: unknown) => void = () => undefined;
+    mockApi.mockImplementationOnce(() => new Promise((resolve) => (restore = resolve)));
+
+    useUiStore.getState().undoToast();
+    // Recharger maintenant relirait la liste d'avant la restauration, sans Léa.
+    expect(queryClient.getQueryState(friendsKey('dim.k', ''))?.isInvalidated).toBe(false);
+    restore(undefined);
+    await flush();
+    expect(queryClient.getQueryState(friendsKey('dim.k', ''))?.isInvalidated).toBe(true);
+  });
+});
+
+describe('demandes reçues', () => {
+  const requested: Member = { ...lea, followState: 'requested' };
+
+  beforeEach(() => {
+    queryClient.setQueryData(followRequestsKey, {
+      pages: [{ items: [requested] }],
+      pageParams: [undefined],
+    });
+  });
+
+  it('accepter : la ligne disparaît, nous sommes amis', async () => {
+    acceptRequest(requested);
+    expect(myRequests()?.pages[0]?.items).toEqual([]);
+    expect(myProfile()).toMatchObject({ friendsCount: 3, followRequestsCount: 0 });
+    expect(cachedLea()).toMatchObject({ followState: 'following', followsMe: true });
+    await flush();
+    expect(mockApi).toHaveBeenCalledWith('/me/follow-requests/lea.m/accept', { method: 'POST' });
+    expect(toast()?.message).toBe('Léa et toi êtes maintenant amis');
+  });
+
+  it('refuser : la ligne disparaît, sans toast ; échec : elle revient', async () => {
+    mockApi.mockRejectedValue(new ApiError(500, 'POST'));
+    declineRequest(requested);
+    expect(myRequests()?.pages[0]?.items).toEqual([]);
+    expect(cachedLea()?.followState).toBe('none');
+    await flush();
+    expect(myRequests()?.pages[0]?.items).toEqual([requested]);
+    expect(cachedLea()?.followState).toBe('requested');
+    expect(myProfile()?.followRequestsCount).toBe(1);
   });
 });
 
@@ -170,16 +260,16 @@ describe('actions simultanées', () => {
   it('« Annuler » ne défait que sa propre action', async () => {
     queryClient.setQueryData(userKey('lea.m'), { ...lea, followState: 'following' });
     queryClient.setQueryData(userKey('max.dubois'), max);
-    unfollowMember({ ...lea, followState: 'following' });
+    removeFriend({ ...lea, followState: 'following' });
     await flush();
     const undo = toast()?.undo;
-    mockApi.mockResolvedValue({ status: 'accepted' });
+    mockApi.mockResolvedValue({ status: 'pending' });
     followMember(max);
     await flush();
 
     undo?.();
     expect(cachedLea()?.followState).toBe('following');
-    expect(cachedMax()?.followState).toBe('following');
+    expect(cachedMax()?.followState).toBe('pending');
   });
 
   it('un échec ne défait que sa propre action', async () => {
@@ -187,56 +277,51 @@ describe('actions simultanées', () => {
     let reject: (error: unknown) => void = () => undefined;
     mockApi.mockImplementationOnce(() => new Promise((_, no) => (reject = no)));
     followMember(lea);
-    mockApi.mockResolvedValueOnce({ status: 'accepted' });
+    mockApi.mockResolvedValueOnce({ status: 'pending' });
     followMember(max);
     await flush();
     reject(new ApiError(500, 'POST'));
     await flush();
 
     expect(cachedLea()?.followState).toBe('none');
-    expect(cachedMax()?.followState).toBe('following');
-    expect(myCounts()).toEqual([2, 8]);
-  });
-});
-
-describe('retirer un abonné', () => {
-  it('la ligne disparaît de mes abonnés ; « Annuler » la remet', async () => {
-    const follower = { ...lea, followsMe: true };
-    const pages = { pages: [{ items: [follower] }], pageParams: [undefined] };
-    queryClient.setQueryData(connectionsKey('dim.k', 'followers', ''), pages);
-
-    removeFollower(follower);
-    const list = () =>
-      queryClient.getQueryData<typeof pages>(connectionsKey('dim.k', 'followers', ''));
-    expect(list()?.pages[0]?.items).toEqual([]);
-    expect(myCounts()).toEqual([1, 7]);
-    await flush();
-    expect(toast()?.message).toBe('@lea.m ne te suit plus');
-
-    useUiStore.getState().undoToast();
-    expect(list()?.pages[0]?.items).toEqual([follower]);
-    await flush();
-    expect(mockApi).toHaveBeenLastCalledWith('/me/followers/lea.m/restore', { method: 'POST' });
+    expect(cachedMax()?.followState).toBe('pending');
   });
 });
 
 describe('bloquer', () => {
   it('dialogue de confirmation, puis blocage et toast', async () => {
-    blockMember({ ...lea, followState: 'following', followsMe: true });
+    const friend = { ...lea, followState: 'following' as const, followsMe: true };
+    queryClient.setQueryData(userKey('lea.m'), friend);
+    blockMember(friend);
     const dialog = useUiStore.getState().dialog;
     expect(dialog?.title).toBe('Bloquer @lea.m ?');
     expect(dialog?.body).toBe(
-      "Vous ne pourrez plus vous suivre et vous n'apparaîtrez plus dans vos recherches ni sur vos fiches. Léa ne sera pas prévenu·e.",
+      "Vous ne serez plus amis et vous n'apparaîtrez plus dans vos recherches ni sur vos fiches. Léa ne sera pas prévenu·e.",
     );
     dialog?.actions.find((action) => action.label === 'Bloquer')?.onPress?.();
     expect(cachedLea()).toMatchObject({
       followState: 'blocked',
       followsMe: false,
-      followersCount: 4,
+      friendsCount: 4,
     });
-    expect(myCounts()).toEqual([1, 6]);
+    expect(myProfile()?.friendsCount).toBe(1);
     await flush();
     expect(mockApi).toHaveBeenCalledWith('/users/lea.m/block', { method: 'POST' });
     expect(toast()?.message).toBe('@lea.m est bloqué·e');
+  });
+
+  it('bloquer quelqu’un dont j’ai reçu la demande la retire de mes demandes', () => {
+    const requested = { ...lea, followState: 'requested' as const };
+    queryClient.setQueryData(followRequestsKey, {
+      pages: [{ items: [requested] }],
+      pageParams: [undefined],
+    });
+    blockMember(requested);
+    useUiStore
+      .getState()
+      .dialog?.actions.find((action) => action.label === 'Bloquer')
+      ?.onPress?.();
+    expect(myRequests()?.pages[0]?.items).toEqual([]);
+    expect(myProfile()?.followRequestsCount).toBe(0);
   });
 });

@@ -58,12 +58,11 @@ const METRICS = {
   insets: { top: 47, left: 0, right: 0, bottom: 34 },
 };
 
-const ME = { id: 'u1', username: 'dim.k', displayName: 'Dim Kovac', isPrivate: false };
+const ME = { id: 'u1', username: 'dim.k', displayName: 'Dim Kovac' };
 
 const member = (username: string, displayName: string) => ({
   username,
   displayName,
-  isPrivate: false,
   followState: 'none',
   followsMe: false,
   commonCount: 0,
@@ -200,10 +199,10 @@ describe('MemberResults', () => {
     expect(screen.getByText('Tape au moins 2 caractères du pseudo ou du nom.')).toBeTruthy();
     await act(() =>
       queryClient.setQueryData(recentProfilesKey, [
-        { username: 'lea.m', displayName: 'Léa Martin', isPrivate: false, followState: 'none' },
+        { username: 'lea.m', displayName: 'Léa Martin', followState: 'none' },
       ]),
     );
-    expect(await screen.findByText('Personnes suivies récemment')).toBeTruthy();
+    expect(await screen.findByText('Profils consultés récemment')).toBeTruthy();
     expect(screen.getByText('Léa Martin')).toBeTruthy();
   });
 

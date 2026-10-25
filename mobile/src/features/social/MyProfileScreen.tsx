@@ -1,204 +1,155 @@
-import { useQuery } from '@tanstack/react-query';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import {
   CaretRightIcon,
-  GearSixIcon,
+  MagnifyingGlassIcon,
+  ShareNetworkIcon,
   UserCirclePlusIcon,
   UserPlusIcon,
+  UsersThreeIcon,
 } from 'phosphor-react-native';
-import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useProfile, type Profile } from '@/api/profile';
-import { movieWatchlistQuery, seriesWatchlistQuery } from '@/api/watchlist';
+import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
 import { LoadError, showsLoadError } from '@/components/LoadError';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { SkeletonBox } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
-import {
-  defaultSegment,
-  myMovieGrid,
-  mySeriesGrid,
-  segmentFor,
-  type MovieSegment,
-  type ProfileSegment,
-  type SeriesSegment,
-} from '@/domain/social/profileLists';
-import type { MediaType } from '@/domain/types';
-import { openInviteSheet } from '@/store/ui';
-import { colors, radii } from '@/theme/tokens';
-import { fonts } from '@/theme/typography';
+import { openActionSheet, openInviteSheet } from '@/store/ui';
+import { colors, radii, spacing } from '@/theme/tokens';
+import { fonts, typography } from '@/theme/typography';
 
-import { ProfileContent } from './ProfileContent';
-import { ProfileHeader } from './ProfileHeader';
-import { openConnections } from './navigation';
+import { SettingsGroup, SettingsRow } from '../profile/SettingsGroup';
+import { SettingsContent } from '../profile/SettingsContent';
+import { openFriends } from './navigation';
 
-/** Mon profil, onglet Profil (specs/social/docs/04 §4.2). Listes tirées de Ma liste (hors ligne). */
+/**
+ * Onglet Profil (retours du 2026-10-24) : ma photo, mon nom et mon pseudo, mes amis et mes
+ * demandes, puis les réglages. Photo et nom sont ceux du compte, le pseudo est définitif.
+ */
 export function MyProfileScreen() {
   const insets = useSafeAreaInsets();
   const query = useProfile();
   const profile = query.data;
+  const { refetch } = query;
+  // Mes amis et mes demandes changent par les actions des autres : relus à chaque retour sur l'onglet.
+  useFocusEffect(
+    useCallback(() => {
+      void refetch();
+    }, [refetch]),
+  );
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = () => {
+    setRefreshing(true);
+    void query.refetch().finally(() => setRefreshing(false));
+  };
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <OfflineBanner />
-      {profile?.username ? (
-        <MyProfile
-          profile={profile}
-          username={profile.username}
-          onRefresh={() => query.refetch()}
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={refresh}
+            tintColor={colors.accent}
+            colors={[colors.accent]}
+          />
+        }
+      >
+        <ScreenHeader
+          title="Profil"
+          actions={
+            <Button
+              variant="icon"
+              height={44}
+              icon={UserPlusIcon}
+              iconSize={22}
+              color={colors.text}
+              accessibilityLabel="Ajouter un ami"
+              onPress={openAddFriend}
+            />
+          }
         />
-      ) : (
-        <>
-          <Bar />
-          {showsLoadError(query) ? <LoadError onRetry={() => void query.refetch()} /> : null}
-        </>
-      )}
+        {profile ? (
+          <SettingsContent profile={profile} first={<Me profile={profile} />} />
+        ) : showsLoadError(query) ? (
+          <LoadError onRetry={() => void query.refetch()} />
+        ) : (
+          <View style={styles.loading}>
+            <SkeletonBox height={88} radius={radii.rLg} />
+            <SkeletonBox height={200} radius={radii.rLg} />
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 }
 
-function Bar() {
-  return (
-    <ScreenHeader
-      title="Profil"
-      actions={
-        <>
-          <Button
-            variant="icon"
-            height={44}
-            icon={UserPlusIcon}
-            iconSize={22}
-            color={colors.text}
-            accessibilityLabel="Inviter"
-            onPress={openInviteSheet}
-          />
-          <Button
-            variant="icon"
-            height={44}
-            icon={GearSixIcon}
-            iconSize={22}
-            color={colors.text}
-            accessibilityLabel="Réglages"
-            onPress={() => router.push('/settings')}
-          />
-        </>
-      }
-    />
-  );
-}
-
-function MyProfile({
-  profile,
-  username,
-  onRefresh,
-}: {
-  profile: Profile;
-  username: string;
-  onRefresh: () => Promise<unknown>;
-}) {
-  const [tab, setTab] = useState<MediaType>('movie');
-  const [segment, setSegment] = useState<ProfileSegment>(defaultSegment('movie'));
-  const [refreshing, setRefreshing] = useState(false);
-  const movies = useQuery({ ...movieWatchlistQuery(), enabled: tab === 'movie' });
-  const series = useQuery({
-    ...seriesWatchlistQuery(tab === 'anime' ? 'anime' : 'tv'),
-    enabled: tab !== 'movie',
+/** « + » : chercher un membre à ajouter, ou l'inviter s'il n'est pas encore sur Zabava. */
+function openAddFriend() {
+  openActionSheet({
+    title: 'Ajouter un ami',
+    options: [
+      {
+        label: 'Chercher un membre',
+        icon: MagnifyingGlassIcon,
+        onPress: () => router.push({ pathname: '/search', params: { tab: 'members' } }),
+      },
+      { label: 'Inviter', icon: ShareNetworkIcon, onPress: openInviteSheet },
+    ],
   });
-  const list = tab === 'movie' ? movies : series;
-
-  let items;
-  if (tab === 'movie') {
-    items = movies.data ? myMovieGrid(movies.data, segment as MovieSegment) : undefined;
-  } else {
-    items = series.data
-      ? mySeriesGrid(series.data, segment as SeriesSegment, new Date())
-      : undefined;
-  }
-
-  const changeTab = (next: MediaType) => {
-    setTab(next);
-    setSegment(segmentFor(next, segment));
-  };
-
-  const refresh = () => {
-    setRefreshing(true);
-    void Promise.all([onRefresh(), list.refetch()]).finally(() => setRefreshing(false));
-  };
-
-  const name = profile.displayName || username;
-
-  return (
-    <ProfileContent
-      header={
-        <>
-          <Bar />
-          <ProfileHeader
-            isMe
-            profile={{
-              username,
-              displayName: name,
-              avatarUrl: profile.avatarUrl,
-              isPrivate: profile.isPrivate ?? false,
-              followersCount: profile.followersCount ?? 0,
-              followingCount: profile.followingCount ?? 0,
-            }}
-            onFollowers={() => openConnections(username, 'followers')}
-            onFollowing={() => openConnections(username, 'following')}
-          />
-          <View style={styles.buttons}>
-            <Button
-              variant="secondary"
-              height={44}
-              label="Modifier le profil"
-              onPress={() => router.push('/profile/edit')}
-              style={styles.button}
-            />
-            <Button
-              variant="primary"
-              height={44}
-              icon={UserPlusIcon}
-              label="Inviter"
-              onPress={openInviteSheet}
-              style={styles.button}
-            />
-          </View>
-          {profile.isPrivate && (profile.followRequestsCount ?? 0) > 0 ? (
-            <RequestsRow count={profile.followRequestsCount ?? 0} />
-          ) : null}
-        </>
-      }
-      tab={tab}
-      segment={segment}
-      onTab={changeTab}
-      onSegment={setSegment}
-      items={items}
-      error={showsLoadError(list)}
-      onRetry={() => void list.refetch()}
-      refreshing={refreshing}
-      onRefresh={refresh}
-    />
-  );
 }
 
-/** Profil privé avec au moins une demande : « Demandes d'abonnement » et son badge. */
-function RequestsRow({ count }: { count: number }) {
+/** Moi, puis « Mes amis · n » et mes demandes reçues. */
+function Me({ profile }: { profile: Profile }) {
+  const username = profile.username ?? '';
+  const name = profile.displayName || username;
+  const friends = profile.friendsCount ?? 0;
+  const requests = profile.followRequestsCount ?? 0;
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Demandes d'abonnement, ${count}`}
-      onPress={() => router.push('/follow-requests')}
-      style={({ pressed }) => [styles.requests, pressed && styles.requestsPressed]}
-    >
-      <UserCirclePlusIcon size={20} color={colors.neutral400} />
-      <Text style={styles.requestsLabel}>Demandes d&apos;abonnement</Text>
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>{count}</Text>
+    <>
+      <View style={styles.identity}>
+        <Avatar size={88} name={name} uri={profile.avatarUrl} mine />
+        <View style={styles.names}>
+          <Text accessibilityRole="header" numberOfLines={1} style={styles.name}>
+            {name}
+          </Text>
+          <Text numberOfLines={1} style={styles.handle}>
+            @{username}
+          </Text>
+        </View>
       </View>
-      <CaretRightIcon size={16} color={colors.neutral600} />
-    </Pressable>
+      <SettingsGroup label="Amis">
+        <SettingsRow
+          label="Mes amis"
+          icon={UsersThreeIcon}
+          accessibilityLabel={`Mes amis, ${friends}`}
+          onPress={() => openFriends(username)}
+        >
+          <Text style={styles.count}>{friends}</Text>
+          <CaretRightIcon size={16} color={colors.neutral600} />
+        </SettingsRow>
+        {requests > 0 ? (
+          <SettingsRow
+            label="Demandes d'amis"
+            icon={UserCirclePlusIcon}
+            accessibilityLabel={`Demandes d'amis, ${requests}`}
+            onPress={() => router.push('/follow-requests')}
+          >
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{requests}</Text>
+            </View>
+            <CaretRightIcon size={16} color={colors.neutral600} />
+          </SettingsRow>
+        ) : null}
+      </SettingsGroup>
+    </>
   );
 }
 
@@ -207,35 +158,39 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
   },
-  buttons: {
-    flexDirection: 'row',
-    gap: 8,
+  content: {
+    paddingBottom: 24,
+  },
+  loading: {
+    gap: 16,
     paddingTop: 16,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.screenX,
   },
-  button: {
-    flex: 1,
-  },
-  requests: {
+  identity: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    minHeight: 52,
-    marginTop: 12,
-    marginHorizontal: 16,
-    paddingHorizontal: 14,
-    borderRadius: radii.rLg,
-    backgroundColor: colors.surface,
+    gap: 16,
   },
-  requestsPressed: {
-    backgroundColor: colors.neutral800,
-  },
-  requestsLabel: {
+  names: {
     flex: 1,
-    fontFamily: fonts.regular,
-    fontSize: 15,
-    lineHeight: 15 * 1.3,
+    minWidth: 0,
+    gap: 2,
+  },
+  name: {
+    ...typography.titleXL,
     color: colors.text,
+  },
+  handle: {
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    lineHeight: 14 * 1.4,
+    color: colors.neutral400,
+  },
+  count: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 13 * 1.4,
+    color: colors.neutral400,
   },
   badge: {
     height: 22,

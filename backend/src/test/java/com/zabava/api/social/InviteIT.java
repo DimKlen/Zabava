@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
@@ -36,18 +35,6 @@ class InviteIT extends SocialTest {
                 .andExpect(content().string(containsString("@lea.m")))
                 .andExpect(content().string(containsString("href=\"zabava://u/lea.m\">Ouvrir dans Zabava</a>")))
                 .andExpect(content().string(not(containsString("<Martin>"))));
-    }
-
-    @Test
-    void ancienPseudoMeneAuProfilActuel() throws Exception {
-        UUID lea = member("lea.m", "Léa");
-        db.sql("insert into username_history (user_id, username, released_at) values (:id, 'lea.old', :at)")
-                .param("id", lea)
-                .param("at", java.sql.Timestamp.from(NOW.plusSeconds(86_400)))
-                .update();
-        mvc.perform(get("/u/lea.old"))
-                .andExpect(status().isOk())
-                .andExpect(content().string(containsString("href=\"zabava://u/lea.m\"")));
     }
 
     @Test

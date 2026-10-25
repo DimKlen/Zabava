@@ -9,11 +9,11 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +25,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 
-/** Suivre, demandes, visibilité, blocage, limite du jour (specs/social/etapes/01). */
+/**
+ * Amis réciproques (retours du 2026-10-24) : demandes, amitié dans les deux sens, visibilité
+ * réservée aux amis, blocage, limite du jour.
+ */
 class FollowIT extends SocialTest {
 
     @Autowired
@@ -43,93 +46,98 @@ class FollowIT extends SocialTest {
         max = member("max.dubois", "Max Dubois");
     }
 
-    private long followers(UUID id) {
-        return count("select followers_count from profiles where id = ?", id);
-    }
-
-    private long following(UUID id) {
+    private long friends(UUID id) {
         return count("select following_count from profiles where id = ?", id);
     }
 
     @Test
-    void suivreUnProfilPublicEstImmediat() throws Exception {
-        follow(dim, "lea.m").andExpect(status().isOk()).andExpect(jsonPath("$.status").value("accepted"));
+    void uneDemandeAccepteeRendAmisDansLesDeuxSens() throws Exception {
+        follow(dim, "lea.m").andExpect(status().isOk()).andExpect(jsonPath("$.status").value("pending"));
         // Idempotent : un second tap ne crée rien.
-        follow(dim, "lea.m").andExpect(jsonPath("$.status").value("accepted"));
-
-        assertThat(followers(lea)).isEqualTo(1);
-        assertThat(following(dim)).isEqualTo(1);
-        assertThat(count("select count from follow_quota where user_id = ?", dim)).isEqualTo(1);
-        mvc.perform(as(dim, get("/api/v1/users/lea.m")))
-                .andExpect(jsonPath("$.followState").value("following"))
-                .andExpect(jsonPath("$.followersCount").value(1))
-                .andExpect(jsonPath("$.canSeeLists").value(true))
-                .andExpect(jsonPath("$.isMe").value(false));
-        mvc.perform(as(lea, get("/api/v1/users/dim.k")))
-                .andExpect(jsonPath("$.followsMe").value(true))
-                .andExpect(jsonPath("$.followState").value("none"));
-    }
-
-    @Test
-    void suivreUnProfilPriveEnvoieUneDemande() throws Exception {
-        makePrivate(lea);
         follow(dim, "lea.m").andExpect(jsonPath("$.status").value("pending"));
-        assertThat(followers(lea)).isZero();
+        assertThat(friends(dim)).isZero();
+        assertThat(count("select count from follow_quota where user_id = ?", dim)).isEqualTo(1);
 
+        mvc.perform(as(dim, get("/api/v1/users/lea.m")))
+                .andExpect(jsonPath("$.followState").value("pending"))
+                .andExpect(jsonPath("$.canSeeLists").value(false));
+        mvc.perform(as(lea, get("/api/v1/users/dim.k"))).andExpect(jsonPath("$.followState").value("requested"));
         mvc.perform(as(lea, get("/api/v1/me/follow-requests")))
                 .andExpect(jsonPath("$.items[*].username", contains("dim.k")));
         mvc.perform(as(lea, get("/api/v1/me/profile"))).andExpect(jsonPath("$.followRequestsCount").value(1));
 
         mvc.perform(as(lea, post("/api/v1/me/follow-requests/dim.k/accept"))).andExpect(status().isNoContent());
-        assertThat(followers(lea)).isEqualTo(1);
-        mvc.perform(as(dim, get("/api/v1/users/lea.m"))).andExpect(jsonPath("$.followState").value("following"));
+
+        assertThat(count("select count(*) from follows where status = 'accepted'")).isEqualTo(2);
+        assertThat(friends(dim)).isEqualTo(1);
+        assertThat(friends(lea)).isEqualTo(1);
+        for (UUID[] pair : List.of(new UUID[] {dim, lea}, new UUID[] {lea, dim})) {
+            String other = pair[1].equals(lea) ? "lea.m" : "dim.k";
+            mvc.perform(as(pair[0], get("/api/v1/users/" + other)))
+                    .andExpect(jsonPath("$.followState").value("following"))
+                    .andExpect(jsonPath("$.followsMe").value(true))
+                    .andExpect(jsonPath("$.friendsCount").value(1))
+                    .andExpect(jsonPath("$.canSeeLists").value(true))
+                    .andExpect(jsonPath("$.isMe").value(false));
+        }
+        mvc.perform(as(lea, get("/api/v1/me/profile")))
+                .andExpect(jsonPath("$.friendsCount").value(1))
+                .andExpect(jsonPath("$.followRequestsCount").value(0));
+    }
+
+    @Test
+    void deuxDemandesCroiseesDonnentUneAmitie() throws Exception {
+        follow(dim, "lea.m");
+        follow(lea, "dim.k").andExpect(jsonPath("$.status").value("accepted"));
+
+        assertThat(count("select count(*) from follows where status = 'accepted'")).isEqualTo(2);
+        assertThat(friends(dim)).isEqualTo(1);
+        mvc.perform(as(lea, get("/api/v1/me/follow-requests"))).andExpect(jsonPath("$.items", hasSize(0)));
+        mvc.perform(as(dim, get("/api/v1/me/follow-requests"))).andExpect(jsonPath("$.items", hasSize(0)));
     }
 
     @Test
     void refuserUneDemandeLaFaitDisparaitre() throws Exception {
-        makePrivate(lea);
         follow(dim, "lea.m");
         mvc.perform(as(lea, post("/api/v1/me/follow-requests/dim.k/decline"))).andExpect(status().isNoContent());
         mvc.perform(as(lea, get("/api/v1/me/follow-requests"))).andExpect(jsonPath("$.items", hasSize(0)));
-        // Elle peut en renvoyer une.
+        assertThat(count("select count(*) from follows")).isZero();
+        // Il peut en renvoyer une.
         follow(dim, "lea.m").andExpect(jsonPath("$.status").value("pending"));
     }
 
-    /** Critère : un profil privé non suivi renvoie 403 sur /titles et /followers. */
+    /** Seuls les amis voient les listes et les amis d'un profil (403 sinon). */
     @Test
-    void unProfilPriveNonSuiviCacheSesListes() throws Exception {
-        makePrivate(lea);
-        follow(max, "lea.m");
-        mvc.perform(as(lea, post("/api/v1/me/follow-requests/max.dubois/accept")));
+    void seulsLesAmisVoientListesEtAmis() throws Exception {
+        befriend(max, "max.dubois", lea, "lea.m");
         follow(dim, "lea.m");
 
         mvc.perform(as(dim, get("/api/v1/users/lea.m")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.followState").value("pending"))
-                .andExpect(jsonPath("$.followersCount").value(1))
+                .andExpect(jsonPath("$.friendsCount").value(1))
                 .andExpect(jsonPath("$.canSeeLists").value(false));
         mvc.perform(as(dim, get("/api/v1/users/lea.m/titles?type=movie&status=watched")))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error.code").value("private_profile"));
-        mvc.perform(as(dim, get("/api/v1/users/lea.m/followers"))).andExpect(status().isForbidden());
-        mvc.perform(as(dim, get("/api/v1/users/lea.m/following"))).andExpect(status().isForbidden());
+        mvc.perform(as(dim, get("/api/v1/users/lea.m/friends"))).andExpect(status().isForbidden());
 
-        // Abonné accepté : tout redevient visible.
+        // Ami : tout est visible.
         mvc.perform(as(max, get("/api/v1/users/lea.m/titles?type=movie&status=watched"))).andExpect(status().isOk());
-        mvc.perform(as(max, get("/api/v1/users/lea.m/followers")))
+        mvc.perform(as(max, get("/api/v1/users/lea.m/friends")))
                 .andExpect(jsonPath("$.items[*].username", contains("max.dubois")));
-        // Mes propres listes me sont toujours visibles.
-        mvc.perform(as(lea, get("/api/v1/users/lea.m/followers"))).andExpect(status().isOk());
+        // Mes propres amis me sont toujours visibles.
+        mvc.perform(as(lea, get("/api/v1/users/lea.m/friends"))).andExpect(status().isOk());
     }
 
-    /** Critère : un utilisateur qui m'a bloqué renvoie 404. */
+    /** Un utilisateur qui m'a bloqué renvoie 404. */
     @Test
     void unUtilisateurQuiMABloqueEstIntrouvable() throws Exception {
         mvc.perform(as(lea, post("/api/v1/users/dim.k/block"))).andExpect(status().isNoContent());
 
         mvc.perform(as(dim, get("/api/v1/users/lea.m"))).andExpect(status().isNotFound());
         mvc.perform(as(dim, get("/api/v1/users/lea.m/titles?type=movie&status=watched"))).andExpect(status().isNotFound());
-        mvc.perform(as(dim, get("/api/v1/users/lea.m/followers"))).andExpect(status().isNotFound());
+        mvc.perform(as(dim, get("/api/v1/users/lea.m/friends"))).andExpect(status().isNotFound());
         follow(dim, "lea.m").andExpect(status().isForbidden());
         mvc.perform(as(dim, get("/api/v1/users/search?q=lea"))).andExpect(jsonPath("$.items", hasSize(0)));
 
@@ -143,88 +151,74 @@ class FollowIT extends SocialTest {
         mvc.perform(as(lea, get("/api/v1/me/blocks"))).andExpect(jsonPath("$[*].username", contains("dim.k")));
     }
 
-    /** Critère : bloquer supprime les abonnements dans les deux sens. */
     @Test
-    void bloquerSupprimeLesAbonnementsDansLesDeuxSens() throws Exception {
-        follow(dim, "lea.m");
-        follow(lea, "dim.k");
-        makePrivate(max);
+    void bloquerSupprimeLAmitieEtLesDemandes() throws Exception {
+        befriend(dim, "dim.k", lea, "lea.m");
         follow(dim, "max.dubois");
 
         mvc.perform(as(dim, post("/api/v1/users/lea.m/block"))).andExpect(status().isNoContent());
         mvc.perform(as(dim, post("/api/v1/users/max.dubois/block"))).andExpect(status().isNoContent());
 
         assertThat(count("select count(*) from follows")).isZero();
-        assertThat(count("select count(*) from activities where type = 'followed'")).isZero();
-        assertThat(followers(lea)).isZero();
-        assertThat(following(lea)).isZero();
-        assertThat(followers(dim)).isZero();
-        assertThat(following(dim)).isZero();
+        assertThat(friends(lea)).isZero();
+        assertThat(friends(dim)).isZero();
         follow(dim, "lea.m").andExpect(status().isForbidden());
 
-        // Débloquer ne rétablit pas les anciens abonnements.
+        // Débloquer ne rétablit pas l'ancienne amitié : il faut une nouvelle demande.
         mvc.perform(as(dim, delete("/api/v1/users/lea.m/block"))).andExpect(status().isNoContent());
         mvc.perform(as(dim, get("/api/v1/users/lea.m"))).andExpect(jsonPath("$.followState").value("none"));
-        follow(dim, "lea.m").andExpect(jsonPath("$.status").value("accepted"));
+        follow(dim, "lea.m").andExpect(jsonPath("$.status").value("pending"));
     }
 
-    /** Critère : passer de privé à public accepte toutes les demandes. */
+    /** La 201e demande du jour renvoie 429. */
     @Test
-    void passerDePriveAPublicAccepteLesDemandes() throws Exception {
-        makePrivate(lea);
-        follow(dim, "lea.m");
-        follow(max, "lea.m");
-
-        mvc.perform(json(lea, put("/api/v1/me/profile"), "{\"isPrivate\": false}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.isPrivate").value(false))
-                .andExpect(jsonPath("$.followersCount").value(2))
-                .andExpect(jsonPath("$.followRequestsCount").value(0));
-        assertThat(count("select count(*) from follows where status = 'accepted'")).isEqualTo(2);
-        // Public → privé : les abonnés restent abonnés.
-        mvc.perform(json(lea, put("/api/v1/me/profile"), "{\"isPrivate\": true}"))
-                .andExpect(jsonPath("$.followersCount").value(2));
-    }
-
-    /** Critère : le 201e abonnement du jour renvoie 429. */
-    @Test
-    void le201eAbonnementDuJourEstRefuse() throws Exception {
+    void la201eDemandeDuJourEstRefusee() throws Exception {
         db.sql("insert into follow_quota (user_id, day, count) values (:me, date '2026-10-11', 199)")
                 .param("me", dim)
                 .update();
-        follow(dim, "lea.m").andExpect(jsonPath("$.status").value("accepted"));
+        follow(dim, "lea.m").andExpect(jsonPath("$.status").value("pending"));
         follow(dim, "max.dubois")
                 .andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.error.code").value("follow_limit"));
         assertThat(count("select count(*) from follows where follower_id = ?", dim)).isEqualTo(1);
         // Le compteur de la veille ne compte pas.
         db.sql("update follow_quota set day = date '2026-10-10'").update();
-        follow(dim, "max.dubois").andExpect(jsonPath("$.status").value("accepted"));
+        follow(dim, "max.dubois").andExpect(jsonPath("$.status").value("pending"));
     }
 
     @Test
-    void annulerUnDesabonnementRetablitLAbonnementDOrigine() throws Exception {
-        makePrivate(lea);
-        follow(dim, "lea.m");
-        mvc.perform(as(lea, post("/api/v1/me/follow-requests/dim.k/accept")));
+    void retirerUnAmiPuisAnnulerRetablitLAmitieDOrigine() throws Exception {
+        befriend(dim, "dim.k", lea, "lea.m");
         db.sql("update follows set created_at = '2026-09-01T10:00:00Z', accepted_at = '2026-09-02T10:00:00Z'").update();
 
-        mvc.perform(as(dim, delete("/api/v1/users/lea.m/follow"))).andExpect(status().isNoContent());
-        assertThat(followers(lea)).isZero();
-        assertThat(count("select count(*) from activities where type = 'followed'")).isZero();
+        // Léa retire Dim : les deux sens disparaissent, sans prévenir personne.
+        mvc.perform(as(lea, delete("/api/v1/users/dim.k/follow"))).andExpect(status().isNoContent());
+        assertThat(count("select count(*) from follows")).isZero();
+        assertThat(friends(dim)).isZero();
+        mvc.perform(as(dim, get("/api/v1/users/lea.m"))).andExpect(jsonPath("$.followState").value("none"));
 
-        // « Annuler » : de nouveau abonné (pas une demande), avec les mêmes dates, hors limite du jour.
-        follow(dim, "lea.m").andExpect(jsonPath("$.status").value("accepted"));
-        assertThat(db.sql("select accepted_at from follows").query(Instant.class).single())
-                .isEqualTo(Instant.parse("2026-09-02T10:00:00Z"));
-        assertThat(count("select count from follow_quota where user_id = ?", dim)).isEqualTo(1);
-        assertThat(db.sql("select created_at from activities where type = 'followed'").query(Instant.class).single())
-                .isEqualTo(Instant.parse("2026-09-02T10:00:00Z"));
+        // « Annuler » : amis de nouveau (pas une demande), avec les mêmes dates, hors limite du jour.
+        follow(lea, "dim.k").andExpect(jsonPath("$.status").value("accepted"));
+        assertThat(db.sql("select accepted_at from follows").query(Instant.class).list())
+                .containsOnly(Instant.parse("2026-09-02T10:00:00Z"))
+                .hasSize(2);
+        assertThat(count("select count(*) from follow_quota where user_id = ?", lea)).isZero();
+        assertThat(friends(dim)).isEqualTo(1);
+        assertThat(friends(lea)).isEqualTo(1);
+    }
+
+    @Test
+    void retirerUnAmiNeLuiPermetPasDeRevenirSeul() throws Exception {
+        befriend(dim, "dim.k", lea, "lea.m");
+        mvc.perform(as(lea, delete("/api/v1/users/dim.k/follow"))).andExpect(status().isNoContent());
+
+        // Seule Léa (qui a retiré) peut annuler ; Dim doit renvoyer une demande.
+        follow(dim, "lea.m").andExpect(jsonPath("$.status").value("pending"));
+        assertThat(count("select count(*) from follows where status = 'accepted'")).isZero();
     }
 
     @Test
     void annulerUneDemandeNeLaRetablitPas() throws Exception {
-        makePrivate(lea);
         follow(dim, "lea.m");
         mvc.perform(as(dim, delete("/api/v1/users/lea.m/follow"))).andExpect(status().isNoContent());
         assertThat(count("select count(*) from follows")).isZero();
@@ -232,31 +226,26 @@ class FollowIT extends SocialTest {
     }
 
     @Test
-    void retirerUnAbonnePuisAnnuler() throws Exception {
-        follow(dim, "lea.m");
-        mvc.perform(as(lea, delete("/api/v1/me/followers/dim.k"))).andExpect(status().isNoContent());
-        assertThat(followers(lea)).isZero();
-        mvc.perform(as(dim, get("/api/v1/users/lea.m"))).andExpect(jsonPath("$.followState").value("none"));
-
-        mvc.perform(as(lea, post("/api/v1/me/followers/dim.k/restore"))).andExpect(status().isNoContent());
-        assertThat(followers(lea)).isEqualTo(1);
-        assertThat(count("select count(*) from activities where type = 'followed'")).isEqualTo(1);
-        // Rien à rétablir une seconde fois, et personne d'autre ne peut se faire ajouter.
-        mvc.perform(as(lea, post("/api/v1/me/followers/max.dubois/restore"))).andExpect(status().isNotFound());
+    void annulerSansDemandeNeRefusePasLaSienne() throws Exception {
+        follow(lea, "dim.k");
+        mvc.perform(as(dim, delete("/api/v1/users/lea.m/follow"))).andExpect(status().isNoContent());
+        mvc.perform(as(dim, get("/api/v1/me/follow-requests")))
+                .andExpect(jsonPath("$.items[*].username", contains("lea.m")));
     }
 
     @Test
     void toutAccepter() throws Exception {
-        makePrivate(lea);
         follow(dim, "lea.m");
         follow(max, "lea.m");
         mvc.perform(as(lea, post("/api/v1/me/follow-requests/accept-all")))
                 .andExpect(jsonPath("$.accepted").value(2));
-        assertThat(followers(lea)).isEqualTo(2);
+        assertThat(friends(lea)).isEqualTo(2);
+        assertThat(friends(dim)).isEqualTo(1);
+        assertThat(friends(max)).isEqualTo(1);
     }
 
     @Test
-    void onNePeutPasSeSuivreSoiMeme() throws Exception {
+    void onNePeutPasSAjouterSoiMeme() throws Exception {
         follow(dim, "dim.k").andExpect(status().isBadRequest());
         mvc.perform(as(dim, post("/api/v1/users/dim.k/block"))).andExpect(status().isBadRequest());
         follow(dim, "inconnu").andExpect(status().isNotFound());
@@ -274,35 +263,34 @@ class FollowIT extends SocialTest {
     }
 
     @Test
-    void abonnesEtAbonnementsPlusRecentsDAbordAvecFiltre() throws Exception {
-        follow(dim, "lea.m");
-        follow(max, "lea.m");
-        db.sql("update follows set accepted_at = '2026-10-01T00:00:00Z' where follower_id = :d").param("d", dim).update();
+    void amisPlusRecentsDAbordAvecFiltre() throws Exception {
+        befriend(dim, "dim.k", lea, "lea.m");
+        befriend(max, "max.dubois", lea, "lea.m");
+        db.sql("update follows set accepted_at = '2026-10-01T00:00:00Z' where :d in (follower_id, followee_id)")
+                .param("d", dim)
+                .update();
 
-        mvc.perform(as(dim, get("/api/v1/users/lea.m/followers")))
+        mvc.perform(as(dim, get("/api/v1/users/lea.m/friends")))
                 .andExpect(jsonPath("$.items[*].username", contains("max.dubois", "dim.k")))
                 .andExpect(jsonPath("$.nextCursor").doesNotExist());
-        mvc.perform(as(dim, get("/api/v1/users/lea.m/followers?q=DUBO")))
+        mvc.perform(as(dim, get("/api/v1/users/lea.m/friends?q=DUBO")))
                 .andExpect(jsonPath("$.items[*].username", contains("max.dubois")));
-        mvc.perform(as(lea, get("/api/v1/users/dim.k/following")))
+        mvc.perform(as(lea, get("/api/v1/users/dim.k/friends")))
                 .andExpect(jsonPath("$.items[0].username").value("lea.m"))
-                .andExpect(jsonPath("$.items[0].displayName").value("Léa Martin"))
-                .andExpect(jsonPath("$.items[0].followsMe").value(false));
+                .andExpect(jsonPath("$.items[0].displayName").value("Léa Martin"));
     }
 
     @Test
     void supprimerSonCompteMetAJourLesCompteursDesAutres() throws Exception {
-        follow(dim, "lea.m");
-        follow(lea, "dim.k");
+        befriend(dim, "dim.k", lea, "lea.m");
         follow(max, "dim.k");
         WIREMOCK.stubFor(WireMock.delete(urlEqualTo("/supabase/auth/v1/admin/users/" + dim))
                 .willReturn(aResponse().withStatus(200)));
 
         mvc.perform(as(dim, delete("/api/v1/me"))).andExpect(status().isNoContent());
 
-        assertThat(followers(lea)).isZero();
-        assertThat(following(lea)).isZero();
-        assertThat(following(max)).isZero();
+        assertThat(friends(lea)).isZero();
+        assertThat(count("select followers_count from profiles where id = ?", lea)).isZero();
         assertThat(count("select count(*) from follows")).isZero();
         assertThat(count("select count(*) from activities")).isZero();
     }
@@ -313,10 +301,9 @@ class FollowIT extends SocialTest {
      */
     @Test
     void laSuppressionParSupabaseAuthPasseLaCascadeSociale() throws Exception {
-        follow(dim, "lea.m");
-        follow(lea, "dim.k");
-        mvc.perform(as(lea, delete("/api/v1/me/followers/dim.k")));
-        follow(dim, "max.dubois");
+        befriend(dim, "dim.k", lea, "lea.m");
+        mvc.perform(as(lea, delete("/api/v1/users/dim.k/follow")));
+        befriend(dim, "dim.k", max, "max.dubois");
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
         tx.executeWithoutResult(s -> {
             db.sql("""
@@ -331,13 +318,13 @@ class FollowIT extends SocialTest {
             db.sql("set local role auth_admin_test").update();
             db.sql("delete from auth.users where id = :id").param("id", dim).update();
         });
-        assertThat(followers(lea)).isZero();
-        assertThat(following(lea)).isZero();
+        assertThat(friends(lea)).isZero();
+        assertThat(friends(max)).isZero();
     }
 
     /** Clients directs (clé Supabase) : lecture de leurs lignes seulement, aucune écriture. */
     @Test
-    void laRlsInterditDeSAbonnerSansPasserParLeBackend() throws Exception {
+    void laRlsInterditDeDevenirAmisSansPasserParLeBackend() throws Exception {
         follow(max, "lea.m");
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
         Long visible = tx.execute(s -> {

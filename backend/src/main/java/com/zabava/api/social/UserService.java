@@ -31,7 +31,7 @@ import com.zabava.api.social.dto.SocialDtos.ProfileTitle;
 import com.zabava.api.social.dto.SocialDtos.UserProfile;
 
 /**
- * Profils des membres : en-tête, listes de titres, abonnés et abonnements, recherche,
+ * Profils des membres : en-tête, listes de titres, amis, recherche,
  * profils visités. Règles de visibilité : specs/social/docs/01 §3 et §5.
  */
 @Service
@@ -62,14 +62,14 @@ public class UserService {
     /** Ce que je vois d'un profil ; {@code 404} s'il n'existe pas ou s'il m'a bloqué. */
     record Viewed(ProfileRow profile, Relation relation, boolean isMe) {
 
-        /** Listes visibles : moi, ou ni bloqué ni privé non suivi. */
+        /** Listes, amis et activité visibles : moi, ou un ami que je n'ai pas bloqué. */
         boolean canSeeLists() {
-            return isMe || (!relation.iBlocked() && (!profile.isPrivate() || relation.following()));
+            return isMe || (!relation.iBlocked() && relation.following());
         }
     }
 
     Viewed view(UUID me, String username) {
-        ProfileRow profile = store.findByUsername(username, clock.instant())
+        ProfileRow profile = store.findByUsername(username)
                 .orElseThrow(() -> ApiException.notFound("Profil introuvable"));
         if (profile.id().equals(me)) return new Viewed(profile, new Relation(null, false, false, false), true);
         Relation relation = store.relation(me, profile.id());
@@ -84,12 +84,10 @@ public class UserService {
                 m.username(),
                 m.displayName(),
                 m.avatarUrl(),
-                m.isPrivate(),
                 m.followState(),
                 m.followsMe(),
                 m.commonCount(),
-                v.profile().followersCount(),
-                v.profile().followingCount(),
+                v.profile().friendsCount(),
                 v.canSeeLists(),
                 v.isMe());
     }
@@ -158,26 +156,23 @@ public class UserService {
         return new Page<>(items, more ? Cursors.offset(offset + TITLES_PAGE) : null);
     }
 
-    // ─── Abonnés et abonnements ───────────────────────────────────────────────
+    // ─── Amis ─────────────────────────────────────────────────────────────────
 
     /**
-     * Abonnés ({@code followers}) ou abonnements acceptés, plus récents d'abord. Les comptes
-     * bloqués avec moi (dans un sens ou dans l'autre) sont masqués. Filtre {@code q} sur le
-     * pseudo et le nom, sans accents ni casse.
+     * Amis d'un profil, plus récents d'abord. Les comptes bloqués avec moi (dans un sens ou dans
+     * l'autre) sont masqués. Filtre {@code q} sur le pseudo et le nom, sans accents ni casse.
      */
-    public Page<MemberLite> connections(UUID me, String username, boolean followers, String q, String cursor) {
+    public Page<MemberLite> friends(UUID me, String username, String q, String cursor) {
         Viewed v = readable(me, username);
-        String other = followers ? "follower_id" : "followee_id";
-        String self = followers ? "followee_id" : "follower_id";
         String query = Usernames.searchQuery(q);
         int offset = Cursors.offset(cursor);
         List<UUID> ids = db.sql("""
-                select f.%1$s from follows f join profiles p on p.id = f.%1$s
-                where f.%2$s = :user and f.status = 'accepted' and p.username is not null and %3$s
+                select f.followee_id from follows f join profiles p on p.id = f.followee_id
+                where f.follower_id = :user and f.status = 'accepted' and p.username is not null and %s
                   and (:q = '' or strpos(lower(extensions.unaccent(p.username || ' ' || coalesce(p.display_name, ''))), :q) > 0)
-                order by f.accepted_at desc, f.%1$s
+                order by f.accepted_at desc, f.followee_id
                 limit :limit offset :offset
-                """.formatted(other, self, SocialStore.notBlocked("f." + other)))
+                """.formatted(SocialStore.notBlocked("f.followee_id")))
                 .param("user", v.profile().id())
                 .param("me", me)
                 .param("q", query)
@@ -192,7 +187,7 @@ public class UserService {
 
     /**
      * Préfixe du pseudo, du nom ou d'un mot du nom, à partir de 2 caractères. Ordre :
-     * pseudo exact, puis nombre de mes abonnements qui suivent la personne, puis nombre d'abonnés.
+     * pseudo exact, puis nombre d'amis en commun, puis nombre d'amis.
      */
     public Page<MemberLite> search(UUID me, String q, String cursor) {
         String query = Usernames.searchQuery(q);

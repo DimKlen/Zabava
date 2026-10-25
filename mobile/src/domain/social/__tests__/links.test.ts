@@ -32,6 +32,6 @@ describe('usernameFromLink', () => {
 
 it('chemin de profil', () => {
   expect(isProfilePath('/u/lea.m')).toBe(true);
-  expect(isProfilePath('/u/lea.m/connections')).toBe(false);
+  expect(isProfilePath('/u/lea.m/friends')).toBe(false);
   expect(isProfilePath('/title/tv/1399')).toBe(false);
 });

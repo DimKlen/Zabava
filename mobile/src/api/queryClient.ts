@@ -65,7 +65,7 @@ function isInList(type: unknown, tmdbId: unknown): boolean {
   );
 }
 
-/** Profils visités et leurs listes de titres (specs/social/docs/07 §2), pas leurs abonnés. */
+/** Profils visités et leurs listes de titres (specs/social/docs/07 §2), pas leurs amis. */
 function isVisitedProfile(key: readonly unknown[]): boolean {
   return key[0] === 'user' && (key.length === 2 || key[2] === 'titles');
 }

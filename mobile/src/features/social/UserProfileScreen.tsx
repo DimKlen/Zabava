@@ -27,7 +27,7 @@ import { showToast } from '@/store/ui';
 import { colors, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
-import { openConnections } from './navigation';
+import { openFriends } from './navigation';
 import { ProfileContent } from './ProfileContent';
 import { ProfileHeader } from './ProfileHeader';
 import { ProfileNotice } from './ProfileNotice';
@@ -44,7 +44,7 @@ export function UserProfileScreen({ username }: { username: string }) {
     if (profile?.isMe) router.replace('/(tabs)/profile');
   }, [profile?.isMe]);
 
-  // Profil ouvert : en tête des « Personnes suivies récemment ».
+  // Profil ouvert : en tête des « Profils consultés récemment ».
   const found = Boolean(profile && !profile.isMe);
   useEffect(() => {
     if (found) void rememberVisit(username).catch(() => undefined);
@@ -111,11 +111,11 @@ function OtherProfile({ profile }: { profile: UserProfile }) {
   const visible = !access.locked && !access.blocked;
   const titles = useUserTitles(profile.username, tab, segment, visible);
 
-  // Compteurs d'un profil privé non suivi ou bloqué : pas de liste, un toast.
-  const counters = (kind: 'followers' | 'following') => () => {
-    if (access.locked) showToast('Ce profil est privé');
+  // Amis d'un profil qui n'est pas un ami, ou bloqué : pas de liste, un toast.
+  const friends = () => {
+    if (access.locked) showToast('Réservé à ses amis');
     else if (access.blocked) showToast('Tu as bloqué ce profil');
-    else openConnections(profile.username, kind);
+    else openFriends(profile.username);
   };
 
   return (
@@ -123,12 +123,7 @@ function OtherProfile({ profile }: { profile: UserProfile }) {
       header={
         <>
           <Bar profile={profile} />
-          <ProfileHeader
-            isMe={false}
-            profile={profile}
-            onFollowers={counters('followers')}
-            onFollowing={counters('following')}
-          />
+          <ProfileHeader profile={profile} onFriends={friends} />
           <View style={styles.follow}>
             <FollowButton member={profile} size="normal" />
           </View>

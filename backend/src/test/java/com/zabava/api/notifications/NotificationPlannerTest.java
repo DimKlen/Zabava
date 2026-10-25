@@ -19,7 +19,7 @@ class NotificationPlannerTest {
 
     private static final ZoneId ZONE = ZoneId.of("America/Toronto");
     private static final ZonedDateTime NOW = ZonedDateTime.of(2026, 10, 11, 21, 30, 0, 0, ZONE);
-    private static final NotificationPrefs ALL = new NotificationPrefs(true, true, true, true, 9, true, true);
+    private static final NotificationPrefs ALL = new NotificationPrefs(true, true, true, true, 9, true);
 
     private static Candidate episode(long title, long episode, ZonedDateTime at) {
         return new Candidate(Type.EPISODE, title, episode, "Série " + title + " · S01 E0" + episode + " est disponible",
@@ -89,7 +89,7 @@ class NotificationPlannerTest {
 
     @Test
     void typeCoupeOuDejaEnvoye() {
-        NotificationPrefs noEpisodes = new NotificationPrefs(false, true, true, true, 9, true, true);
+        NotificationPrefs noEpisodes = new NotificationPrefs(false, true, true, true, 9, true);
         assertThat(NotificationPlanner.plan(List.of(episode(1, 1, NOW.minusHours(1))), noEpisodes, NOW, Set.of(), Set.of()))
                 .isEmpty();
         assertThat(NotificationPlanner.plan(List.of(episode(1, 1, NOW.minusHours(1))), ALL, NOW, Set.of(),

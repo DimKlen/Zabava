@@ -1,10 +1,9 @@
-import { CardsIcon, LockSimpleIcon } from 'phosphor-react-native';
+import { CardsIcon } from 'phosphor-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/Avatar';
-import { Tag } from '@/components/Tag';
 import { Text } from '@/components/Text';
-import { commonLabel, counterLabel, formatCount, showsCommon } from '@/domain/social/members';
+import { commonLabel, formatCount, friendsLabel, showsCommon } from '@/domain/social/members';
 import { colors, radii } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
 
@@ -12,48 +11,42 @@ export type HeaderProfile = {
   username: string;
   displayName: string;
   avatarUrl?: string | null;
-  isPrivate: boolean;
-  followersCount: number;
-  followingCount: number;
-  /** Profil d'un autre seulement : « Te suit » et titres en commun. */
-  followsMe?: boolean;
+  friendsCount: number;
+  /** Titres en commun avec moi (profil d'un ami). */
   commonCount?: number;
 };
 
 type Props = {
   profile: HeaderProfile;
-  isMe: boolean;
-  onFollowers: () => void;
-  onFollowing: () => void;
+  onFriends: () => void;
 };
 
-/** En-tête de profil (specs/social/docs/03 › ProfileHeader, Counters, CommonChip). */
-export function ProfileHeader({ profile, isMe, onFollowers, onFollowing }: Props) {
+/** En-tête du profil d'un autre membre (specs/social/docs/03 › ProfileHeader, Counters, CommonChip). */
+export function ProfileHeader({ profile, onFriends }: Props) {
   const common = profile.commonCount ?? 0;
+  const label = friendsLabel(profile.friendsCount);
   return (
     <>
       <View style={styles.row}>
-        <Avatar size={88} name={profile.displayName} uri={profile.avatarUrl} mine={isMe} />
+        <Avatar size={88} name={profile.displayName} uri={profile.avatarUrl} />
         <View style={styles.column}>
           <Text accessibilityRole="header" numberOfLines={1} style={styles.name}>
             {profile.displayName}
           </Text>
-          <View style={styles.handleRow}>
-            <Text style={styles.handle}>@{profile.username}</Text>
-            {profile.isPrivate ? (
-              <View accessible accessibilityLabel="Profil privé">
-                <LockSimpleIcon size={14} color={colors.neutral400} />
-              </View>
-            ) : null}
-            {!isMe && profile.followsMe ? <Tag label="Te suit" variant="neutral" /> : null}
-          </View>
-          <View style={styles.counters}>
-            <Counter count={profile.followersCount} kind="followers" onPress={onFollowers} />
-            <Counter count={profile.followingCount} kind="following" onPress={onFollowing} />
-          </View>
+          <Text style={styles.handle}>@{profile.username}</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${profile.friendsCount} ${label}`}
+            onPress={onFriends}
+            hitSlop={4}
+            style={styles.counter}
+          >
+            <Text style={styles.count}>{formatCount(profile.friendsCount)}</Text>
+            <Text style={styles.countLabel}>{label}</Text>
+          </Pressable>
         </View>
       </View>
-      {!isMe && showsCommon(common) ? (
+      {showsCommon(common) ? (
         <View style={styles.chipRow}>
           <View style={styles.chip}>
             <CardsIcon size={15} color={colors.neutral100} />
@@ -62,30 +55,6 @@ export function ProfileHeader({ profile, isMe, onFollowers, onFollowing }: Props
         </View>
       ) : null}
     </>
-  );
-}
-
-function Counter({
-  count,
-  kind,
-  onPress,
-}: {
-  count: number;
-  kind: 'followers' | 'following';
-  onPress: () => void;
-}) {
-  const label = counterLabel(count, kind);
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${count} ${label}`}
-      onPress={onPress}
-      hitSlop={4}
-      style={styles.counter}
-    >
-      <Text style={styles.count}>{formatCount(count)}</Text>
-      <Text style={styles.countLabel}>{label}</Text>
-    </Pressable>
   );
 }
 
@@ -106,28 +75,19 @@ const styles = StyleSheet.create({
     ...typography.titleXL,
     color: colors.text,
   },
-  handleRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 6,
-  },
   handle: {
     fontFamily: fonts.regular,
     fontSize: 14,
     lineHeight: 14 * 1.4,
     color: colors.neutral400,
   },
-  counters: {
-    flexDirection: 'row',
-    gap: 18,
-    marginTop: 4,
-  },
   counter: {
     flexDirection: 'row',
+    alignSelf: 'flex-start',
     alignItems: 'baseline',
     gap: 5,
     minHeight: 36,
+    marginTop: 4,
     paddingVertical: 6,
   },
   count: {

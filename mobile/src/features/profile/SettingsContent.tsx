@@ -3,27 +3,21 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import {
   CaretDownIcon,
-  CaretLeftIcon,
   CaretRightIcon,
   CheckIcon,
-  LockSimpleIcon,
   ProhibitIcon,
   ShieldCheckIcon,
   SignOutIcon,
   TelevisionSimpleIcon,
   TranslateIcon,
 } from 'phosphor-react-native';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useState, type ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { useProviders } from '@/api/catalog';
-import { useProfile, type Profile } from '@/api/profile';
+import type { Profile } from '@/api/profile';
 import { useBlocks } from '@/api/social';
 import { Button } from '@/components/Button';
-import { LoadError, showsLoadError } from '@/components/LoadError';
-import { OfflineBanner } from '@/components/OfflineBanner';
-import { SkeletonBox } from '@/components/Skeleton';
 import { Switch } from '@/components/Switch';
 import { Text } from '@/components/Text';
 import { LANGUAGES, languageChoice, languageLabel } from '@/domain/onboarding';
@@ -34,10 +28,9 @@ import {
   platformsSummary,
   type NotificationSwitch,
 } from '@/domain/profile';
-import { goBack } from '@/lib/navigation';
 import { ensureNotificationPermission } from '@/lib/notifications';
 import { openActionSheet } from '@/store/ui';
-import { colors, radii, spacing } from '@/theme/tokens';
+import { colors, spacing } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
 import { PlatformsSheet } from './PlatformsSheet';
@@ -45,7 +38,6 @@ import {
   changeLanguage,
   confirmDeleteAccount,
   confirmSignOut,
-  setPrivacy,
   updatePreference,
 } from './profileActions';
 import { SettingsGroup, SettingsRow } from './SettingsGroup';
@@ -56,48 +48,14 @@ const TMDB_LOGO_RATIO = 273.42 / 35.52;
 const JUSTWATCH_LOGO = require('../../../assets/logos/justwatch.png');
 const JUSTWATCH_LOGO_RATIO = 505 / 76;
 
-/**
- * Réglages (specs/docs/09 §9.2, specs/social/docs/04 §4.13) : ancien onglet Profil sans le bloc
- * compte, remplacé par Mon profil ; ouvert depuis l'engrenage.
- */
-export function SettingsScreen() {
-  const insets = useSafeAreaInsets();
-  const query = useProfile();
-  const profile = query.data;
+type Props = {
+  profile: Profile;
+  /** En tête des groupes, avec le même espacement (onglet Profil : moi et mes amis). */
+  first?: ReactNode;
+};
 
-  return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
-      <OfflineBanner />
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.bar}>
-          <Button
-            variant="icon"
-            height={44}
-            icon={CaretLeftIcon}
-            iconSize={22}
-            color={colors.text}
-            accessibilityLabel="Retour"
-            onPress={goBack}
-          />
-          <Text accessibilityRole="header" style={styles.title}>
-            Réglages
-          </Text>
-        </View>
-        {profile ? (
-          <SettingsContent profile={profile} />
-        ) : showsLoadError(query) ? (
-          <LoadError onRetry={() => void query.refetch()} />
-        ) : (
-          <View style={styles.loading}>
-            <SkeletonBox height={200} radius={radii.rLg} style={styles.loadingGroup} />
-          </View>
-        )}
-      </ScrollView>
-    </View>
-  );
-}
-
-function SettingsContent({ profile }: { profile: Profile }) {
+/** Réglages (specs/docs/09 §9.2, specs/social/docs/04 §4.13), dans l'onglet Profil. */
+export function SettingsContent({ profile, first }: Props) {
   const [platformsOpen, setPlatformsOpen] = useState(false);
   // Pendant le chargement : rien plutôt qu'un « Aucune » trompeur.
   const providers = useProviders().data;
@@ -128,6 +86,7 @@ function SettingsContent({ profile }: { profile: Profile }) {
   return (
     <>
       <View style={styles.groups}>
+        {first}
         <SettingsGroup label="Préférences">
           <SettingsRow
             label="Langue"
@@ -181,28 +140,16 @@ function SettingsContent({ profile }: { profile: Profile }) {
           </SettingsRow>
         </SettingsGroup>
 
-        <View>
-          <SettingsGroup label="Confidentialité">
-            <SettingsRow label="Profil privé" icon={LockSimpleIcon}>
-              <Switch
-                value={profile.isPrivate ?? false}
-                onValueChange={(value) => void setPrivacy(value)}
-                accessibilityLabel="Profil privé"
-              />
-            </SettingsRow>
-            <SettingsRow
-              label="Comptes bloqués"
-              icon={ProhibitIcon}
-              onPress={() => router.push('/settings/blocked')}
-            >
-              <Text style={styles.count}>{blockedLabel(blocked)}</Text>
-              <CaretRightIcon size={16} color={colors.neutral600} />
-            </SettingsRow>
-          </SettingsGroup>
-          <Text style={styles.help}>
-            En privé, seules les personnes que tu acceptes voient tes listes et ton activité.
-          </Text>
-        </View>
+        <SettingsGroup label="Confidentialité">
+          <SettingsRow
+            label="Comptes bloqués"
+            icon={ProhibitIcon}
+            onPress={() => router.push('/settings/blocked')}
+          >
+            <Text style={styles.count}>{blockedLabel(blocked)}</Text>
+            <CaretRightIcon size={16} color={colors.neutral600} />
+          </SettingsRow>
+        </SettingsGroup>
 
         {/* Déplacé des Préférences (specs/social/docs/04 §4.13). */}
         <SettingsGroup label="Anti-spoiler">
@@ -282,35 +229,6 @@ function Value({ text }: { text: string | undefined }) {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  bar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-  },
-  title: {
-    flex: 1,
-    fontFamily: fonts.medium,
-    fontSize: 18,
-    lineHeight: 18 * 1.3,
-    color: colors.text,
-  },
-  content: {
-    paddingBottom: 24,
-  },
-  loading: {
-    gap: 16,
-    paddingTop: 12,
-    paddingHorizontal: spacing.screenX,
-  },
-  loadingGroup: {
-    marginTop: 8,
-  },
   groups: {
     gap: 20,
     paddingTop: 16,
@@ -328,14 +246,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 13 * 1.4,
     color: colors.neutral400,
-  },
-  help: {
-    marginTop: 8,
-    paddingHorizontal: 4,
-    fontFamily: fonts.regular,
-    fontSize: 12,
-    lineHeight: 12 * 1.4,
-    color: colors.neutral500,
   },
   platforms: {
     flexShrink: 1,

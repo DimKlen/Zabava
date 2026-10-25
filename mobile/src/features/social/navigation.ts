@@ -2,7 +2,6 @@ import { router } from 'expo-router';
 
 import { profileKey, type Profile } from '@/api/profile';
 import { queryClient } from '@/api/queryClient';
-import type { ConnectionsKind } from '@/api/social';
 
 /** Profil d'un membre ; le mien s'ouvre dans l'onglet Profil (specs/social/docs/02 §2). */
 export function openUser(username: string): void {
@@ -14,7 +13,7 @@ export function openUser(username: string): void {
   router.push({ pathname: '/u/[username]', params: { username } });
 }
 
-/** Abonnés ou abonnements d'un profil, ouvert sur l'onglet touché. */
-export function openConnections(username: string, tab: ConnectionsKind): void {
-  router.push({ pathname: '/u/[username]/connections', params: { username, tab } });
+/** Amis d'un profil (les miens depuis l'onglet Profil). */
+export function openFriends(username: string): void {
+  router.push({ pathname: '/u/[username]/friends', params: { username } });
 }

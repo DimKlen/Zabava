@@ -76,25 +76,16 @@ public class SocialController {
         return users.titles(user.id(), username, type, status, cursor);
     }
 
-    @GetMapping("/users/{username}/followers")
-    public Page<MemberLite> followers(
+    @GetMapping("/users/{username}/friends")
+    public Page<MemberLite> friends(
             CurrentUser user,
             @PathVariable String username,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String cursor) {
-        return users.connections(user.id(), username, true, q, cursor);
+        return users.friends(user.id(), username, q, cursor);
     }
 
-    @GetMapping("/users/{username}/following")
-    public Page<MemberLite> following(
-            CurrentUser user,
-            @PathVariable String username,
-            @RequestParam(required = false) String q,
-            @RequestParam(required = false) String cursor) {
-        return users.connections(user.id(), username, false, q, cursor);
-    }
-
-    // ─── Suivi ────────────────────────────────────────────────────────────────
+    // ─── Amis (abonnements réciproques) ───────────────────────────────────────
 
     @PostMapping("/users/{username}/follow")
     public FollowResult follow(CurrentUser user, @PathVariable String username) {
@@ -105,19 +96,6 @@ public class SocialController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void unfollow(CurrentUser user, @PathVariable String username) {
         follows.unfollow(user.id(), username);
-    }
-
-    @DeleteMapping("/me/followers/{username}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeFollower(CurrentUser user, @PathVariable String username) {
-        follows.removeFollower(user.id(), username);
-    }
-
-    /** « Annuler » après « Retirer cet abonné » (specs/social/docs/07 §3). */
-    @PostMapping("/me/followers/{username}/restore")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void restoreFollower(CurrentUser user, @PathVariable String username) {
-        follows.restoreFollower(user.id(), username);
     }
 
     @GetMapping("/me/follow-requests")

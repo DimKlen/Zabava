@@ -25,25 +25,27 @@ type ApiFollowingStatus = components['schemas']['FollowingStatus'];
 export type UsernameAvailability = components['schemas']['UsernameAvailability'];
 
 export type UserProfile = Member & {
-  followersCount: number;
-  followingCount: number;
+  friendsCount: number;
   canSeeLists: boolean;
   isMe: boolean;
 };
 
 export type Page<T> = { items: T[]; nextCursor?: string };
 
-export type ConnectionsKind = 'followers' | 'following';
-
 const MINUTE = 60 * 1000;
-const FOLLOW_STATES: ReadonlySet<string> = new Set(['none', 'pending', 'following', 'blocked']);
+const FOLLOW_STATES: ReadonlySet<string> = new Set([
+  'none',
+  'pending',
+  'requested',
+  'following',
+  'blocked',
+]);
 const ACTIVITY_TYPES: ReadonlySet<string> = new Set([
   'added',
   'watched_movie',
   'started_show',
   'watched_episodes',
   'finished_show',
-  'followed',
 ]);
 const TITLE_STATUSES: ReadonlySet<string> = new Set([
   'watched',
@@ -59,8 +61,8 @@ export const usernameAvailableKey = (username: string) => ['usernameAvailable', 
 export const userKey = (username: string) => ['user', username] as const;
 export const userTitlesKey = (username: string, type: MediaType, status: ProfileSegment) =>
   ['user', username, 'titles', type, status] as const;
-export const connectionsKey = (username: string, kind: ConnectionsKind, q: string) =>
-  ['user', username, kind, q] as const;
+export const friendsKey = (username: string, q: string) =>
+  ['user', username, 'friends', q] as const;
 
 // ─── Conversions ───────────────────────────────────────────────────────────
 
@@ -70,7 +72,6 @@ export function toMember(item: ApiMember): Member | null {
     username: item.username,
     displayName: item.displayName || item.username,
     avatarUrl: item.avatarUrl,
-    isPrivate: item.isPrivate ?? false,
     followState: FOLLOW_STATES.has(item.followState ?? '')
       ? (item.followState as FollowState)
       : 'none',
@@ -84,8 +85,7 @@ export function toUserProfile(item: ApiUserProfile): UserProfile | null {
   if (!member) return null;
   return {
     ...member,
-    followersCount: item.followersCount ?? 0,
-    followingCount: item.followingCount ?? 0,
+    friendsCount: item.friendsCount ?? 0,
     canSeeLists: item.canSeeLists ?? false,
     isMe: item.isMe ?? false,
   };
@@ -161,7 +161,7 @@ export function useUserProfile(username: string) {
   });
 }
 
-/** Titres d'un autre profil, par 30 (403 si privé non suivi). */
+/** Titres d'un autre profil, par 30 (403 si ce n'est pas un ami). */
 export function useUserTitles(
   username: string,
   type: MediaType,
@@ -182,12 +182,12 @@ export function useUserTitles(
   });
 }
 
-/** Abonnés ou abonnements, plus récents d'abord, par 50 ; `q` filtre côté serveur. */
-export function useConnections(username: string, kind: ConnectionsKind, q: string) {
+/** Amis d'un profil, plus récents d'abord, par 50 ; `q` filtre côté serveur. */
+export function useFriends(username: string, q: string) {
   return useInfiniteQuery({
-    queryKey: connectionsKey(username, kind, q),
+    queryKey: friendsKey(username, q),
     queryFn: ({ pageParam, signal }) =>
-      api<ApiMemberPage>(`/users/${username}/${kind}`, {
+      api<ApiMemberPage>(`/users/${username}/friends`, {
         query: { q: q || undefined, cursor: pageParam },
         signal,
       }).then(toMemberPage),
@@ -197,7 +197,7 @@ export function useConnections(username: string, kind: ConnectionsKind, q: strin
   });
 }
 
-/** Ouvrir un profil le met en tête des « Personnes suivies récemment ». */
+/** Ouvrir un profil le met en tête des « Profils consultés récemment ». */
 export function rememberVisit(username: string): Promise<void> {
   return api<ApiMember[]>(`/me/recent-profiles/${username}`, { method: 'POST' }).then((items) => {
     queryClient.setQueryData(
@@ -227,7 +227,7 @@ export function useMemberSearch(q: string) {
   });
 }
 
-/** « Personnes suivies récemment » : les 5 derniers profils visités. */
+/** « Profils consultés récemment » : les 5 derniers profils visités. */
 export function useRecentProfiles(enabled = true) {
   return useQuery({
     queryKey: recentProfilesKey,
@@ -249,16 +249,15 @@ export function toActivity(item: ApiActivity): FeedActivity | null {
   const actor = item.actor ? toMember(item.actor) : null;
   if (!item.id || !item.createdAt || !actor || !ACTIVITY_TYPES.has(item.type ?? '')) return null;
   const type = item.type as ActivityType;
-  const target = item.target ? toMember(item.target) : null;
   const title = item.title ? toPosterTitle(item.title, 'movie') : null;
-  if (type === 'followed' ? !target : !title) return null;
+  if (!title) return null;
   const episode = item.episode;
   return {
     id: item.id,
     createdAt: item.createdAt,
     actor,
     type,
-    title: title ?? undefined,
+    title,
     episode:
       episode?.id !== undefined && episode.season !== undefined && episode.number !== undefined
         ? {
@@ -270,7 +269,6 @@ export function toActivity(item: ApiActivity): FeedActivity | null {
           }
         : undefined,
     count: item.count ?? 1,
-    target: target ?? undefined,
     inMyList: item.inMyList ?? false,
   };
 }
@@ -282,7 +280,7 @@ function toActivityPage(page: ApiActivityPage): Page<FeedActivity> {
   };
 }
 
-/** Activités de mes abonnements, plus récentes d'abord, par 30 ; 1re page gardée hors ligne. */
+/** Activités de mes amis, plus récentes d'abord, par 30 ; 1re page gardée hors ligne. */
 export function useFeed() {
   return useInfiniteQuery({
     queryKey: feedKey,
@@ -315,10 +313,10 @@ function toHolder(item: ApiFollowingStatus): TitleHolder | null {
 export function toTitleSocial(data: ApiTitleSocial): TitleSocial {
   const holders = (items: ApiFollowingStatus[] | undefined) =>
     (items ?? []).map(toHolder).filter((h): h is TitleHolder => h !== null);
-  return { following: holders(data.following), saw: holders(data.saw) };
+  return { following: holders(data.following) };
 }
 
-/** « Tes abonnements » et « Ils l'ont vu », chargés en parallèle de la fiche. */
+/** « Tes amis » d'une fiche, chargés en parallèle de la fiche. */
 export function useTitleSocial(type: MediaType, tmdbId: number) {
   return useQuery({
     queryKey: titleSocialKey(type, tmdbId),
@@ -333,7 +331,7 @@ export function useTitleSocial(type: MediaType, tmdbId: number) {
 export const followRequestsKey = ['followRequests'] as const;
 export const blocksKey = ['blocks'] as const;
 
-/** Mes demandes d'abonnement, plus récentes d'abord, par 50. */
+/** Mes demandes d'ami reçues, plus récentes d'abord, par 50. */
 export function useFollowRequests() {
   return useInfiniteQuery({
     queryKey: followRequestsKey,

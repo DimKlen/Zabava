@@ -7,10 +7,7 @@ import { api } from '@/api/http';
 import { profileKey, type Profile, type ProfileUpdate } from '@/api/profile';
 import { queryClient } from '@/api/queryClient';
 import { signOut } from '@/api/session';
-import { followRequestsKey } from '@/api/social';
-import { requireOnline } from '@/api/socialActions';
 import { toggleGroup, type ProviderGroup } from '@/domain/providers';
-import { autoAcceptedLabel } from '@/domain/social/members';
 import { unregisterPushToken } from '@/lib/notifications';
 import { openDialog, showToast } from '@/store/ui';
 
@@ -79,32 +76,6 @@ export function updatePreference(
     }),
     () => api<Profile>('/me/profile', { method: 'PUT', body: update }),
   );
-}
-
-/**
- * Profil privé ou public (Réglages › Confidentialité), refusé hors ligne. Passer en public accepte
- * les demandes en attente : toast « 3 demandes acceptées automatiquement ».
- */
-export function setPrivacy(isPrivate: boolean): Promise<boolean> {
-  if (!requireOnline()) return Promise.resolve(false);
-  const before = currentProfile();
-  const accepted = before?.isPrivate && !isPrivate ? (before.followRequestsCount ?? 0) : 0;
-  return optimistic(
-    (profile) => ({ ...profile, isPrivate }),
-    // Compteurs à jour (demandes acceptées, abonnés) d'après la réponse.
-    () =>
-      api<Profile>('/me/profile', { method: 'PUT', body: { isPrivate } }).then((profile) =>
-        queryClient.setQueryData<Profile>(profileKey, profile),
-      ),
-  ).then((done) => {
-    const toast = done ? autoAcceptedLabel(accepted) : null;
-    if (toast) {
-      showToast(toast);
-      void queryClient.invalidateQueries({ queryKey: followRequestsKey });
-      void queryClient.invalidateQueries({ queryKey: ['user', before?.username, 'followers'] });
-    }
-    return done;
-  });
 }
 
 function stripUndefined<T extends object>(value: T): Partial<T> {

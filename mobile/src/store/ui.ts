@@ -65,7 +65,7 @@ type UiState = {
   discoverTab: MediaType;
   /** À venir : filtre (Tout, Films, Séries, Animés). */
   upcomingFilter: 'all' | MediaType;
-  /** Sheet « Inviter » (Mon profil, abonnés vides, recherche de membres). */
+  /** Sheet « Inviter » (onglet Profil, amis vides, recherche de membres). */
   inviteOpen: boolean;
 
   showToast: (message: string, undo?: () => void) => void;

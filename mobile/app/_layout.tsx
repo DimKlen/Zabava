@@ -35,8 +35,8 @@ setupOnlineManager();
 const persistOptions = {
   persister: queryPersister,
   maxAge: persistMaxAge,
-  // À changer quand la forme d'une réponse en cache évolue (ex. identifiants de l'équipe).
-  buster: 'v2',
+  // À changer quand la forme d'une réponse en cache évolue (v3 : amis réciproques, friendsCount).
+  buster: 'v3',
   dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
 };
 
@@ -82,12 +82,10 @@ export default function RootLayout() {
             <Stack.Screen name="genre/[type]/[genre]" options={pushOptions} />
             <Stack.Screen name="studio/[id]" options={pushOptions} />
             <Stack.Screen name="u/[username]/index" options={pushOptions} />
-            <Stack.Screen name="u/[username]/connections" options={pushOptions} />
+            <Stack.Screen name="u/[username]/friends" options={pushOptions} />
             <Stack.Screen name="feed" options={pushOptions} />
             <Stack.Screen name="follow-requests" options={pushOptions} />
-            <Stack.Screen name="settings/index" options={pushOptions} />
             <Stack.Screen name="settings/blocked" options={pushOptions} />
-            <Stack.Screen name="profile/edit" options={pushOptions} />
             <Stack.Screen
               name="scan"
               options={{ presentation: 'fullScreenModal', animation: 'fade' }}

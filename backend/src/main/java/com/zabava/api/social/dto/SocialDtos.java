@@ -17,14 +17,14 @@ public final class SocialDtos {
     public record Page<T>(List<T> items, String nextCursor) {}
 
     /**
-     * Membre vu par l'utilisateur connecté. {@code followState} : mon abonnement à ce membre
-     * ({@code none}, {@code pending}, {@code following}) ou {@code blocked} si je l'ai bloqué.
+     * Membre vu par l'utilisateur connecté. {@code followState} : {@code following} (amis),
+     * {@code pending} (ma demande d'ami envoyée), {@code requested} (sa demande reçue),
+     * {@code none}, ou {@code blocked} si je l'ai bloqué.
      */
     public record MemberLite(
             String username,
             String displayName,
             String avatarUrl,
-            boolean isPrivate,
             String followState,
             boolean followsMe,
             int commonCount) {}
@@ -33,12 +33,10 @@ public final class SocialDtos {
             String username,
             String displayName,
             String avatarUrl,
-            boolean isPrivate,
             String followState,
             boolean followsMe,
             int commonCount,
-            int followersCount,
-            int followingCount,
+            int friendsCount,
             boolean canSeeLists,
             boolean isMe) {}
 
@@ -69,14 +67,14 @@ public final class SocialDtos {
             boolean inMyList) {}
 
     /**
-     * Un de mes abonnements qui a ce titre. {@code status} : film watched / towatch ; série
+     * Un de mes amis qui a ce titre. {@code status} : film watched / towatch ; série
      * in_progress (avec {@code detail} « S02 E05 »), finished, abandoned, towatch.
      * {@code date} : date de visionnage d'un film vu, sinon dernière action sur le titre.
      */
     public record FollowingStatus(MemberLite user, String status, String detail, Instant date) {}
 
-    /** {@code saw} : même forme que {@code following}, le membre portant ses titres en commun. */
-    public record TitleSocial(List<FollowingStatus> following, List<FollowingStatus> saw) {}
+    /** {@code following} : mes amis qui ont ce titre. */
+    public record TitleSocial(List<FollowingStatus> following) {}
 
     public record FollowResult(String status) {}
 

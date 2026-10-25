@@ -43,7 +43,7 @@ public class Members {
 
     static MemberLite lite(ProfileRow p, String followState, boolean followsMe, int commonCount) {
         return new MemberLite(
-                p.username(), displayName(p), p.avatarUrl(), p.isPrivate(), followState, followsMe, commonCount);
+                p.username(), displayName(p), p.avatarUrl(), followState, followsMe, commonCount);
     }
 
     /** Nom affiché, ou le pseudo s'il est vide. */
@@ -51,12 +51,16 @@ public class Members {
         return p.displayName() == null || p.displayName().isBlank() ? p.username() : p.displayName();
     }
 
-    /** blocked › following › pending › none (moi : none). */
+    /**
+     * blocked › following (amis) › pending (ma demande envoyée) › requested (sa demande reçue)
+     * › none (moi : none).
+     */
     static String followState(UUID me, MemberRow row) {
         if (row.profile().id().equals(me)) return "none";
         if (row.iBlocked()) return "blocked";
         if ("accepted".equals(row.myStatus())) return "following";
         if ("pending".equals(row.myStatus())) return "pending";
+        if (row.requestedMe()) return "requested";
         return "none";
     }
 }

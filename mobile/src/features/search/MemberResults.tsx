@@ -81,7 +81,7 @@ function RecentProfiles() {
       members={members}
       me={me}
       header={
-        <Text style={[typography.overline, styles.recentTitle]}>Personnes suivies récemment</Text>
+        <Text style={[typography.overline, styles.recentTitle]}>Profils consultés récemment</Text>
       }
     />
   );

@@ -18,7 +18,6 @@ import com.zabava.api.me.ProfileService;
 import com.zabava.api.notifications.NotificationService;
 import com.zabava.api.notifications.SocialNotifications;
 import com.zabava.api.social.ActivityService;
-import com.zabava.api.social.UsernameService;
 
 /**
  * Tâches planifiées (specs/docs/11 §4), en UTC. Actives seulement si
@@ -46,19 +45,16 @@ public class ScheduledJobs {
     private final ProfileService profiles;
     private final NotificationService notifications;
     private final ActivityService activities;
-    private final UsernameService usernames;
     private final SocialNotifications socialNotifications;
 
     public ScheduledJobs(JdbcClient db, TitleService titles, TitleStore store, ProfileService profiles,
-            NotificationService notifications, ActivityService activities, UsernameService usernames,
-            SocialNotifications socialNotifications) {
+            NotificationService notifications, ActivityService activities, SocialNotifications socialNotifications) {
         this.db = db;
         this.titles = titles;
         this.store = store;
         this.profiles = profiles;
         this.notifications = notifications;
         this.activities = activities;
-        this.usernames = usernames;
         this.socialNotifications = socialNotifications;
     }
 
@@ -90,10 +86,10 @@ public class ScheduledJobs {
         return ids.size();
     }
 
-    /** Rétention du social : activités de plus de 180 jours, pseudos libérés, compteurs du jour. */
+    /** Rétention du social : activités de plus de 180 jours, notifications envoyées, compteurs du jour. */
     @Scheduled(cron = "0 30 3 * * *", zone = "UTC")
     public int purgeSocial() {
-        int purged = activities.purge() + usernames.purge() + socialNotifications.purge();
+        int purged = activities.purge() + socialNotifications.purge();
         db.sql("delete from follow_quota where day < current_date - 1").update();
         db.sql("delete from follow_removals where removed_at < now() - interval '1 day'").update();
         return purged;

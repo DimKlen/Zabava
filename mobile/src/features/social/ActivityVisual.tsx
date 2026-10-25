@@ -2,14 +2,12 @@ import { Image } from 'expo-image';
 import { CheckIcon } from 'phosphor-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Avatar } from '@/components/Avatar';
 import { GradientFill } from '@/components/GradientFill';
 import type { ActivityVisual as Visual, FeedActivity } from '@/domain/social/feed';
 import { tmdbImage } from '@/lib/tmdb';
 import { colors, durations } from '@/theme/tokens';
 
 import { openTitle, previewOf } from '../title/openTitle';
-import { openUser } from './navigation';
 
 const POSTER = { width: 48, height: 72 };
 const STILL = { width: 64, height: 36 };
@@ -24,22 +22,9 @@ type Props = {
   background: string;
 };
 
-/** À droite d'une activité : affiche, vignette d'épisode ou avatar (specs/social/docs/03 › ActivityItem). */
+/** À droite d'une activité : affiche ou vignette d'épisode (specs/social/docs/03 › ActivityItem). */
 export function ActivityVisual({ activity, visual, background }: Props) {
-  const { title, episode, target } = activity;
-  if (visual === 'avatar') {
-    if (!target) return null;
-    return (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={target.displayName}
-        onPress={() => openUser(target.username)}
-      >
-        <Avatar size={48} name={target.displayName} uri={target.avatarUrl} />
-      </Pressable>
-    );
-  }
-  if (!title) return null;
+  const { title, episode } = activity;
   const open = () => openTitle(previewOf(title), visual === 'still' ? episode?.season : undefined);
   if (visual === 'still') {
     return (

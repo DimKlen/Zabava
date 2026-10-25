@@ -1,11 +1,10 @@
 import {
-  autoAcceptedLabel,
   commonLabel,
-  counterLabel,
   firstName,
   followButtonA11y,
   followButtonState,
   formatCount,
+  friendsLabel,
   profileAccess,
   showsCommon,
   stateAfterFollow,
@@ -13,34 +12,35 @@ import {
 
 describe('followButtonState', () => {
   it.each([
-    ['none', false, 'Suivre', 'userPlus', 'primary'],
-    ['none', true, 'Suivre en retour', 'userPlus', 'primary'],
-    ['pending', true, 'Demandé', 'clock', 'secondary'],
-    ['following', true, 'Abonné', 'check', 'secondary'],
-    ['blocked', true, 'Débloquer', 'prohibit', 'secondary'],
-  ] as const)('%s (me suit : %s) → %s', (followState, followsMe, label, icon, variant) => {
-    expect(followButtonState({ followState, followsMe })).toMatchObject({ label, icon, variant });
+    ['none', 'Ajouter en ami', 'userPlus', 'primary'],
+    ['requested', 'Accepter', 'userPlus', 'primary'],
+    ['pending', 'Demande envoyée', 'clock', 'secondary'],
+    ['following', 'Amis', 'check', 'secondary'],
+    ['blocked', 'Débloquer', 'prohibit', 'secondary'],
+  ] as const)('%s → %s', (followState, label, icon, variant) => {
+    expect(followButtonState({ followState })).toMatchObject({ label, icon, variant });
   });
 
   it('libellés d’accessibilité', () => {
-    expect(followButtonA11y('follow', 'lea.m')).toBe('Suivre @lea.m');
-    expect(followButtonA11y('following', 'lea.m')).toBe(
-      'Abonné à @lea.m, toucher pour se désabonner',
+    expect(followButtonA11y('add', 'lea.m')).toBe('Ajouter @lea.m en ami');
+    expect(followButtonA11y('accept', 'lea.m')).toBe('Accepter la demande de @lea.m');
+    expect(followButtonA11y('friends', 'lea.m')).toBe('Ami avec @lea.m, toucher pour le retirer');
+    expect(followButtonA11y('requested', 'lea.m')).toBe(
+      "Demande envoyée à @lea.m, toucher pour l'annuler",
     );
   });
 
-  it('suivre un profil privé envoie une demande', () => {
-    expect(stateAfterFollow({ isPrivate: true })).toBe('pending');
-    expect(stateAfterFollow({ isPrivate: false })).toBe('following');
+  it('ajouter en ami : une demande, ou amis tout de suite si sa demande était reçue', () => {
+    expect(stateAfterFollow({ followState: 'none' })).toBe('pending');
+    expect(stateAfterFollow({ followState: 'requested' })).toBe('following');
   });
 });
 
-describe('compteurs', () => {
+describe('compteur d’amis', () => {
   it('singulier pour 0 et 1', () => {
-    expect(counterLabel(0, 'followers')).toBe('abonné');
-    expect(counterLabel(1, 'following')).toBe('abonnement');
-    expect(counterLabel(2, 'followers')).toBe('abonnés');
-    expect(counterLabel(64, 'following')).toBe('abonnements');
+    expect(friendsLabel(0)).toBe('ami');
+    expect(friendsLabel(1)).toBe('ami');
+    expect(friendsLabel(2)).toBe('amis');
   });
 
   it('abrège à partir de 10 000', () => {
@@ -65,17 +65,15 @@ describe('titres en commun', () => {
 });
 
 describe('profileAccess', () => {
-  it('privé non suivi (ou demande envoyée) : verrouillé', () => {
-    for (const followState of ['none', 'pending'] as const) {
-      expect(profileAccess({ isMe: false, isPrivate: true, followState }).locked).toBe(true);
+  it('pas encore amis (même avec une demande dans un sens ou dans l’autre) : verrouillé', () => {
+    for (const followState of ['none', 'pending', 'requested'] as const) {
+      expect(profileAccess({ isMe: false, followState }).locked).toBe(true);
     }
-    expect(profileAccess({ isMe: false, isPrivate: true, followState: 'following' }).locked).toBe(
-      false,
-    );
+    expect(profileAccess({ isMe: false, followState: 'following' }).locked).toBe(false);
   });
 
   it('bloqué par moi : jamais « verrouillé », mais bloqué', () => {
-    expect(profileAccess({ isMe: false, isPrivate: true, followState: 'blocked' })).toEqual({
+    expect(profileAccess({ isMe: false, followState: 'blocked' })).toEqual({
       isMe: false,
       blocked: true,
       locked: false,
@@ -83,7 +81,7 @@ describe('profileAccess', () => {
   });
 
   it('moi : tout est visible', () => {
-    expect(profileAccess({ isMe: true, isPrivate: true, followState: 'none' })).toEqual({
+    expect(profileAccess({ isMe: true, followState: 'none' })).toEqual({
       isMe: true,
       blocked: false,
       locked: false,
@@ -94,10 +92,4 @@ describe('profileAccess', () => {
 it('prénom = premier mot du nom', () => {
   expect(firstName('Léa Martin')).toBe('Léa');
   expect(firstName('  Max ')).toBe('Max');
-});
-
-it('passage en public : libellé des demandes acceptées', () => {
-  expect(autoAcceptedLabel(0)).toBeNull();
-  expect(autoAcceptedLabel(1)).toBe('1 demande acceptée automatiquement');
-  expect(autoAcceptedLabel(3)).toBe('3 demandes acceptées automatiquement');
 });

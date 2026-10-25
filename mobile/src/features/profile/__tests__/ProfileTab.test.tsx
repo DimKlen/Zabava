@@ -9,11 +9,13 @@ import { signOut } from '@/api/session';
 import { ensureNotificationPermission } from '@/lib/notifications';
 import { useUiStore } from '@/store/ui';
 
-import { SettingsScreen } from '../SettingsScreen';
+import { MyProfileScreen } from '../../social/MyProfileScreen';
 
 jest.mock('@/api/http', () => ({ api: jest.fn() }));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true },
+  // L'onglet prend le focus une fois, au montage.
+  useFocusEffect: (effect: () => void) => jest.requireActual('react').useEffect(effect, [effect]),
 }));
 // Le client de l'app garde ses requêtes 7 jours : ses minuteurs empêcheraient Jest de finir.
 jest.mock('@/api/queryClient', () => {
@@ -50,7 +52,10 @@ const METRICS = {
 };
 
 const PROFILE = {
+  username: 'dim.k',
   displayName: 'Dim',
+  friendsCount: 2,
+  followRequestsCount: 0,
   email: 'dim@exemple.ca',
   authProvider: 'apple',
   language: 'fr-CA',
@@ -87,7 +92,7 @@ async function renderProfile() {
   await render(
     <SafeAreaProvider initialMetrics={METRICS}>
       <QueryClientProvider client={queryClient}>
-        <SettingsScreen />
+        <MyProfileScreen />
       </QueryClientProvider>
     </SafeAreaProvider>,
   );
@@ -109,10 +114,17 @@ beforeEach(async () => {
   await act(() => useUiStore.setState({ dialog: null, dialogOpen: false }));
 });
 
-describe('SettingsScreen', () => {
-  it('préférences et à propos ; le bloc compte est remplacé par Mon profil', async () => {
+describe('onglet Profil', () => {
+  it('moi, « Mes amis · 2 », puis les réglages, sans « Modifier le profil »', async () => {
     await renderProfile();
-    expect(screen.getByText('Réglages')).toBeTruthy();
+    expect(screen.getByText('Profil')).toBeTruthy();
+    expect(screen.getByText('Dim')).toBeTruthy();
+    expect(screen.getByText('@dim.k')).toBeTruthy();
+    expect(screen.getByLabelText('Mes amis, 2')).toBeTruthy();
+    // Aucune demande : pas de ligne « Demandes d'amis ».
+    expect(screen.queryByLabelText(/^Demandes d'amis, /)).toBeNull();
+    expect(screen.queryByText('Modifier le profil')).toBeNull();
+    expect(screen.queryByText(/abonn/)).toBeNull();
     expect(screen.queryByText('dim@exemple.ca · Apple')).toBeNull();
     expect(screen.getByText('Français')).toBeTruthy();
     expect(await screen.findByText('Netflix, Crave')).toBeTruthy();
@@ -120,6 +132,48 @@ describe('SettingsScreen', () => {
     expect(screen.getByText('Version 1.0.0')).toBeTruthy();
     expect(screen.getByLabelText('TMDB')).toBeTruthy();
     expect(screen.getByLabelText('JustWatch')).toBeTruthy();
+  });
+
+  it('revenir sur l’onglet relit mes amis et mes demandes (changés par les autres)', async () => {
+    queryClient.clear();
+    // Profil en cache d'une visite précédente : sans relecture, il resterait affiché.
+    queryClient.setQueryData(['profile'], { ...PROFILE, friendsCount: 0, followRequestsCount: 0 });
+    profile = { ...PROFILE, friendsCount: 1, followRequestsCount: 1 };
+    await render(
+      <SafeAreaProvider initialMetrics={METRICS}>
+        <QueryClientProvider client={queryClient}>
+          <MyProfileScreen />
+        </QueryClientProvider>
+      </SafeAreaProvider>,
+    );
+    expect(await screen.findByLabelText("Demandes d'amis, 1")).toBeTruthy();
+    expect(screen.getByLabelText('Mes amis, 1')).toBeTruthy();
+  });
+
+  it('« Mes amis » ouvre ma liste d’amis', async () => {
+    await renderProfile();
+    await fireEvent.press(screen.getByLabelText('Mes amis, 2'));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/u/[username]/friends',
+      params: { username: 'dim.k' },
+    });
+  });
+
+  it('demandes reçues : ligne « Demandes d’amis » avec leur nombre', async () => {
+    profile = { ...PROFILE, followRequestsCount: 3 };
+    await renderProfile();
+    await fireEvent.press(screen.getByLabelText("Demandes d'amis, 3"));
+    expect(router.push).toHaveBeenCalledWith('/follow-requests');
+  });
+
+  it('« + » : chercher un membre ou inviter', async () => {
+    await renderProfile();
+    await fireEvent.press(screen.getByLabelText('Ajouter un ami'));
+    const sheet = useUiStore.getState().actionSheet;
+    expect(sheet?.title).toBe('Ajouter un ami');
+    expect(sheet?.options.map((option) => option.label)).toEqual(['Chercher un membre', 'Inviter']);
+    await act(() => sheet?.options[0]?.onPress());
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/search', params: { tab: 'members' } });
   });
 
   it('activer une notification sans permission : rien n’est enregistré', async () => {
@@ -215,51 +269,30 @@ describe('SettingsScreen', () => {
     expect(screen.getByLabelText('Disney Plus')).toBeTruthy();
   });
 
-  it('notifications sociales : « Nouvel abonné » et « Demandes d’abonnement »', async () => {
+  it('notifications sociales : « Demandes d’amis » seulement', async () => {
     await renderProfile();
-    await fireEvent.press(screen.getByLabelText('Nouvel abonné'));
+    expect(screen.queryByLabelText('Nouvel abonné')).toBeNull();
+    await fireEvent.press(screen.getByLabelText("Demandes d'amis"));
     expect(mockPermission).not.toHaveBeenCalled();
     await waitFor(() =>
       expect(mockApi).toHaveBeenCalledWith('/me/profile', {
         method: 'PUT',
-        body: { notificationPrefs: { newFollower: false } },
+        body: { notificationPrefs: { followRequests: false } },
       }),
     );
-    expect(screen.getByLabelText("Demandes d'abonnement")).toBeTruthy();
   });
 
   it('confidentialité : comptes bloqués « Aucun », puis leur nombre ; la ligne ouvre l’écran', async () => {
     await renderProfile();
     expect(await screen.findByText('Aucun')).toBeTruthy();
-    expect(
-      screen.getByText(
-        'En privé, seules les personnes que tu acceptes voient tes listes et ton activité.',
-      ),
-    ).toBeTruthy();
+    // Plus de profil public ni privé : seuls les amis voient listes et activité.
+    expect(screen.queryByLabelText('Profil privé')).toBeNull();
     await fireEvent.press(screen.getByLabelText('Comptes bloqués'));
     expect(router.push).toHaveBeenCalledWith('/settings/blocked');
 
     blocked = [{ username: 'x.y', displayName: 'X', followState: 'blocked' }];
     await act(() => queryClient.invalidateQueries({ queryKey: ['blocks'] }));
     expect(await screen.findByText('1')).toBeTruthy();
-  });
-
-  it('passer en public accepte les demandes : « 3 demandes acceptées automatiquement »', async () => {
-    profile = { ...PROFILE, isPrivate: true, followRequestsCount: 3, username: 'dim.k' };
-    await renderProfile();
-    mockApi.mockImplementation(async (path, options) =>
-      path === '/me/profile' && options?.method === 'PUT'
-        ? { ...profile, isPrivate: false, followRequestsCount: 0 }
-        : route(path),
-    );
-    await fireEvent.press(screen.getByLabelText('Profil privé'));
-    await waitFor(() =>
-      expect(useUiStore.getState().toast?.message).toBe('3 demandes acceptées automatiquement'),
-    );
-    expect(mockApi).toHaveBeenCalledWith('/me/profile', {
-      method: 'PUT',
-      body: { isPrivate: false },
-    });
   });
 
   it('anti-spoiler : son propre groupe, « Protection anti-spoiler »', async () => {

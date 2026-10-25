@@ -138,15 +138,16 @@ describe('UsernameScreen', () => {
     expect(continueButton()).toBeDisabled();
   });
 
-  it('enregistre le pseudo et la visibilité, puis passe à la langue', async () => {
+  it('enregistre le pseudo, définitif, puis passe à la langue', async () => {
     await renderScreen();
     await screen.findByText('Disponible');
-    await fireEvent.press(screen.getByLabelText('Profil privé'));
+    expect(screen.getByText(/Tu ne pourras plus le changer\./)).toBeTruthy();
+    expect(screen.queryByLabelText('Profil privé')).toBeNull();
     await fireEvent.press(continueButton());
     await waitFor(() => expect(router.push).toHaveBeenCalledWith('/onboarding/region'));
     expect(mockApi).toHaveBeenCalledWith('/me/profile', {
       method: 'PUT',
-      body: { username: 'dim.k.tv', isPrivate: true },
+      body: { username: 'dim.k.tv' },
     });
   });
 
@@ -190,9 +191,6 @@ describe('UsernameScreen', () => {
     expect(continueButton()).toBeEnabled();
     await fireEvent.press(continueButton());
     await waitFor(() => expect(router.push).toHaveBeenCalledWith('/onboarding/region'));
-    expect(mockApi).toHaveBeenCalledWith('/me/profile', {
-      method: 'PUT',
-      body: { isPrivate: false },
-    });
+    expect(mockApi).not.toHaveBeenCalledWith('/me/profile', expect.anything());
   });
 });
