@@ -1,4 +1,3 @@
-import { DotsThreeIcon } from 'phosphor-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { commonLabel, showsCommon, type Member } from '@/domain/social/members';
@@ -6,7 +5,6 @@ import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
 import { Avatar } from './Avatar';
-import { Button } from './Button';
 import { FollowButton } from './FollowButton';
 import { Text } from './Text';
 
@@ -15,12 +13,10 @@ type Props = {
   onPress: () => void;
   /** Ma propre ligne : jamais de bouton d'ami. */
   isMe?: boolean;
-  /** Menu « … » (ma liste d'amis). */
-  onMore?: () => void;
 };
 
 /** Ligne de membre (specs/social/docs/03 › MemberRow). */
-export function MemberRow({ member, onPress, isMe = false, onMore }: Props) {
+export function MemberRow({ member, onPress, isMe = false }: Props) {
   const subtitle = showsCommon(member.commonCount)
     ? `@${member.username} · ${commonLabel(member.commonCount)}`
     : `@${member.username}`;
@@ -41,17 +37,6 @@ export function MemberRow({ member, onPress, isMe = false, onMore }: Props) {
         </Text>
       </View>
       {isMe ? null : <FollowButton member={member} size="compact" />}
-      {onMore ? (
-        <Button
-          variant="icon"
-          height={40}
-          icon={DotsThreeIcon}
-          iconSize={20}
-          color={colors.neutral400}
-          accessibilityLabel={`Options pour @${member.username}`}
-          onPress={onMore}
-        />
-      ) : null}
     </Pressable>
   );
 }

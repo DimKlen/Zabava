@@ -25,7 +25,7 @@ import { PROGRESS_HEIGHT, ProfilePoster } from './ProfilePoster';
 type Props = {
   /** Barre, en-tête, boutons : tout ce qui précède les listes. */
   header: ReactNode;
-  /** À la place des listes (pas encore amis, bloqué) ; null = listes visibles. */
+  /** À la place des listes (pas encore amis) ; null = listes visibles. */
   notice?: ReactNode;
   tab: MediaType;
   segment: ProfileSegment;

@@ -159,8 +159,8 @@ class ActivityIT extends SocialTest {
         mvc.perform(as(dim, get("/api/v1/me/feed")))
                 .andExpect(jsonPath("$.items[*].type", contains("watched_movie", "added")));
 
-        // Bloquer Léa la retire du fil.
-        mvc.perform(as(dim, post("/api/v1/users/lea.m/block")));
+        // Retirer Léa de mes amis la retire du fil.
+        mvc.perform(as(dim, delete("/api/v1/users/lea.m/follow")));
         mvc.perform(as(dim, get("/api/v1/me/feed")))
                 .andExpect(jsonPath("$.items[*].type", contains("watched_movie")));
     }

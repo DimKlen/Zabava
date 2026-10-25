@@ -16,7 +16,6 @@ describe('followButtonState', () => {
     ['requested', 'Accepter', 'userPlus', 'primary'],
     ['pending', 'Demande envoyée', 'clock', 'secondary'],
     ['following', 'Amis', 'check', 'secondary'],
-    ['blocked', 'Débloquer', 'prohibit', 'secondary'],
   ] as const)('%s → %s', (followState, label, icon, variant) => {
     expect(followButtonState({ followState })).toMatchObject({ label, icon, variant });
   });
@@ -72,18 +71,9 @@ describe('profileAccess', () => {
     expect(profileAccess({ isMe: false, followState: 'following' }).locked).toBe(false);
   });
 
-  it('bloqué par moi : jamais « verrouillé », mais bloqué', () => {
-    expect(profileAccess({ isMe: false, followState: 'blocked' })).toEqual({
-      isMe: false,
-      blocked: true,
-      locked: false,
-    });
-  });
-
   it('moi : tout est visible', () => {
     expect(profileAccess({ isMe: true, followState: 'none' })).toEqual({
       isMe: true,
-      blocked: false,
       locked: false,
     });
   });

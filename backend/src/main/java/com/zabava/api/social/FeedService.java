@@ -57,10 +57,7 @@ public class FeedService {
 
     // ─── Fil ──────────────────────────────────────────────────────────────────
 
-    /**
-     * Activités de mes amis, plus récentes d'abord, sans les
-     * comptes bloqués dans un sens ou dans l'autre (auteur ou personne suivie).
-     */
+    /** Activités de mes amis, plus récentes d'abord. */
     public Page<Activity> feed(UUID me, String cursor, Integer limit) {
         int size = limit == null ? FEED_PAGE : Math.clamp(limit, 1, FEED_MAX);
         Cursors.FeedPosition after = Cursors.feed(cursor);
@@ -68,12 +65,10 @@ public class FeedService {
                 select a.id, a.user_id, a.type, a.title_id, a.episode_id, a.target_user_id, a.count, a.updated_at
                 from activities a
                 join follows f on f.follower_id = :me and f.followee_id = a.user_id and f.status = 'accepted'
-                where %s
-                  and (a.target_user_id is null or %s)
-                  and (cast(:at as timestamptz) is null or (a.updated_at, a.id) < (cast(:at as timestamptz), :id))
+                where cast(:at as timestamptz) is null or (a.updated_at, a.id) < (cast(:at as timestamptz), :id)
                 order by a.updated_at desc, a.id desc
                 limit :limit
-                """.formatted(SocialStore.notBlocked("a.user_id"), SocialStore.notBlocked("a.target_user_id")))
+                """)
                 .param("me", me)
                 .param("at", after == null ? null : Timestamp.from(after.at()))
                 .param("id", after == null ? 0 : after.id())
@@ -141,8 +136,8 @@ public class FeedService {
         List<UUID> followees = db.sql("""
                 select f.followee_id from follows f
                 join user_titles ut on ut.user_id = f.followee_id and ut.title_id = :title
-                where f.follower_id = :me and f.status = 'accepted' and %s
-                """.formatted(SocialStore.notBlocked("f.followee_id")))
+                where f.follower_id = :me and f.status = 'accepted'
+                """)
                 .param("me", me)
                 .param("title", title.id())
                 .query(UUID.class)

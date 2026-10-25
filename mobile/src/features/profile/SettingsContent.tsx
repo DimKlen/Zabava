@@ -1,11 +1,10 @@
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
 import {
   CaretDownIcon,
   CaretRightIcon,
   CheckIcon,
-  ProhibitIcon,
+  GlobeHemisphereWestIcon,
   ShieldCheckIcon,
   SignOutIcon,
   TelevisionSimpleIcon,
@@ -16,7 +15,6 @@ import { StyleSheet, View } from 'react-native';
 
 import { useProviders } from '@/api/catalog';
 import type { Profile } from '@/api/profile';
-import { useBlocks } from '@/api/social';
 import { Button } from '@/components/Button';
 import { Switch } from '@/components/Switch';
 import { Text } from '@/components/Text';
@@ -24,8 +22,10 @@ import { LANGUAGES, languageChoice, languageLabel } from '@/domain/onboarding';
 import {
   DIGEST_HOURS,
   NOTIFICATION_SWITCHES,
+  REGIONS,
   digestLabel,
   platformsSummary,
+  regionLabel,
   type NotificationSwitch,
 } from '@/domain/profile';
 import { ensureNotificationPermission } from '@/lib/notifications';
@@ -35,7 +35,7 @@ import { fonts } from '@/theme/typography';
 
 import { PlatformsSheet } from './PlatformsSheet';
 import {
-  changeLanguage,
+  changeCatalogSetting,
   confirmDeleteAccount,
   confirmSignOut,
   updatePreference,
@@ -59,7 +59,6 @@ export function SettingsContent({ profile, first }: Props) {
   const [platformsOpen, setPlatformsOpen] = useState(false);
   // Pendant le chargement : rien plutôt qu'un « Aucune » trompeur.
   const providers = useProviders().data;
-  const blocked = useBlocks().data;
   const prefs = profile.notificationPrefs;
 
   const pick = <V extends string>(
@@ -96,11 +95,25 @@ export function SettingsContent({ profile, first }: Props) {
                 'Langue',
                 LANGUAGES,
                 languageChoice(profile.language),
-                (language) => void changeLanguage({ language }),
+                (language) => void changeCatalogSetting({ language }),
               )
             }
           >
             <Value text={languageLabel(profile.language)} />
+          </SettingsRow>
+          <SettingsRow
+            label="Région"
+            icon={GlobeHemisphereWestIcon}
+            onPress={() =>
+              pick(
+                'Région',
+                REGIONS,
+                profile.region,
+                (region) => void changeCatalogSetting({ region }),
+              )
+            }
+          >
+            <Value text={regionLabel(profile.region)} />
           </SettingsRow>
           <SettingsRow
             label="Mes plateformes"
@@ -137,17 +150,6 @@ export function SettingsContent({ profile, first }: Props) {
             }
           >
             <Value text={digestLabel(prefs?.digestHour ?? 9)} />
-          </SettingsRow>
-        </SettingsGroup>
-
-        <SettingsGroup label="Confidentialité">
-          <SettingsRow
-            label="Comptes bloqués"
-            icon={ProhibitIcon}
-            onPress={() => router.push('/settings/blocked')}
-          >
-            <Text style={styles.count}>{blockedLabel(blocked)}</Text>
-            <CaretRightIcon size={16} color={colors.neutral600} />
           </SettingsRow>
         </SettingsGroup>
 
@@ -209,13 +211,6 @@ export function SettingsContent({ profile, first }: Props) {
   );
 }
 
-/** « 3 », « Aucun » ; rien pendant le chargement. */
-function blockedLabel(blocked: readonly { followState: string }[] | undefined): string {
-  if (!blocked) return '';
-  const count = blocked.filter((member) => member.followState === 'blocked').length;
-  return count > 0 ? String(count) : 'Aucun';
-}
-
 /** Valeur d'une ligne à choix : texte 14 `neutral300` et CaretDown. */
 function Value({ text }: { text: string | undefined }) {
   return (
@@ -240,12 +235,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 14 * 1.4,
     color: colors.neutral300,
-  },
-  count: {
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    lineHeight: 13 * 1.4,
-    color: colors.neutral400,
   },
   platforms: {
     flexShrink: 1,

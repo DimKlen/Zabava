@@ -34,14 +34,10 @@ public class SocialStore {
      * Relation entre moi et un autre compte. {@code myStatus} : mon abonnement (null, pending,
      * accepted) ; {@code followsMe} : son abonnement accepté à moi.
      */
-    public record Relation(String myStatus, boolean followsMe, boolean iBlocked, boolean blockedMe) {
+    public record Relation(String myStatus, boolean followsMe) {
 
         public boolean following() {
             return "accepted".equals(myStatus);
-        }
-
-        public boolean blockedEitherWay() {
-            return iBlocked || blockedMe;
         }
     }
 
@@ -49,8 +45,7 @@ public class SocialStore {
      * Membre et sa relation avec moi, sans les titres en commun. {@code requestedMe} : il m'a envoyé
      * une demande d'ami pas encore acceptée.
      */
-    public record MemberRow(
-            ProfileRow profile, String myStatus, boolean followsMe, boolean requestedMe, boolean iBlocked) {}
+    public record MemberRow(ProfileRow profile, String myStatus, boolean followsMe, boolean requestedMe) {}
 
     /** Titre de la liste d'un utilisateur. */
     public record ListRow(long titleId, String mediaType, String status, Instant addedAt, Instant watchedAt) {}
@@ -71,13 +66,6 @@ public class SocialStore {
             """.formatted(filter);
     }
 
-    /** Aucun blocage, dans un sens ou dans l'autre, entre {@code :me} et la colonne donnée. */
-    static String notBlocked(String column) {
-        return """
-                not exists (select 1 from blocks b where (b.blocker_id = :me and b.blocked_id = %1$s)
-                  or (b.blocker_id = %1$s and b.blocked_id = :me))
-                """.formatted(column);
-    }
 
     private static final String PROFILE = """
             select p.id, p.username, p.display_name, p.avatar_url, p.following_count
@@ -109,17 +97,13 @@ public class SocialStore {
                 select
                   (select status from follows where follower_id = :me and followee_id = :other) as my_status,
                   exists (select 1 from follows where follower_id = :other and followee_id = :me
-                          and status = 'accepted') as follows_me,
-                  exists (select 1 from blocks where blocker_id = :me and blocked_id = :other) as i_blocked,
-                  exists (select 1 from blocks where blocker_id = :other and blocked_id = :me) as blocked_me
+                          and status = 'accepted') as follows_me
                 """)
                 .param("me", me)
                 .param("other", other)
                 .query((rs, n) -> new Relation(
                         rs.getString("my_status"),
-                        rs.getBoolean("follows_me"),
-                        rs.getBoolean("i_blocked"),
-                        rs.getBoolean("blocked_me")))
+                        rs.getBoolean("follows_me")))
                 .single();
     }
 
@@ -131,8 +115,7 @@ public class SocialStore {
                 select p.id, p.username, p.display_name, p.avatar_url, p.following_count,
                   mine.status as my_status,
                   coalesce(theirs.status = 'accepted', false) as follows_me,
-                  coalesce(theirs.status = 'pending', false) as requested_me,
-                  exists (select 1 from blocks b where b.blocker_id = :me and b.blocked_id = p.id) as i_blocked
+                  coalesce(theirs.status = 'pending', false) as requested_me
                 from profiles p
                 left join follows mine on mine.follower_id = :me and mine.followee_id = p.id
                 left join follows theirs on theirs.follower_id = p.id and theirs.followee_id = :me
@@ -142,7 +125,7 @@ public class SocialStore {
                 .param("ids", ids)
                 .query((rs, n) -> result.put(rs.getObject("id", UUID.class), new MemberRow(
                         profile(rs, n), rs.getString("my_status"), rs.getBoolean("follows_me"),
-                        rs.getBoolean("requested_me"), rs.getBoolean("i_blocked"))))
+                        rs.getBoolean("requested_me"))))
                 .list();
         return result;
     }
@@ -163,9 +146,8 @@ public class SocialStore {
                 where o.user_id <> :me
                   and exists (select 1 from follows f
                     where f.follower_id = :me and f.followee_id = o.user_id and f.status = 'accepted')
-                  and %s
                 group by o.user_id
-                """.formatted(notBlocked("o.user_id")))
+                """)
                 .param("me", me)
                 .param("users", union(me, others))
                 .query((rs, n) -> result.put(rs.getObject("user_id", UUID.class), rs.getInt("n")))

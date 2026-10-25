@@ -18,8 +18,8 @@ public final class SocialDtos {
 
     /**
      * Membre vu par l'utilisateur connecté. {@code followState} : {@code following} (amis),
-     * {@code pending} (ma demande d'ami envoyée), {@code requested} (sa demande reçue),
-     * {@code none}, ou {@code blocked} si je l'ai bloqué.
+     * {@code pending} (ma demande d'ami envoyée), {@code requested} (sa demande reçue) ou
+     * {@code none}.
      */
     public record MemberLite(
             String username,

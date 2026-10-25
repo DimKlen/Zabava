@@ -27,7 +27,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 
 /**
  * Amis réciproques (retours du 2026-10-24) : demandes, amitié dans les deux sens, visibilité
- * réservée aux amis, blocage, limite du jour.
+ * réservée aux amis, limite du jour.
  */
 class FollowIT extends SocialTest {
 
@@ -130,46 +130,6 @@ class FollowIT extends SocialTest {
         mvc.perform(as(lea, get("/api/v1/users/lea.m/friends"))).andExpect(status().isOk());
     }
 
-    /** Un utilisateur qui m'a bloqué renvoie 404. */
-    @Test
-    void unUtilisateurQuiMABloqueEstIntrouvable() throws Exception {
-        mvc.perform(as(lea, post("/api/v1/users/dim.k/block"))).andExpect(status().isNoContent());
-
-        mvc.perform(as(dim, get("/api/v1/users/lea.m"))).andExpect(status().isNotFound());
-        mvc.perform(as(dim, get("/api/v1/users/lea.m/titles?type=movie&status=watched"))).andExpect(status().isNotFound());
-        mvc.perform(as(dim, get("/api/v1/users/lea.m/friends"))).andExpect(status().isNotFound());
-        follow(dim, "lea.m").andExpect(status().isForbidden());
-        mvc.perform(as(dim, get("/api/v1/users/search?q=lea"))).andExpect(jsonPath("$.items", hasSize(0)));
-
-        // Côté bloqueur : profil visible, bouton « Débloquer », listes masquées.
-        mvc.perform(as(lea, get("/api/v1/users/dim.k")))
-                .andExpect(jsonPath("$.followState").value("blocked"))
-                .andExpect(jsonPath("$.canSeeLists").value(false));
-        mvc.perform(as(lea, get("/api/v1/users/dim.k/titles?type=movie&status=watched")))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.error.code").value("blocked"));
-        mvc.perform(as(lea, get("/api/v1/me/blocks"))).andExpect(jsonPath("$[*].username", contains("dim.k")));
-    }
-
-    @Test
-    void bloquerSupprimeLAmitieEtLesDemandes() throws Exception {
-        befriend(dim, "dim.k", lea, "lea.m");
-        follow(dim, "max.dubois");
-
-        mvc.perform(as(dim, post("/api/v1/users/lea.m/block"))).andExpect(status().isNoContent());
-        mvc.perform(as(dim, post("/api/v1/users/max.dubois/block"))).andExpect(status().isNoContent());
-
-        assertThat(count("select count(*) from follows")).isZero();
-        assertThat(friends(lea)).isZero();
-        assertThat(friends(dim)).isZero();
-        follow(dim, "lea.m").andExpect(status().isForbidden());
-
-        // Débloquer ne rétablit pas l'ancienne amitié : il faut une nouvelle demande.
-        mvc.perform(as(dim, delete("/api/v1/users/lea.m/block"))).andExpect(status().isNoContent());
-        mvc.perform(as(dim, get("/api/v1/users/lea.m"))).andExpect(jsonPath("$.followState").value("none"));
-        follow(dim, "lea.m").andExpect(jsonPath("$.status").value("pending"));
-    }
-
     /** La 201e demande du jour renvoie 429. */
     @Test
     void la201eDemandeDuJourEstRefusee() throws Exception {
@@ -247,7 +207,6 @@ class FollowIT extends SocialTest {
     @Test
     void onNePeutPasSAjouterSoiMeme() throws Exception {
         follow(dim, "dim.k").andExpect(status().isBadRequest());
-        mvc.perform(as(dim, post("/api/v1/users/dim.k/block"))).andExpect(status().isBadRequest());
         follow(dim, "inconnu").andExpect(status().isNotFound());
     }
 

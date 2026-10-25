@@ -6,13 +6,13 @@
  * membre concerné, jamais une autre action faite entre-temps.
  */
 import { onlineManager, type QueryKey } from '@tanstack/react-query';
-import { FlagIcon, ProhibitIcon, ShareNetworkIcon, UserMinusIcon } from 'phosphor-react-native';
+import { FlagIcon, ShareNetworkIcon, UserMinusIcon } from 'phosphor-react-native';
 import { Share } from 'react-native';
 
 import { firstName, stateAfterFollow, type Member } from '@/domain/social/members';
 import { hapticLight } from '@/lib/haptics';
 import { profileLink } from '@/lib/links';
-import { openActionSheet, openDialog, showToast } from '@/store/ui';
+import { openActionSheet, showToast } from '@/store/ui';
 
 import { ApiError, api } from './http';
 import { profileKey, type Profile } from './profile';
@@ -22,14 +22,12 @@ import { followRequestsKey, userKey, type Page, type UserProfile } from './socia
 export const OFFLINE = 'Connexion requise';
 export const SAVE_FAILED = "Impossible d'enregistrer, réessaie";
 const FOLLOW_LIMIT = "Tu as atteint la limite de 200 demandes d'ami par jour";
-const CANNOT_FOLLOW = "Impossible d'ajouter ce profil";
 
 /** Requêtes où un membre peut apparaître (profils, listes, recherche, fil, fiches). */
 const MEMBER_ROOTS = new Set([
   'user',
   'members',
   'followRequests',
-  'blocks',
   'recentProfiles',
   'feed',
   'title',
@@ -137,7 +135,6 @@ function invalidateSocial(): void {
 
 function failureMessage(error: unknown): string {
   if (error instanceof ApiError && error.status === 429) return FOLLOW_LIMIT;
-  if (error instanceof ApiError && error.status === 403) return CANNOT_FOLLOW;
   return SAVE_FAILED;
 }
 
@@ -274,9 +271,6 @@ export function cancelRequest(member: Member): void {
 /** Tap sur le bouton d'ami, selon son état (specs/social/docs/03 › FollowButton). */
 export function pressFollow(member: Member): void {
   switch (member.followState) {
-    case 'blocked':
-      unblockMember(member);
-      return;
     case 'pending':
       cancelRequest(member);
       return;
@@ -296,66 +290,6 @@ export function pressFollow(member: Member): void {
       // « Accepter » (sa demande reçue) ou « Ajouter en ami ».
       followMember(member);
   }
-}
-
-// ─── Blocage et signalement ────────────────────────────────────────────────
-
-/** Dialogue de confirmation, puis blocage (amitié et demandes retirées dans les deux sens). */
-export function blockMember(member: Member): void {
-  if (!requireOnline()) return;
-  openDialog({
-    title: `Bloquer @${member.username} ?`,
-    body: `Vous ne serez plus amis et vous n'apparaîtrez plus dans vos recherches ni sur vos fiches. ${firstName(member.displayName)} ne sera pas prévenu·e.`,
-    actions: [
-      { label: 'Annuler', variant: 'secondary' },
-      { label: 'Bloquer', variant: 'primary', onPress: () => confirmBlock(member) },
-    ],
-  });
-}
-
-function confirmBlock(member: Member): void {
-  if (!requireOnline()) return;
-  const friends = member.followState === 'following';
-  const requested = member.followState === 'requested';
-  let putBack = () => undefined as void;
-  void send({
-    apply: () => {
-      patchMemberEverywhere(member.username, { followState: 'blocked', followsMe: false });
-      if (friends) countFriend(member.username, -1);
-      removeFromMyFriends(member.username);
-      if (requested) {
-        putBack = takeRequests(new Set([member.username]));
-        countRequests(-1);
-      }
-    },
-    revert: () => {
-      patchMemberEverywhere(member.username, {
-        followState: member.followState,
-        followsMe: member.followsMe,
-      });
-      if (friends) countFriend(member.username, 1);
-      reloadMyFriends();
-      if (requested) {
-        putBack();
-        countRequests(1);
-      }
-    },
-    request: () => api(`/users/${member.username}/block`, { method: 'POST' }),
-  }).then((done) => {
-    if (done) showToast(`@${member.username} est bloqué·e`);
-  });
-}
-
-/** Débloquer ne rétablit pas l'ancienne amitié. */
-export function unblockMember(member: Member): void {
-  if (!requireOnline()) return;
-  void send({
-    apply: () => patchMemberEverywhere(member.username, { followState: 'none' }),
-    revert: () => patchMemberEverywhere(member.username, { followState: 'blocked' }),
-    request: () => api(`/users/${member.username}/block`, { method: 'DELETE' }),
-  }).then((done) => {
-    if (done) showToast(`@${member.username} est débloqué·e`);
-  });
 }
 
 // ─── Demandes d'ami reçues ─────────────────────────────────────────────────
@@ -468,6 +402,8 @@ export function declineRequest(member: Member): void {
   });
 }
 
+// ─── Signalement et partage ────────────────────────────────────────────────
+
 const REPORT_REASONS = [
   { reason: 'inappropriate', label: 'Pseudo ou avatar inapproprié' },
   { reason: 'impersonation', label: "Usurpation d'identité" },
@@ -515,9 +451,6 @@ export function openMemberMenu(member: Member): void {
             },
           ]
         : []),
-      member.followState === 'blocked'
-        ? { label: 'Débloquer', icon: ProhibitIcon, onPress: () => unblockMember(member) }
-        : { label: 'Bloquer', icon: ProhibitIcon, onPress: () => blockMember(member) },
       { label: 'Signaler', icon: FlagIcon, onPress: () => reportMember(member) },
     ],
   });

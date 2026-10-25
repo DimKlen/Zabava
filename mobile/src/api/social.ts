@@ -33,13 +33,7 @@ export type UserProfile = Member & {
 export type Page<T> = { items: T[]; nextCursor?: string };
 
 const MINUTE = 60 * 1000;
-const FOLLOW_STATES: ReadonlySet<string> = new Set([
-  'none',
-  'pending',
-  'requested',
-  'following',
-  'blocked',
-]);
+const FOLLOW_STATES: ReadonlySet<string> = new Set(['none', 'pending', 'requested', 'following']);
 const ACTIVITY_TYPES: ReadonlySet<string> = new Set([
   'added',
   'watched_movie',
@@ -326,10 +320,9 @@ export function useTitleSocial(type: MediaType, tmdbId: number) {
   });
 }
 
-// ─── Demandes et comptes bloqués ───────────────────────────────────────────
+// ─── Demandes d'ami reçues ──────────────────────────────────────────────────
 
 export const followRequestsKey = ['followRequests'] as const;
-export const blocksKey = ['blocks'] as const;
 
 /** Mes demandes d'ami reçues, plus récentes d'abord, par 50. */
 export function useFollowRequests() {
@@ -342,18 +335,5 @@ export function useFollowRequests() {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (page) => page.nextCursor,
     staleTime: MINUTE,
-  });
-}
-
-/** Comptes que j'ai bloqués, plus récents d'abord. */
-export function useBlocks(enabled = true) {
-  return useQuery({
-    queryKey: blocksKey,
-    queryFn: ({ signal }) =>
-      api<ApiMember[]>('/me/blocks', { signal }).then((items) =>
-        items.map(toMember).filter((m): m is Member => m !== null),
-      ),
-    enabled,
-    staleTime: 10 * MINUTE,
   });
 }

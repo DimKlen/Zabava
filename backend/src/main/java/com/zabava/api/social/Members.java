@@ -51,13 +51,9 @@ public class Members {
         return p.displayName() == null || p.displayName().isBlank() ? p.username() : p.displayName();
     }
 
-    /**
-     * blocked › following (amis) › pending (ma demande envoyée) › requested (sa demande reçue)
-     * › none (moi : none).
-     */
+    /** following (amis) › pending (ma demande envoyée) › requested (sa demande reçue) › none (moi : none). */
     static String followState(UUID me, MemberRow row) {
         if (row.profile().id().equals(me)) return "none";
-        if (row.iBlocked()) return "blocked";
         if ("accepted".equals(row.myStatus())) return "following";
         if ("pending".equals(row.myStatus())) return "pending";
         if (row.requestedMe()) return "requested";
