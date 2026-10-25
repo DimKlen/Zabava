@@ -153,6 +153,26 @@ class UserIT extends SocialTest {
     }
 
     @Test
+    void maNoteEtMonCommentaireRestentPrives() throws Exception {
+        befriend(dim, "dim.k", lea, "lea.m");
+        mvc.perform(json(lea, post("/api/v1/me/titles"), """
+                        {"tmdbId": 603, "type": "movie", "status": "watched", "addedAt": "%s",
+                         "review": {"rating": 9, "comment": "Mon avis"}}
+                        """.formatted(NOW)))
+                .andExpect(status().isCreated());
+
+        String body = mvc.perform(as(dim, get("/api/v1/users/lea.m/titles?type=movie&status=watched")))
+                .andExpect(jsonPath("$.items[0].title.id").value("movie-603"))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(body).doesNotContain("Mon avis").doesNotContain("rating");
+        String social = mvc.perform(as(dim, get("/api/v1/titles/movie/603/social")))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(social).doesNotContain("Mon avis").doesNotContain("\"rating\"");
+        // Ma propre fiche : ni la note de Léa, ni de note à moi.
+        mvc.perform(as(dim, get("/api/v1/titles/movie/603"))).andExpect(jsonPath("$.userTitle").doesNotExist());
+    }
+
+    @Test
     void lesSeriesAbandonneesNeSontPasMontrees() throws Exception {
         befriend(dim, "dim.k", lea, "lea.m");
         addTitle(lea, 1399, "tv", "abandoned");

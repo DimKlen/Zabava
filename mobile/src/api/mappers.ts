@@ -60,6 +60,8 @@ export function toUserTitle(
     addedAt: userTitle.addedAt ?? new Date().toISOString(),
     watchedAt: userTitle.watchedAt,
     notificationsEnabled: userTitle.notificationsEnabled ?? true,
+    rating: userTitle.rating,
+    comment: userTitle.comment,
   };
 }
 

@@ -618,6 +618,12 @@ export interface components {
       /** Format: date-time */
       watchedAt?: string;
       notificationsEnabled?: boolean;
+      review?: components['schemas']['Review'];
+    };
+    Review: {
+      /** Format: int32 */
+      rating?: number;
+      comment?: string;
     };
     UserTitle: {
       titleId?: string;
@@ -627,6 +633,9 @@ export interface components {
       /** Format: date-time */
       watchedAt?: string;
       notificationsEnabled?: boolean;
+      /** Format: int32 */
+      rating?: number;
+      comment?: string;
     };
     MemberLite: {
       username?: string;
@@ -656,6 +665,7 @@ export interface components {
       /** Format: date-time */
       watchedAt?: string;
       notificationsEnabled?: boolean;
+      review?: components['schemas']['Review'];
     };
     UserProfile: {
       username?: string;

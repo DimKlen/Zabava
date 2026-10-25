@@ -85,12 +85,20 @@ public final class MeDtos {
             @NotBlank @Pattern(regexp = "towatch|watched|following|abandoned") String status,
             Instant addedAt,
             Instant watchedAt,
-            Boolean notificationsEnabled) {}
+            Boolean notificationsEnabled,
+            @Valid Review review) {}
 
     public record PatchTitleRequest(
             @Pattern(regexp = "towatch|watched|following|abandoned") String status,
             Instant watchedAt,
-            Boolean notificationsEnabled) {}
+            Boolean notificationsEnabled,
+            @Valid Review review) {}
+
+    /**
+     * Ma note d'un film. Présente : remplace la note et le commentaire (absents = effacés) ;
+     * absente de la requête : inchangés. Un commentaire vide compte comme absent.
+     */
+    public record Review(@Min(1) @Max(10) Integer rating, @Size(max = 1000) String comment) {}
 
     public record EpisodesRequest(@NotEmpty @Size(max = 2000) List<Long> episodeIds, Instant watchedAt) {}
 

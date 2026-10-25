@@ -78,6 +78,9 @@ export type UserTitle = {
   addedAt: string;
   watchedAt?: string;
   notificationsEnabled: boolean;
+  /** Film vu : ma note de 1 à 10 et mon commentaire, facultatifs, visibles par moi seul. */
+  rating?: number;
+  comment?: string;
 };
 
 /** titleId → `${saison}:${épisode}` → watchedAt */

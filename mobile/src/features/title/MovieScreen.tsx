@@ -21,6 +21,7 @@ import { TitleHeader } from './TitleHeader';
 import { TitleBodySkeleton } from './TitleSkeleton';
 import { toggleTitleAlerts } from './toggleTitleAlerts';
 import { TrailerButton } from './TrailerButton';
+import { MyReview } from './MyReview';
 import { WhereToWatch } from './WhereToWatch';
 import { TitleSocialBlocks } from '../social/TitleSocialBlocks';
 
@@ -82,6 +83,9 @@ function MovieBody({ movie }: { movie: TitleDetail }) {
       ) : null}
       <MovieActions movie={movie} userTitle={movie.userTitle} />
       <StatusBanner status={movieStatus(movie, new Date())} />
+      {movie.userTitle?.status === 'watched' ? (
+        <MyReview movie={movie} userTitle={movie.userTitle} />
+      ) : null}
 
       <WhereToWatch
         availability={movie.availability}

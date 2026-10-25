@@ -66,8 +66,15 @@ public final class CatalogDtos {
 
     public record Collection(int id, String name, List<TitleLite> parts) {}
 
+    /** {@code rating} (1 à 10) et {@code comment} : film vu, facultatifs, visibles par moi seul. */
     public record UserTitle(
-            String titleId, String status, Instant addedAt, Instant watchedAt, boolean notificationsEnabled) {}
+            String titleId,
+            String status,
+            Instant addedAt,
+            Instant watchedAt,
+            boolean notificationsEnabled,
+            Integer rating,
+            String comment) {}
 
     /** Fiche complète (GET /titles/{type}/{tmdbId}). */
     public record TitleDetail(

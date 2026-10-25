@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { setMovieWatched, toggleInList } from '@/api/libraryActions';
 import type { TitleDetail } from '@/api/titles';
 import { formatLongDate } from '@/domain/format';
+import { useUiStore } from '@/store/ui';
 
 import { MovieScreen } from '../MovieScreen';
 
@@ -154,8 +155,55 @@ describe('MovieScreen', () => {
     await renderMovie(base);
     await fireEvent.press(screen.getByText('Ajouter à ma liste'));
     expect(toggleInList).toHaveBeenCalledWith(expect.objectContaining({ id: 'movie-1' }));
+    // « Marquer comme vu » ouvre « Ta note » : le film est marqué vu à sa fermeture.
     await fireEvent.press(screen.getByText('Marquer comme vu'));
-    expect(setMovieWatched).toHaveBeenCalledWith(expect.objectContaining({ id: 'movie-1' }), true);
+    expect(setMovieWatched).not.toHaveBeenCalled();
+    expect(useUiStore.getState().ratingSheet).toMatchObject({
+      mode: 'watch',
+      title: expect.objectContaining({ id: 'movie-1' }),
+    });
+    expect(useUiStore.getState().ratingSheetOpen).toBe(true);
+    // Pas encore vu : pas de « Ma note ».
+    expect(screen.queryByText('Ma note')).toBeNull();
+    expect(screen.queryByText('Noter ce film')).toBeNull();
+  });
+
+  it('film vu et noté : « Ma note », visible par moi seul ; la toucher la modifie', async () => {
+    await renderMovie({
+      ...base,
+      userTitle: {
+        titleId: 'movie-1',
+        status: 'watched',
+        addedAt: '2026-10-01T10:00:00Z',
+        notificationsEnabled: true,
+        rating: 8,
+        comment: 'Grandiose',
+      },
+    });
+    expect(screen.getByText('Ma note')).toBeTruthy();
+    expect(screen.getByText('8/10')).toBeTruthy();
+    expect(screen.getByText('Grandiose')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Ma note : 8 sur 10, Grandiose. Modifier'));
+    expect(useUiStore.getState().ratingSheet).toMatchObject({
+      mode: 'edit',
+      rating: 8,
+      comment: 'Grandiose',
+    });
+  });
+
+  it('film vu sans note : « Noter ce film »', async () => {
+    await renderMovie({
+      ...base,
+      userTitle: {
+        titleId: 'movie-1',
+        status: 'watched',
+        addedAt: '2026-10-01T10:00:00Z',
+        notificationsEnabled: true,
+      },
+    });
+    expect(screen.queryByText('Ma note')).toBeNull();
+    await fireEvent.press(screen.getByText('Noter ce film'));
+    expect(useUiStore.getState().ratingSheet).toMatchObject({ mode: 'edit' });
   });
 
   it('un film vu affiche « Dans ma liste » et « Vu »', async () => {

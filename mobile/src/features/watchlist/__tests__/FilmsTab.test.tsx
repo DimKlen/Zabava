@@ -135,16 +135,18 @@ describe('FilmsTab', () => {
     expect(screen.queryByText("Date d'ajout · Plus récents")).toBeNull();
   });
 
-  it('appui long : menu du film, puis « Marquer comme vu »', async () => {
+  it('appui long : menu du film, puis « Marquer comme vu » ouvre « Ta note »', async () => {
     await renderTab();
     await fireEvent(first(screen.getAllByTestId('poster')), 'longPress');
     const sheet = useUiStore.getState().actionSheet;
     expect(sheet?.title).toBe('Dune : Troisième partie');
     await act(() => sheet?.options[0]?.onPress());
-    expect(setMovieWatched).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Dune : Troisième partie' }),
-      true,
-    );
+    // Le film est marqué vu à la fermeture de « Ta note ».
+    expect(setMovieWatched).not.toHaveBeenCalled();
+    expect(useUiStore.getState().ratingSheet).toMatchObject({
+      mode: 'watch',
+      title: expect.objectContaining({ title: 'Dune : Troisième partie' }),
+    });
   });
 
   it('les affiches n’ont pas de coche : on sait déjà qu’elles sont dans la liste', async () => {
