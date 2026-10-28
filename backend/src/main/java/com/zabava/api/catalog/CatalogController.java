@@ -33,6 +33,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 /** Catalogue : recherche, Découvrir, fiches, saisons, personnes, plateformes (specs/docs/11 §3). */
 @RestController
@@ -65,7 +66,7 @@ public class CatalogController {
     @GetMapping("/search")
     public SearchResult search(
             CurrentUser user,
-            @RequestParam @NotBlank String q,
+            @RequestParam @NotBlank @Size(max = 100) String q,
             @RequestParam(defaultValue = "all") @Pattern(regexp = "all|movie|tv|anime|person") String type,
             @RequestParam(defaultValue = "1") @Min(1) @Max(500) int page) {
         return discover.search(q.trim(), type, page, prefs(user));

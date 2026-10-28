@@ -47,12 +47,17 @@ public class ApiErrorHandler {
         HandlerMethodValidationException.class,
         ConstraintViolationException.class,
         MissingServletRequestParameterException.class,
-        MethodArgumentTypeMismatchException.class,
-        HttpMessageNotReadableException.class,
         IllegalArgumentException.class
     })
     ResponseEntity<ErrorBody> badRequest(Exception e) {
         return ResponseEntity.badRequest().body(ErrorBody.of("bad_request", e.getMessage()));
+    }
+
+    /** Corps ou paramètre illisible : le message d'origine cite les classes Java internes, il n'est pas renvoyé. */
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
+    ResponseEntity<ErrorBody> unreadable(Exception e) {
+        log.debug("Requête illisible", e);
+        return ResponseEntity.badRequest().body(ErrorBody.of("bad_request", "Requête invalide"));
     }
 
     @ExceptionHandler(RestClientException.class)
