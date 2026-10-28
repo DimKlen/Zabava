@@ -70,10 +70,12 @@ public final class MeDtos {
 
     public record ProvidersUpdate(@NotNull @Size(max = 50) List<Integer> providerIds) {}
 
-    public record PushTokenDeletion(@NotBlank String expoToken) {}
+    public record PushTokenDeletion(@NotBlank @Size(max = 200) String expoToken) {}
 
     public record PushTokenRequest(
-            @NotBlank String expoToken, @NotBlank @Pattern(regexp = "ios|android") String platform, String timezone) {}
+            @NotBlank @Size(max = 200) String expoToken,
+            @NotBlank @Pattern(regexp = "ios|android") String platform,
+            @Size(max = 64) String timezone) {}
 
     /**
      * Ajout d'un titre. Les trois derniers champs sont facultatifs : « Annuler » après un

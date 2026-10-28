@@ -45,17 +45,21 @@ var tag=document.createElement('script');tag.src='https://www.youtube.com/iframe
 </script></body></html>`;
 }
 
-/** Le lecteur reste dans l'app ; un lien vers YouTube (logo, titre) s'ouvre à côté. */
+/** Pages du lecteur YouTube : le domaine est vérifié au début de l'adresse, pas n'importe où. */
+const PLAYER_URL = /^https:\/\/(www\.)?youtube(-nocookie)?\.com\/(embed\/|iframe_api|s\/player\/)/;
+
+/** Le lecteur reste dans l'app ; un lien web (logo, titre YouTube) s'ouvre à côté, jamais un autre schéma. */
 function stayInPlayer(request: WebViewNavigation): boolean {
   const url = request.url;
   if (
-    url.startsWith(ORIGIN) ||
+    url.startsWith(`${ORIGIN}/`) ||
+    url === ORIGIN ||
     url === 'about:blank' ||
-    /youtube(-nocookie)?\.com\/(embed\/|iframe_api|s\/player\/)/.test(url)
+    PLAYER_URL.test(url)
   ) {
     return true;
   }
-  void Linking.openURL(url).catch(() => undefined);
+  if (url.startsWith('https://')) void Linking.openURL(url).catch(() => undefined);
   return false;
 }
 

@@ -9,6 +9,9 @@ services:
     environment:
       # Mémoire bornée pour tenir dans 1 Go avec Caddy et l'OS.
       JAVA_TOOL_OPTIONS: -Xmx320m -Xss512k -XX:MaxMetaspaceSize=160m -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError
+      # Documentation OpenAPI (/api/docs) : utile en développement, pas exposée en production.
+      SPRINGDOC_API_DOCS_ENABLED: "false"
+      SPRINGDOC_SWAGGER_UI_ENABLED: "false"
     expose:
       - "8080"
 

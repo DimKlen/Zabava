@@ -281,17 +281,16 @@ class FollowIT extends SocialTest {
         assertThat(friends(max)).isZero();
     }
 
-    /** Clients directs (clé Supabase) : lecture de leurs lignes seulement, aucune écriture. */
+    /** Clients directs (clé Supabase) : ni lecture ni écriture, tout passe par le backend. */
     @Test
     void laRlsInterditDeDevenirAmisSansPasserParLeBackend() throws Exception {
         follow(max, "lea.m");
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
-        Long visible = tx.execute(s -> {
+        assertThatThrownBy(() -> tx.execute(s -> {
             db.sql("set local role authenticated").update();
             db.sql("select set_config('request.jwt.claim.sub', :sub, true)").param("sub", dim.toString()).query().singleValue();
             return db.sql("select count(*) from follows").query(Long.class).single();
-        });
-        assertThat(visible).isZero();
+        })).isInstanceOf(DataAccessException.class);
         assertThatThrownBy(() -> tx.execute(s -> {
             db.sql("set local role authenticated").update();
             db.sql("select set_config('request.jwt.claim.sub', :sub, true)").param("sub", dim.toString()).query().singleValue();

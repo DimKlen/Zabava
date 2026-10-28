@@ -30,6 +30,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 /** Endpoints sociaux (specs/social/docs/06 §3). Les pseudos des chemins sont en minuscules. */
 @RestController
@@ -52,12 +53,15 @@ public class SocialController {
     // ─── Membres ──────────────────────────────────────────────────────────────
 
     @GetMapping("/users/username-available")
-    public UsernameAvailability usernameAvailable(CurrentUser user, @RequestParam String u) {
+    public UsernameAvailability usernameAvailable(CurrentUser user, @RequestParam @Size(max = 50) String u) {
         return usernames.availability(user.id(), u);
     }
 
     @GetMapping("/users/search")
-    public Page<MemberLite> search(CurrentUser user, @RequestParam String q, @RequestParam(required = false) String cursor) {
+    public Page<MemberLite> search(
+            CurrentUser user,
+            @RequestParam @Size(max = 100) String q,
+            @RequestParam(required = false) String cursor) {
         return users.search(user.id(), q, cursor);
     }
 
@@ -80,7 +84,7 @@ public class SocialController {
     public Page<MemberLite> friends(
             CurrentUser user,
             @PathVariable String username,
-            @RequestParam(required = false) String q,
+            @RequestParam(required = false) @Size(max = 100) String q,
             @RequestParam(required = false) String cursor) {
         return users.friends(user.id(), username, q, cursor);
     }
