@@ -33,6 +33,9 @@ const config: ExpoConfig = {
       monochromeImage: './assets/android-icon-monochrome.png',
     },
     predictiveBackGestureEnabled: false,
+    // La session (jeton de connexion) est dans le stockage de l'app : pas de copie dans les
+    // sauvegardes Android (Google Drive, adb backup), d'où elle pourrait être restaurée ailleurs.
+    allowBackup: false,
     // App Links : les liens d'invitation s'ouvrent dans l'app (assetlinks.json servi par le serveur).
     intentFilters: [
       {

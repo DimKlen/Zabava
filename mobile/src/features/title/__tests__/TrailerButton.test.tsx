@@ -89,6 +89,29 @@ it('un lien vers YouTube depuis le lecteur s’ouvre hors de l’app', async () 
   expect(openURL).toHaveBeenCalledWith('https://www.youtube.com/watch?v=abc123');
 });
 
+it('le lecteur n’ouvre ni un autre schéma ni un faux domaine YouTube', async () => {
+  const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+  openURL.mockClear();
+  await render(<TrailerButton titleId="movie-1" trailerKey="abc123" />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Lire la bande-annonce' }));
+  const { onShouldStartLoadWithRequest } = screen.getByTestId('trailer-player').props;
+
+  for (const url of [
+    'https://evil.example/?u=youtube.com/embed/abc123',
+    'https://zabava.app.evil.example/',
+    'intent://scan#Intent;scheme=zabava;end',
+    'zabava://u/pirate',
+    'http://www.youtube.com/watch?v=abc123',
+  ]) {
+    expect(onShouldStartLoadWithRequest({ url })).toBe(false);
+  }
+  // Une page web s'ouvre dans le navigateur ; les autres schémas ne s'ouvrent jamais.
+  expect(openURL.mock.calls.map(([url]) => url)).toEqual([
+    'https://evil.example/?u=youtube.com/embed/abc123',
+    'https://zabava.app.evil.example/',
+  ]);
+});
+
 it('page du lecteur : identifiant échappé', () => {
   const html = trailerHtml('a"b</script>');
   expect(html).toContain(String.raw`videoId:"a\"b\u003c/script>"`);
