@@ -73,6 +73,28 @@ class ProfileIT extends IntegrationTest {
                 .andExpect(jsonPath("$.error.code").value("bad_request"));
     }
 
+    /** Un corps illisible ne renvoie pas le message interne de Jackson (classes, champs Java). */
+    @Test
+    void corpsIllisibleSansDetailInterne() throws Exception {
+        UUID user = createUser("alice@example.com");
+        mvc.perform(as(user, put("/api/v1/me/profile"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"spoilerProtection\": \"pas un booléen\""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("bad_request"))
+                .andExpect(jsonPath("$.error.message").value("Requête invalide"));
+    }
+
+    /** Jeton push démesuré : refusé avant d'arriver en base. */
+    @Test
+    void jetonPushTropLongRefuse() throws Exception {
+        UUID user = createUser("alice@example.com");
+        mvc.perform(as(user, post("/api/v1/me/push-token"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"expoToken\": \"" + "x".repeat(201) + "\", \"platform\": \"android\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
     @Test
     void mesPlateformesRemplaceesEtRelues() throws Exception {
         UUID user = createUser("alice@example.com");

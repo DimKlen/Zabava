@@ -1,6 +1,7 @@
 package com.zabava.api.me;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -91,26 +92,39 @@ class IsolationIT extends IntegrationTest {
                 .andExpect(jsonPath("$[0].episodes[1].watchedAt").exists());
     }
 
-    /** Accès direct à la base avec le rôle des clients Supabase : la RLS filtre les lignes. */
+    /** Clé publique de Supabase (rôles anon et authenticated) : aucun droit sur les tables ni les fonctions. */
     @Test
-    void laRlsFiltreLesLignesParUtilisateur() {
-        assertThat(rowsVisibleTo(bob, "user_titles")).isZero();
-        assertThat(rowsVisibleTo(bob, "user_episodes")).isZero();
-        assertThat(rowsVisibleTo(bob, "user_providers")).isZero();
-        assertThat(rowsVisibleTo(bob, "profiles")).isEqualTo(1);
-        assertThat(rowsVisibleTo(alice, "user_titles")).isEqualTo(1);
-        assertThat(rowsVisibleTo(alice, "user_episodes")).isEqualTo(1);
-        // Tables du catalogue : aucune politique, aucun accès direct.
-        for (String table : List.of("titles", "episodes", "providers", "title_availability")) {
-            assertThat(rowsVisibleTo(alice, table)).as(table).isZero();
-        }
+    void aucunAccesDirectAuxTablesAvecLaClePublique() {
+        List<String> exposed = db.sql("""
+                select r.rolname || ' ' || c.relname
+                from pg_class c join pg_namespace n on n.oid = c.relnamespace
+                cross join (values ('anon'), ('authenticated')) r(rolname)
+                where n.nspname = 'public' and c.relkind in ('r', 'v', 'm', 'S')
+                  and (has_table_privilege(r.rolname, c.oid, 'select')
+                    or has_table_privilege(r.rolname, c.oid, 'insert')
+                    or has_table_privilege(r.rolname, c.oid, 'update')
+                    or has_table_privilege(r.rolname, c.oid, 'delete'))
+                union all
+                select r.rolname || ' ' || p.proname || '()'
+                from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                cross join (values ('anon'), ('authenticated')) r(rolname)
+                where n.nspname = 'public' and has_function_privilege(r.rolname, p.oid, 'execute')
+                """).query(String.class).list();
+        assertThat(exposed).isEmpty();
     }
 
-    private long rowsVisibleTo(UUID user, String table) {
-        return tx.execute(status -> {
-            db.sql("set local role authenticated").update();
-            db.sql("select set_config('request.jwt.claim.sub', :sub, true)").param("sub", user.toString()).query().singleValue();
-            return db.sql("select count(*) from " + table).query(Long.class).single();
-        });
+    /** Le pseudo est figé : même son propriétaire ne peut pas le changer en écrivant directement en base. */
+    @Test
+    void sonProfilNeSeModifiePasEnDirect() {
+        assertThatThrownBy(() -> tx.executeWithoutResult(status -> {
+                    db.sql("set local role authenticated").update();
+                    db.sql("select set_config('request.jwt.claim.sub', :sub, true)")
+                            .param("sub", alice.toString())
+                            .query()
+                            .singleValue();
+                    db.sql("update profiles set display_name = 'Pirate' where id = auth.uid()").update();
+                }))
+                .rootCause()
+                .hasMessageContaining("permission denied");
     }
 }

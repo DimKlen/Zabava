@@ -226,8 +226,6 @@ public abstract class IntegrationTest {
             for (Path migration : migrations()) {
                 statement.execute(Files.readString(migration, StandardCharsets.UTF_8));
             }
-            // Droits de lecture des clients directs : la RLS doit filtrer leurs lignes.
-            statement.execute("grant select, insert, update, delete on all tables in schema public to authenticated");
         } catch (SQLException | IOException e) {
             throw new IllegalStateException("Schéma de test impossible à appliquer", e);
         }
