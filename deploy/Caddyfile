@@ -1,4 +1,24 @@
 {$API_DOMAIN} {
 	encode gzip
+
+	# Le plus gros corps envoyé par l'app (liste d'épisodes cochés) reste sous 100 Ko.
+	request_body {
+		max_size 1MB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		# Page d'invitation : ses styles en ligne et la photo de profil seulement.
+		Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; img-src https:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+		-Server
+	}
+
+	# Documentation de l'API : jamais publique en production.
+	@docs path /api/docs /api/docs/* /swagger-ui/*
+	respond @docs 404
+
 	reverse_proxy api:8080
 }
