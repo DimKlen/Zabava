@@ -34,6 +34,7 @@ export type CatalogTitle = PosterTitle & {
   year?: number;
   releaseDate?: string;
   popularity?: number;
+  voteAverage?: number;
   /** Joint par GET /discover ; absent ailleurs (filmographie : chargé par lots). */
   badge?: BadgeData;
 };
@@ -46,6 +47,7 @@ export function toCatalogTitle(item: ApiTitleLite, fallbackType: MediaType): Cat
     year: item.year,
     releaseDate: item.releaseDate,
     popularity: item.popularity,
+    voteAverage: item.voteAverage,
     badge: item.badge ? toBadgeData(item.badge) : undefined,
   };
 }
@@ -126,8 +128,7 @@ export function useAdvancedResults(filters: AdvancedFilters, enabled: boolean) {
 
 /** Compteur en direct du pied de la sheet ; garde l'ancien nombre pendant le chargement. */
 export function useAdvancedCount(filters: AdvancedFilters, enabled: boolean) {
-  // Le tri ne change pas le nombre de résultats.
-  const params = { ...advancedQuery(filters), sort: undefined };
+  const params = advancedQuery(filters);
   return useQuery({
     queryKey: ['discoverCount', params],
     queryFn: async ({ signal }) =>
