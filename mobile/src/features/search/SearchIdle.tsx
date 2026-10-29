@@ -1,4 +1,4 @@
-import { ClockCounterClockwiseIcon, UsersIcon, XIcon } from 'phosphor-react-native';
+import { ClockCounterClockwiseIcon, XIcon } from 'phosphor-react-native';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useTrendingToday, type TitleResult } from '@/api/search';
@@ -6,7 +6,7 @@ import { Button } from '@/components/Button';
 import { SkeletonSearchRow } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { useRecentSearches } from '@/store/recentSearches';
-import { colors, radii } from '@/theme/tokens';
+import { colors } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
 
 import type { Membership } from '../catalog/useLibraryMembership';
@@ -14,8 +14,6 @@ import { TitleRow } from './ResultRows';
 import { pressTitle, previewOf } from '../title/openTitle';
 
 type Props = {
-  /** « Chercher un membre » (specs/social/docs/04 §4.6). */
-  onSearchMembers: () => void;
   onPickRecent: (query: string) => void;
   onOpenTitle: (title: TitleResult) => void;
   onToggleTitle: (title: TitleResult) => void;
@@ -25,13 +23,7 @@ type Props = {
 const TRENDING_SKELETONS = 5;
 
 /** Recherche sans saisie : recherches récentes, puis « Tendances du moment ». */
-export function SearchIdle({
-  onSearchMembers,
-  onPickRecent,
-  onOpenTitle,
-  onToggleTitle,
-  isInList,
-}: Props) {
+export function SearchIdle({ onPickRecent, onOpenTitle, onToggleTitle, isInList }: Props) {
   const recents = useRecentSearches((s) => s.recents);
   const removeRecent = useRecentSearches((s) => s.remove);
   const clearRecents = useRecentSearches((s) => s.clear);
@@ -43,16 +35,6 @@ export function SearchIdle({
       keyboardDismissMode="on-drag"
       contentContainerStyle={styles.content}
     >
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Chercher un membre"
-        onPress={onSearchMembers}
-        style={({ pressed }) => [styles.members, pressed && styles.membersPressed]}
-      >
-        <UsersIcon size={20} color={colors.accent} />
-        <Text style={styles.membersLabel}>Chercher un membre</Text>
-        <Text style={styles.membersHint}>tape @pseudo</Text>
-      </Pressable>
       {recents.length > 0 ? (
         <>
           <View style={styles.recentsHeader}>
@@ -112,33 +94,6 @@ export function SearchIdle({
 const styles = StyleSheet.create({
   content: {
     paddingBottom: 40,
-  },
-  members: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    minHeight: 48,
-    marginTop: 8,
-    marginHorizontal: 16,
-    paddingHorizontal: 14,
-    borderRadius: radii.rLg,
-    backgroundColor: colors.surface,
-  },
-  membersPressed: {
-    backgroundColor: colors.textA07,
-  },
-  membersLabel: {
-    flex: 1,
-    fontFamily: fonts.regular,
-    fontSize: 15,
-    lineHeight: 15 * 1.4,
-    color: colors.text,
-  },
-  membersHint: {
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    lineHeight: 13 * 1.4,
-    color: colors.neutral500,
   },
   recentsHeader: {
     flexDirection: 'row',

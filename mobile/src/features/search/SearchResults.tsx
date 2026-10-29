@@ -7,6 +7,7 @@ import { LoadError, showsLoadError } from '@/components/LoadError';
 import { SkeletonSearchRow } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { UnderlineTabs } from '@/components/UnderlineTabs';
+import type { ResultOrder } from '@/domain/resultSort';
 import { SEARCH_TABS, type SearchTab } from '@/domain/search';
 import { searchQuery } from '@/domain/social/username';
 import { colors } from '@/theme/tokens';
@@ -15,6 +16,7 @@ import { fonts } from '@/theme/typography';
 import type { Membership } from '../catalog/useLibraryMembership';
 import { MemberResults } from './MemberResults';
 import { PersonRow, TitleRow } from './ResultRows';
+import { ResultSortBar } from './ResultSortBar';
 import { pressTitle, previewOf } from '../title/openTitle';
 import { pressPerson } from '../person/openPerson';
 
@@ -26,6 +28,8 @@ type Props = {
   /** La saisie diffère de la requête : on attend la fin de la frappe. */
   typing: boolean;
   tab: SearchTab;
+  order: ResultOrder;
+  onOrderChange: (order: ResultOrder) => void;
   onChangeTab: (tab: SearchTab) => void;
   onOpenTitle: (title: TitleResult) => void;
   onToggleTitle: (title: TitleResult) => void;
@@ -39,6 +43,8 @@ export function SearchResults({
   query,
   typing,
   tab,
+  order,
+  onOrderChange,
   onChangeTab,
   onOpenTitle,
   onToggleTitle,
@@ -49,7 +55,10 @@ export function SearchResults({
   const members = tab === 'members';
   // Onglet Membres : pas de recherche du catalogue.
   const search = useSearch(members ? '' : query, members ? 'all' : tab);
-  const rows = searchRows(search.data?.pages);
+  const rows = searchRows(search.data?.pages, order);
+
+  // Le tri ne concerne que les résultats du catalogue, pas les membres ni les personnes seules.
+  const showsSort = tab !== 'members' && tab !== 'person' && rows.length > 0 && !typing;
 
   let body;
   if (members) {
@@ -125,6 +134,7 @@ export function SearchResults({
       <View>
         <UnderlineTabs tabs={SEARCH_TABS} value={tab} onChange={onChangeTab} variant="search" />
       </View>
+      {showsSort ? <ResultSortBar order={order} onChange={onOrderChange} /> : null}
       {body}
     </View>
   );

@@ -31,21 +31,7 @@ export function genreLabel(key: string): string | undefined {
   return GENRES.find((genre) => genre.key === key)?.label;
 }
 
-/** Durée maximale en minutes (films, ou épisode moyen des séries). */
-export type RuntimeKey = 'all' | '90' | '120' | '150';
-export const RUNTIMES: readonly { value: RuntimeKey; label: string }[] = [
-  { value: 'all', label: 'Toutes' },
-  { value: '90', label: 'Moins de 1 h 30' },
-  { value: '120', label: 'Moins de 2 h' },
-  { value: '150', label: 'Moins de 2 h 30' },
-];
-
 export type AdvancedSort = 'pop' | 'rating' | 'recent';
-export const ADVANCED_SORTS: readonly { key: AdvancedSort; label: string }[] = [
-  { key: 'pop', label: 'Popularité' },
-  { key: 'rating', label: 'Mieux notés' },
-  { key: 'recent', label: 'Plus récents' },
-];
 
 export type Actor = { id: number; name: string };
 
@@ -58,11 +44,7 @@ export type AdvancedFilters = {
   genres: GenreKey[];
   yearFrom: number;
   yearTo: number;
-  /** 0 = toutes les notes ; pas de 0,5. */
-  minRating: number;
   availability: 'all' | 'mine';
-  maxRuntime: RuntimeKey;
-  sort: AdvancedSort;
 };
 
 export const FIRST_YEAR = 1950;
@@ -80,10 +62,7 @@ export function defaultFilters(now: Date): AdvancedFilters {
     genres: [],
     yearFrom: DEFAULT_YEAR_FROM,
     yearTo: now.getFullYear(),
-    minRating: 0,
     availability: 'all',
-    maxRuntime: 'all',
-    sort: 'pop',
   };
 }
 
@@ -111,18 +90,8 @@ export function setYears(
   return { ...filters, yearFrom: Math.min(a, b), yearTo: Math.max(a, b) };
 }
 
-/** Note arrondie au pas de 0,5. */
-export function setMinRating(filters: AdvancedFilters, rating: number): AdvancedFilters {
-  return { ...filters, minRating: Math.min(10, Math.max(0, Math.round(rating * 2) / 2)) };
-}
-
 export function yearsLabel(filters: AdvancedFilters): string {
   return `${filters.yearFrom} – ${filters.yearTo}`;
-}
-
-export function minRatingLabel(rating: number): string {
-  if (rating <= 0) return 'Toutes les notes';
-  return `${rating.toLocaleString('fr-CA', { maximumFractionDigits: 1 })}/10 minimum`;
 }
 
 /** Texte du bouton du pied de la sheet. */
@@ -138,10 +107,7 @@ export type DiscoverQueryParams = {
   cast?: string;
   yearFrom: number;
   yearTo: number;
-  minRating?: number;
   providers?: 'mine';
-  maxRuntime?: number;
-  sort: AdvancedSort;
 };
 
 /** Paramètres de `GET /discover` et `GET /discover/count`. */
@@ -154,10 +120,7 @@ export function advancedQuery(filters: AdvancedFilters): DiscoverQueryParams {
     cast: csv(filters.actors.map((a) => a.id)),
     yearFrom: filters.yearFrom,
     yearTo: filters.yearTo,
-    minRating: filters.minRating > 0 ? filters.minRating : undefined,
     providers: filters.availability === 'mine' ? 'mine' : undefined,
-    maxRuntime: filters.maxRuntime === 'all' ? undefined : Number(filters.maxRuntime),
-    sort: filters.sort,
   };
 }
 

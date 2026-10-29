@@ -7,9 +7,7 @@ import {
   defaultFilters,
   genreCountLabel,
   genreQuery,
-  minRatingLabel,
   removeActor,
-  setMinRating,
   setYears,
   toggleValue,
   yearsLabel,
@@ -18,7 +16,7 @@ import {
 const NOW = new Date(2026, 9, 11, 12);
 
 describe('filtres par défaut', () => {
-  it('1990 → année courante, tous types, popularité', () => {
+  it('1990 → année courante, tous types', () => {
     const filters = defaultFilters(NOW);
     expect(yearsLabel(filters)).toBe('1990 – 2026');
     expect(advancedQuery(filters)).toEqual({
@@ -27,10 +25,7 @@ describe('filtres par défaut', () => {
       cast: undefined,
       yearFrom: 1990,
       yearTo: 2026,
-      minRating: undefined,
       providers: undefined,
-      maxRuntime: undefined,
-      sort: 'pop',
     });
   });
 });
@@ -41,21 +36,6 @@ describe('années', () => {
     expect(setYears(filters, [2000, 2010])).toMatchObject({ yearFrom: 2000, yearTo: 2010 });
     expect(setYears(filters, [2030, 2026])).toMatchObject({ yearFrom: 2026, yearTo: 2030 });
     expect(setYears(filters, [1969.6, 2000]).yearFrom).toBe(1970);
-  });
-});
-
-describe('note minimale', () => {
-  it('pas de 0,5, bornée à 0 → 10', () => {
-    const filters = defaultFilters(NOW);
-    expect(setMinRating(filters, 7.3).minRating).toBe(7.5);
-    expect(setMinRating(filters, 12).minRating).toBe(10);
-    expect(setMinRating(filters, -1).minRating).toBe(0);
-  });
-
-  it('libellé', () => {
-    expect(minRatingLabel(0)).toBe('Toutes les notes');
-    expect(minRatingLabel(7.5)).toBe('7,5/10 minimum');
-    expect(minRatingLabel(8)).toBe('8/10 minimum');
   });
 });
 
@@ -75,10 +55,7 @@ describe('advancedQuery', () => {
       ...defaultFilters(NOW),
       types: toggleValue(toggleValue([], 'movie' as const), 'anime' as const),
       genres: toggleValue(['action' as const], 'thriller' as const),
-      minRating: 7.5,
       availability: 'mine' as const,
-      maxRuntime: '120' as const,
-      sort: 'recent' as const,
     };
     expect(advancedQuery(filters)).toEqual({
       type: 'movie,anime',
@@ -86,10 +63,7 @@ describe('advancedQuery', () => {
       cast: undefined,
       yearFrom: 1990,
       yearTo: 2026,
-      minRating: 7.5,
       providers: 'mine',
-      maxRuntime: 120,
-      sort: 'recent',
     });
   });
 

@@ -1,4 +1,3 @@
-import Slider from '@react-native-community/slider';
 import { XIcon } from 'phosphor-react-native';
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
@@ -8,20 +7,15 @@ import { BottomSheet } from '@/components/BottomSheet';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { RangeSlider } from '@/components/RangeSlider';
-import { SelectField } from '@/components/SelectField';
 import { Text } from '@/components/Text';
 import {
-  ADVANCED_SORTS,
   COUNT_DEBOUNCE_MS,
   FIRST_YEAR,
   GENRES,
-  RUNTIMES,
   addActor,
   countButtonLabel,
   defaultFilters,
-  minRatingLabel,
   removeActor,
-  setMinRating,
   setYears,
   toggleValue,
   yearsLabel,
@@ -150,20 +144,6 @@ export function AdvancedSearchSheet({ visible, filters, onChange, onClose, onApp
           />
         </Section>
 
-        <Section label="Note IMDb minimale" value={minRatingLabel(filters.minRating)}>
-          <Slider
-            accessibilityLabel="Note IMDb minimale"
-            minimumValue={0}
-            maximumValue={10}
-            step={0.5}
-            value={filters.minRating}
-            onValueChange={(rating) => onChange(setMinRating(filters, rating))}
-            minimumTrackTintColor={colors.accent}
-            maximumTrackTintColor={colors.neutral800}
-            thumbTintColor={colors.accent}
-          />
-        </Section>
-
         <Section label="Disponible sur">
           <View style={styles.chips}>
             {AVAILABILITY.map((option) => (
@@ -172,30 +152,6 @@ export function AdvancedSearchSheet({ visible, filters, onChange, onClose, onApp
                 label={option.label}
                 active={filters.availability === option.key}
                 onPress={() => onChange({ ...filters, availability: option.key })}
-              />
-            ))}
-          </View>
-        </Section>
-
-        <View style={styles.fields}>
-          <SelectField
-            label="Durée maximale"
-            height={42}
-            value={filters.maxRuntime}
-            options={RUNTIMES}
-            onChange={(maxRuntime) => onChange({ ...filters, maxRuntime })}
-            style={styles.field}
-          />
-        </View>
-
-        <Section label="Trier par">
-          <View style={styles.chips}>
-            {ADVANCED_SORTS.map((sort) => (
-              <Chip
-                key={sort.key}
-                label={sort.label}
-                active={filters.sort === sort.key}
-                onPress={() => onChange({ ...filters, sort: sort.key })}
               />
             ))}
           </View>
@@ -285,13 +241,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-  },
-  fields: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  field: {
-    flex: 1,
   },
   footer: {
     paddingTop: 10,
