@@ -22,6 +22,7 @@ import { Text } from '@/components/Text';
 import { profileAccess } from '@/domain/social/members';
 import { defaultSegment, segmentFor, type ProfileSegment } from '@/domain/social/profileLists';
 import type { MediaType } from '@/domain/types';
+import { useT } from '@/i18n';
 import { goBack } from '@/lib/navigation';
 import { showToast } from '@/store/ui';
 import { colors, radii } from '@/theme/tokens';
@@ -78,6 +79,7 @@ export function UserProfileScreen({ username }: { username: string }) {
 }
 
 function Bar({ profile }: { profile?: UserProfile }) {
+  const { t } = useT();
   return (
     <View style={styles.bar}>
       <Button
@@ -86,7 +88,7 @@ function Bar({ profile }: { profile?: UserProfile }) {
         icon={CaretLeftIcon}
         iconSize={22}
         color={colors.text}
-        accessibilityLabel="Retour"
+        accessibilityLabel={t('social.back')}
         onPress={goBack}
       />
       {profile ? (
@@ -96,7 +98,7 @@ function Bar({ profile }: { profile?: UserProfile }) {
           icon={DotsThreeIcon}
           iconSize={22}
           color={colors.text}
-          accessibilityLabel={`Options pour @${profile.username}`}
+          accessibilityLabel={t('social.profile.options', { username: profile.username })}
           onPress={() => openMemberMenu(profile)}
         />
       ) : null}
@@ -105,6 +107,7 @@ function Bar({ profile }: { profile?: UserProfile }) {
 }
 
 function OtherProfile({ profile }: { profile: UserProfile }) {
+  const { t } = useT();
   const [tab, setTab] = useState<MediaType>('movie');
   const [segment, setSegment] = useState<ProfileSegment>(defaultSegment('movie'));
   const access = profileAccess(profile);
@@ -113,7 +116,7 @@ function OtherProfile({ profile }: { profile: UserProfile }) {
 
   // Abonnements d'un membre que je ne suis pas : pas de liste, un toast.
   const friends = () => {
-    if (access.locked) showToast('Suis ce membre pour voir ses listes');
+    if (access.locked) showToast(t('social.profile.followToSee'));
     else openFriends(profile.username);
   };
 
@@ -147,14 +150,13 @@ function OtherProfile({ profile }: { profile: UserProfile }) {
 }
 
 function NotFound() {
+  const { t } = useT();
   return (
     <>
       <Bar />
       <View style={styles.notFound}>
-        <Text style={styles.notFoundText}>
-          Ce profil n&apos;existe pas ou n&apos;est plus disponible
-        </Text>
-        <Button variant="secondary" height={44} label="Retour" onPress={goBack} />
+        <Text style={styles.notFoundText}>{t('social.profile.notFound')}</Text>
+        <Button variant="secondary" height={44} label={t('social.back')} onPress={goBack} />
       </View>
     </>
   );

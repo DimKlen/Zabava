@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { Text } from '@/components/Text';
 import { commonLabel, formatCount, friendsLabel, showsCommon } from '@/domain/social/members';
+import { useT } from '@/i18n';
 import { colors, radii } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
 
@@ -23,6 +24,7 @@ type Props = {
 
 /** En-tête du profil d'un autre membre (specs/social/docs/03 › ProfileHeader, Counters, CommonChip). */
 export function ProfileHeader({ profile, onFriends }: Props) {
+  useT();
   const common = profile.commonCount ?? 0;
   const label = friendsLabel(profile.friendsCount);
   return (

@@ -5,6 +5,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 
 import { Text } from '@/components/Text';
 import type { SeasonProgress } from '@/domain/series';
+import { useT } from '@/i18n';
 import { easeTiming } from '@/lib/animation';
 import { colors, durations, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
@@ -17,13 +18,16 @@ type Props = {
 
 /** En-tête de saison : « {vus}/{total} vus », barre, « Tout marquer comme vu » / « Saison vue ». */
 export function SeasonHeader({ name, progress, onToggleAll }: Props) {
+  const { t } = useT();
   const ratio = progress.total > 0 ? progress.watched / progress.total : 0;
   const complete = progress.complete;
   return (
     <View style={styles.card}>
       <View style={styles.text}>
         <Text style={styles.name}>{name}</Text>
-        <Text style={styles.seen}>{`${progress.watched}/${progress.total} vus`}</Text>
+        <Text style={styles.seen}>
+          {t('title.season.seen', { watched: progress.watched, total: progress.total })}
+        </Text>
         <ProgressBar ratio={ratio} />
       </View>
       {progress.aired.length > 0 ? (
@@ -39,7 +43,7 @@ export function SeasonHeader({ name, progress, onToggleAll }: Props) {
         >
           <ChecksIcon size={18} color={complete ? colors.bg : colors.accent} />
           <Text style={[styles.buttonLabel, { color: complete ? colors.bg : colors.accent }]}>
-            {complete ? 'Saison vue' : 'Tout marquer comme vu'}
+            {complete ? t('title.season.complete') : t('title.season.markAll')}
           </Text>
         </Pressable>
       ) : null}

@@ -10,6 +10,7 @@ import { SkeletonBox } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { TextField } from '@/components/TextField';
 import { featuredProviders, isGroupSelected, searchProviders } from '@/domain/providers';
+import { useT } from '@/i18n';
 import { colors, durations, radii } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
@@ -29,6 +30,7 @@ type Props = { visible: boolean; onClose: () => void };
 
 /** Mes plateformes (Profil) : grille de 4 colonnes, chaque tap enregistré tout de suite. */
 export function PlatformsSheet({ visible, onClose }: Props) {
+  const { t } = useT();
   const { width, height } = useWindowDimensions();
   const profile = useProfile().data;
   const providers = useProviders();
@@ -53,17 +55,17 @@ export function PlatformsSheet({ visible, onClose }: Props) {
     >
       <View style={styles.header}>
         <Text accessibilityRole="header" style={styles.title}>
-          Mes plateformes
+          {t('settings.platforms')}
         </Text>
-        <Button variant="primary" height={36} label="OK" onPress={onClose} />
+        <Button variant="primary" height={36} label={t('misc.ok')} onPress={onClose} />
       </View>
       <TextField
         height={42}
         icon={MagnifyingGlassIcon}
         value={query}
         onChangeText={setQuery}
-        placeholder="Rechercher une plateforme"
-        accessibilityLabel="Rechercher une plateforme"
+        placeholder={t('misc.platforms.search')}
+        accessibilityLabel={t('misc.platforms.search')}
         autoCorrect={false}
         returnKeyType="search"
         style={styles.search}

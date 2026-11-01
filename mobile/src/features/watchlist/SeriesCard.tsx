@@ -2,12 +2,15 @@ import { removeFromList, setEpisodesWatched, setSeriesAbandoned } from '@/api/li
 import { NextEpisodeCard } from '@/components/NextEpisodeCard';
 import { cardEpisodeLabel, remainingLabel, type SeriesEntry } from '@/domain/seriesList';
 
+import { useT } from '@/i18n';
+
 import { openSeries } from './openSeries';
 
 type Props = { entry: SeriesEntry; spoilerProtection: boolean };
 
 /** Carte « prochain épisode » d'une série de Ma liste (À regarder, Pas regardé depuis un moment). */
 export function SeriesCard({ entry: { series, info }, spoilerProtection }: Props) {
+  const { t } = useT();
   const next = info.next;
   if (!next) return null;
   return (
@@ -24,7 +27,7 @@ export function SeriesCard({ entry: { series, info }, spoilerProtection }: Props
       onPress={() => openSeries(series, next.season)}
       onCheck={() => setEpisodesWatched(series, [next], true)}
       onAbandon={() => setSeriesAbandoned(series, true)}
-      onRemove={() => removeFromList(series, 'Retirée de ma liste')}
+      onRemove={() => removeFromList(series, t('watchlist.series.removed'))}
     />
   );
 }

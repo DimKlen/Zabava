@@ -7,6 +7,7 @@ import { Button } from '@/components/Button';
 import { LoadError, showsLoadError } from '@/components/LoadError';
 import { PosterGrid } from '@/components/PosterGrid';
 import { Text } from '@/components/Text';
+import { useT } from '@/i18n';
 import { goBack } from '@/lib/navigation';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
@@ -19,6 +20,7 @@ type Props = { id: number; name: string };
 
 /** Autres animés d'un studio, les plus pertinents (populaires) d'abord, chargement infini. */
 export function StudioScreen({ id, name }: Props) {
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const query = useStudioTitles(id);
   const isInList = useLibraryMembership();
@@ -34,7 +36,7 @@ export function StudioScreen({ id, name }: Props) {
           icon={CaretLeftIcon}
           iconSize={22}
           color={colors.text}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('misc.back')}
           onPress={goBack}
         />
         <Text accessibilityRole="header" style={styles.title}>
@@ -68,7 +70,7 @@ export function StudioScreen({ id, name }: Props) {
           ListEmptyComponent={
             <View style={styles.empty}>
               <FilmStripIcon size={40} color={colors.neutral600} />
-              <Text style={styles.emptyText}>Aucun animé pour ce studio pour l&apos;instant</Text>
+              <Text style={styles.emptyText}>{t('misc.studio.empty')}</Text>
             </View>
           }
         />

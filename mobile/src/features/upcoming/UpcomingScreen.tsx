@@ -13,6 +13,7 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { SkeletonBox } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { groupUpcoming, noDateLine, type UpcomingItem } from '@/domain/upcoming';
+import { useT, type MessageKey } from '@/i18n';
 import { openDiscover } from '@/lib/discover';
 import { useUiStore } from '@/store/ui';
 import { colors, radii, spacing } from '@/theme/tokens';
@@ -20,11 +21,11 @@ import { fonts } from '@/theme/typography';
 
 import { UpcomingRow } from './UpcomingRow';
 
-const FILTERS: readonly { key: UpcomingFilter; label: string }[] = [
-  { key: 'all', label: 'Tout' },
-  { key: 'movie', label: 'Films' },
-  { key: 'tv', label: 'Séries' },
-  { key: 'anime', label: 'Animés' },
+const FILTERS: readonly { key: UpcomingFilter; label: MessageKey }[] = [
+  { key: 'all', label: 'upcoming.filter.all' },
+  { key: 'movie', label: 'upcoming.filter.movie' },
+  { key: 'tv', label: 'upcoming.filter.tv' },
+  { key: 'anime', label: 'upcoming.filter.anime' },
 ];
 
 const SKELETONS = 4;
@@ -39,6 +40,7 @@ type Section =
  * virtualisée : seuls les jours proches de l'écran sont montés.
  */
 export function UpcomingScreen() {
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const filter = useUiStore((s) => s.upcomingFilter);
   const setFilter = useUiStore((s) => s.setUpcomingFilter);
@@ -81,12 +83,12 @@ export function UpcomingScreen() {
         contentContainerStyle={styles.content}
         ListHeaderComponent={
           <>
-            <ScreenHeader title="À venir" />
+            <ScreenHeader title={t('upcoming.title')} />
             <View style={styles.chips}>
               {FILTERS.map((option) => (
                 <Chip
                   key={option.key}
-                  label={option.label}
+                  label={t(option.label)}
                   active={filter === option.key}
                   onPress={() => setFilter(option.key)}
                   paddingHorizontal={14}
@@ -100,9 +102,9 @@ export function UpcomingScreen() {
           query.data ? (
             <EmptyState
               icon={CalendarBlankIcon}
-              title="Rien de prévu"
+              title={t('upcoming.empty.title')}
               paddingTop={48}
-              action={{ label: 'Suivre des séries', onPress: () => openDiscover('tv') }}
+              action={{ label: t('upcoming.empty.cta'), onPress: () => openDiscover('tv') }}
             />
           ) : null
         }
@@ -113,7 +115,7 @@ export function UpcomingScreen() {
             </Text>
           ) : (
             <Text accessibilityRole="header" style={[styles.noDate, styles.noDateTitle]}>
-              Sans date
+              {t('upcoming.noDate')}
             </Text>
           )
         }

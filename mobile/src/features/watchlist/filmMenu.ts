@@ -2,6 +2,7 @@ import { EyeIcon, EyeSlashIcon, TrashIcon } from 'phosphor-react-native';
 
 import { removeFromList, setMovieWatched } from '@/api/libraryActions';
 import type { LibraryMovie } from '@/domain/watchlist';
+import { t } from '@/i18n';
 import { openActionSheet, openRatingSheet } from '@/store/ui';
 
 /** Appui long sur un film de Ma liste : vu / non vu, retirer (specs/docs/06). */
@@ -12,7 +13,9 @@ export function openFilmMenu(film: LibraryMovie): void {
     title: film.title,
     options: [
       {
-        label: watched ? 'Marquer comme non vu' : 'Marquer comme vu',
+        label: watched
+          ? t('watchlist.films.menu.markUnwatched')
+          : t('watchlist.films.menu.markWatched'),
         icon: watched ? EyeSlashIcon : EyeIcon,
         onPress: () =>
           watched
@@ -24,7 +27,11 @@ export function openFilmMenu(film: LibraryMovie): void {
                 comment: film.userTitle.comment,
               }),
       },
-      { label: 'Retirer de ma liste', icon: TrashIcon, onPress: () => removeFromList(title) },
+      {
+        label: t('watchlist.films.menu.remove'),
+        icon: TrashIcon,
+        onPress: () => removeFromList(title),
+      },
     ],
   });
 }

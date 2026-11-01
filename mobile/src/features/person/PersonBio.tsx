@@ -8,6 +8,7 @@ import {
 
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
+import { useT } from '@/i18n';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
@@ -15,6 +16,7 @@ const COLLAPSED_LINES = 2;
 
 /** Biographie sur 2 lignes, avec « Voir plus » / « Voir moins » si elle dépasse. */
 export function PersonBio({ text }: { text: string }) {
+  const { t } = useT();
   const [expanded, setExpanded] = useState(false);
   const [lineCount, setLineCount] = useState(0);
 
@@ -41,7 +43,7 @@ export function PersonBio({ text }: { text: string }) {
         <Button
           variant="ghost"
           height={32}
-          label={expanded ? 'Voir moins' : 'Voir plus'}
+          label={expanded ? t('misc.person.less') : t('misc.person.more')}
           onPress={() => setExpanded((value) => !value)}
           style={styles.more}
         />

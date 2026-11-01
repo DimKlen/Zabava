@@ -12,6 +12,7 @@ import {
   toggleGroup,
   type ProviderGroup,
 } from '@/domain/providers';
+import { useT } from '@/i18n';
 import { radii } from '@/theme/tokens';
 
 import { OnboardingFooter } from './OnboardingFooter';
@@ -35,6 +36,7 @@ export function platformTileWidth(screenWidth: number): number {
 
 /** Étape 2 — Mes plateformes (specs/docs/05 §5.2). */
 export function PlatformsScreen() {
+  const { t } = useT();
   const { width } = useWindowDimensions();
   const tileWidth = platformTileWidth(width);
   const profile = useProfile();
@@ -56,8 +58,8 @@ export function PlatformsScreen() {
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <StepIntro
-          title="Tes plateformes"
-          text="On les met en avant et on te prévient quand un film de ta liste y arrive."
+          title={t('onboarding.platforms.title')}
+          text={t('onboarding.platforms.text')}
           textMarginBottom={24}
         />
         {showsLoadError(providers) ? (
@@ -85,7 +87,11 @@ export function PlatformsScreen() {
           </View>
         )}
       </ScrollView>
-      <OnboardingFooter label="Continuer" onPress={submit} disabled={setProviders.isPending} />
+      <OnboardingFooter
+        label={t('onboarding.continue')}
+        onPress={submit}
+        disabled={setProviders.isPending}
+      />
     </View>
   );
 }

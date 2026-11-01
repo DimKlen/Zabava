@@ -5,6 +5,7 @@ import { flatItems, useFeed } from '@/api/social';
 import { Button } from '@/components/Button';
 import { HorizontalCarousel } from '@/components/HorizontalCarousel';
 import { Text } from '@/components/Text';
+import { useT } from '@/i18n';
 import { colors } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
@@ -19,6 +20,7 @@ const CARDS = 6;
  * §4.10). Masqué si le fil est vide, ou hors ligne sans cache.
  */
 export function ActivityCarousel() {
+  const { t } = useT();
   const feed = useFeed();
   const sentenceOf = useActivitySentence();
   const activities = flatItems(feed.data?.pages).slice(0, CARDS);
@@ -28,12 +30,12 @@ export function ActivityCarousel() {
     <View style={styles.section}>
       <View style={styles.header}>
         <Text accessibilityRole="header" style={styles.title}>
-          Activité de tes abonnements
+          {t('social.feed.title')}
         </Text>
         <Button
           variant="ghost"
           height={36}
-          label="Tout voir"
+          label={t('social.feed.seeAll')}
           onPress={() => router.push('/feed')}
           style={styles.all}
         />

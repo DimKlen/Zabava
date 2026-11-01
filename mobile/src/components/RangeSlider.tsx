@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
+import { useT } from '@/i18n';
 import { colors } from '@/theme/tokens';
 
 const THUMB = 24;
@@ -22,6 +23,7 @@ type Edge = 'low' | 'high';
 
 /** Curseur à deux poignées sur une seule piste (plage de valeurs). */
 export function RangeSlider({ min, max, step = 1, value, onChange, accessibilityLabel }: Props) {
+  const { t } = useT();
   const [width, setWidth] = useState(0);
   // Valeur de la poignée au début du geste (objet stable, lu seulement dans les gestes).
   const [origin] = useState(() => ({ low: 0, high: 0 }));
@@ -62,7 +64,7 @@ export function RangeSlider({ min, max, step = 1, value, onChange, accessibility
             <View
               accessible
               accessibilityRole="adjustable"
-              accessibilityLabel={`${accessibilityLabel}, début`}
+              accessibilityLabel={t('common.range.start', { label: accessibilityLabel })}
               accessibilityValue={{ min, max, now: value[0] }}
               style={[styles.hit, { left: left - (HIT - THUMB) / 2 }]}
             >
@@ -73,7 +75,7 @@ export function RangeSlider({ min, max, step = 1, value, onChange, accessibility
             <View
               accessible
               accessibilityRole="adjustable"
-              accessibilityLabel={`${accessibilityLabel}, fin`}
+              accessibilityLabel={t('common.range.end', { label: accessibilityLabel })}
               accessibilityValue={{ min, max, now: value[1] }}
               style={[styles.hit, { left: right - (HIT - THUMB) / 2 }]}
             >

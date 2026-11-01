@@ -1,4 +1,6 @@
 /** Ma liste › Séries / Animés : sections, ordre et libellés — specs/docs/06 (`vals()` › series). */
+import { t } from '@/i18n';
+
 import type { Availability, UserTitle } from './types';
 import { isOnMyPlatforms } from './availability';
 import { episodeCode, formatShortDate } from './format';
@@ -26,15 +28,23 @@ export type LibrarySeries = {
 
 export type SectionKind = 'cards' | 'carousel' | 'rows';
 
+const SECTION_KINDS: readonly (readonly [SeriesSection, SectionKind])[] = [
+  ['watch', 'cards'],
+  ['stale', 'cards'],
+  ['notstarted', 'carousel'],
+  ['uptodate', 'rows'],
+  ['done', 'rows'],
+  ['abandoned', 'rows'],
+];
+
 export const SERIES_SECTIONS: readonly { key: SeriesSection; title: string; kind: SectionKind }[] =
-  [
-    { key: 'watch', title: 'À regarder', kind: 'cards' },
-    { key: 'stale', title: 'Pas regardé depuis un moment', kind: 'cards' },
-    { key: 'notstarted', title: 'Pas encore commencées', kind: 'carousel' },
-    { key: 'uptodate', title: 'À jour', kind: 'rows' },
-    { key: 'done', title: 'Terminées', kind: 'rows' },
-    { key: 'abandoned', title: 'Abandonnées', kind: 'rows' },
-  ];
+  SECTION_KINDS.map(([key, kind]) => ({
+    key,
+    kind,
+    get title() {
+      return t(`common.series.section.${key}`);
+    },
+  }));
 
 /** Repliées par défaut : Terminées et Abandonnées. */
 export const DEFAULT_COLLAPSED: Readonly<Partial<Record<SeriesSection, boolean>>> = {
@@ -54,9 +64,24 @@ export type SeriesGroup<T extends LibrarySeries = LibrarySeries> = {
 export type SeriesFilter = 'all' | 'mine' | 'upcoming';
 
 export const SERIES_FILTERS: readonly { value: SeriesFilter; label: string }[] = [
-  { value: 'all', label: 'Tout' },
-  { value: 'mine', label: 'Sur mes plateformes' },
-  { value: 'upcoming', label: 'Pas encore sorti' },
+  {
+    value: 'all',
+    get label() {
+      return t('common.filter.all');
+    },
+  },
+  {
+    value: 'mine',
+    get label() {
+      return t('common.filter.mine');
+    },
+  },
+  {
+    value: 'upcoming',
+    get label() {
+      return t('common.filter.notReleased');
+    },
+  },
 ];
 
 /** « Pas encore sorti » : aucun épisode n'a encore été diffusé. */
@@ -109,7 +134,9 @@ export function groupSeries<T extends LibrarySeries>(
 /** Titre d'un épisode : « Épisode {n} » si l'anti-spoiler le masque ou s'il n'a pas de nom. */
 export function episodeTitle(episode: SeriesEpisode, spoilerProtection: boolean): string {
   const hidden = spoilerProtection && !episode.watchedAt;
-  return !hidden && episode.name ? episode.name : `Épisode ${episode.number}`;
+  return !hidden && episode.name
+    ? episode.name
+    : t('common.series.episodeN', { number: episode.number });
 }
 
 /** Carte : « S04 E03 · Titre ». */
@@ -119,19 +146,26 @@ export function cardEpisodeLabel(episode: SeriesEpisode, spoilerProtection: bool
 
 /** « {n} épisodes restants » si n > 1, sinon « Dernier épisode disponible ». */
 export function remainingLabel(remaining: number): string {
-  return remaining > 1 ? `${remaining} épisodes restants` : 'Dernier épisode disponible';
+  return remaining > 1
+    ? t('common.series.remaining', { count: remaining })
+    : t('common.series.lastAvailable');
 }
 
 /** Libellé des lignes compactes (À jour, Terminées, Abandonnées). */
 export function compactRowLabel(section: SeriesSection, info: SeriesInfo): string {
   switch (section) {
     case 'done':
-      return `Terminée · ${info.aired.length} épisodes vus`;
+      return t('common.series.rowDone', { count: info.aired.length });
     case 'abandoned':
-      return `Abandonnée · ${info.watchedCount}/${info.aired.length} vus`;
+      return t('common.series.rowAbandoned', {
+        watched: info.watchedCount,
+        total: info.aired.length,
+      });
     default: {
       const date = info.upcoming ? episodeAirDate(info.upcoming) : undefined;
-      return date ? `Prochain épisode le ${formatShortDate(date)}` : 'En attente de la suite';
+      return date
+        ? t('common.series.rowNext', { date: formatShortDate(date) })
+        : t('common.series.rowWaiting');
     }
   }
 }

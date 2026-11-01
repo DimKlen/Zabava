@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
+import { useT } from '@/i18n';
 import { colors } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
@@ -18,11 +19,17 @@ export function showsLoadError(query: { isError: boolean; isFetching: boolean })
 
 /** Erreur réseau dans une zone (specs/docs/10 §8). */
 export function LoadError({ onRetry }: Props) {
+  const { t } = useT();
   return (
     <View style={styles.block}>
-      <Text style={styles.title}>Impossible de charger</Text>
-      <Text style={styles.text}>Vérifie ta connexion et réessaie.</Text>
-      <Button variant="secondary" height={44} label="Réessayer" onPress={onRetry} />
+      <Text style={styles.title}>{t('common.loadError.title')}</Text>
+      <Text style={styles.text}>{t('common.loadError.text')}</Text>
+      <Button
+        variant="secondary"
+        height={44}
+        label={t('common.loadError.retry')}
+        onPress={onRetry}
+      />
     </View>
   );
 }

@@ -19,14 +19,10 @@ import {
   type FilmSegment,
   type FilmSort,
 } from '@/domain/watchlist';
+import { useT } from '@/i18n';
 import { openActionSheet } from '@/store/ui';
 import { colors, spacing } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
-
-const SEGMENTS = [
-  { key: 'towatch', label: 'À voir' },
-  { key: 'watched', label: 'Vus' },
-] as const;
 
 type Props = {
   segment: FilmSegment;
@@ -51,13 +47,18 @@ export function FilmControls({
   onToggleDirection,
   onFilterChange,
 }: Props) {
+  const { t } = useT();
+  const segments = [
+    { key: 'towatch', label: t('watchlist.films.segment.towatch') },
+    { key: 'watched', label: t('watchlist.films.segment.watched') },
+  ] as const;
   const towatch = segment === 'towatch';
   const sortLabel = FILM_SORTS.find((option) => option.value === sort)?.label ?? '';
   const directionLabel = sortDirectionLabel(sort, reversed);
 
   const openSort = () =>
     openActionSheet({
-      title: 'Trier par',
+      title: t('watchlist.films.sort.title'),
       options: FILM_SORTS.map((option) => ({
         label: option.value === sort ? `${option.label} · ${directionLabel}` : option.label,
         icon: option.value === sort ? (reversed ? ArrowUpIcon : ArrowDownIcon) : CircleIcon,
@@ -68,7 +69,7 @@ export function FilmControls({
   return (
     <View>
       <View style={styles.bar}>
-        <Segmented options={SEGMENTS} value={segment} onChange={onSegmentChange} />
+        <Segmented options={segments} value={segment} onChange={onSegmentChange} />
         {towatch ? (
           <View style={styles.sort}>
             <Button
@@ -79,7 +80,7 @@ export function FilmControls({
               iconSize={16}
               color={colors.neutral300}
               label={sortLabel}
-              accessibilityLabel={`Trier par : ${sortLabel}`}
+              accessibilityLabel={t('watchlist.films.sort.a11y', { sort: sortLabel })}
               onPress={openSort}
               style={styles.sortButton}
             />
@@ -90,7 +91,9 @@ export function FilmControls({
               fontSize={13}
               color={colors.neutral300}
               label={directionLabel}
-              accessibilityLabel={`${directionLabel}, toucher pour inverser`}
+              accessibilityLabel={t('watchlist.films.direction.a11y', {
+                direction: directionLabel,
+              })}
               onPress={onToggleDirection}
               style={styles.sortButton}
             />

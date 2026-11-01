@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onlineManager } from '@tanstack/react-query';
 
 import type { MediaType, UserTitle } from '@/domain/types';
+import { t } from '@/i18n';
 import { showToast } from '@/store/ui';
 
 import { ApiError } from './http';
@@ -39,8 +40,6 @@ export type Op =
 
 /** Une opération en file. Les opérations d'une même action partagent leur `group`. */
 type Entry = { id: string; group: string; type: MediaType; op: Op };
-
-export const SAVE_FAILED = "Impossible d'enregistrer, réessaie";
 
 const STORAGE_KEY = 'zabava.mutation-queue';
 /** Attente avant un nouvel essai, selon le nombre d'échecs d'affilée. */
@@ -140,7 +139,7 @@ function finishGroup(group: string, error?: unknown): void {
   // Après un redémarrage, l'action d'origine n'est plus là pour restaurer l'écran :
   // Ma liste est rechargée depuis le serveur à la fin de la file.
   if (waiter) waiter.reject(error);
-  else showToast(SAVE_FAILED);
+  else showToast(t('common.toast.saveFailed'));
 }
 
 function refreshTouched(): void {

@@ -6,6 +6,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { useT } from '@/i18n';
 import { easeTiming } from '@/lib/animation';
 import { hapticLight } from '@/lib/haptics';
 import { tmdbImage } from '@/lib/tmdb';
@@ -71,6 +72,7 @@ export function NextEpisodeCard({
   onAbandon,
   onRemove,
 }: Props) {
+  const { t } = useT();
   const isOpen = useUiStore((s) => s.swipedCardId === id);
   const setSwipedCard = useUiStore((s) => s.setSwipedCard);
 
@@ -149,7 +151,7 @@ export function NextEpisodeCard({
           style={[styles.action, styles.abandon]}
         >
           <PauseCircleIcon size={20} color={colors.text} />
-          <Text style={styles.actionLabel}>Abandonner</Text>
+          <Text style={styles.actionLabel}>{t('common.card.abandon')}</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
@@ -157,7 +159,7 @@ export function NextEpisodeCard({
           style={[styles.action, styles.remove]}
         >
           <TrashIcon size={20} color={colors.text} />
-          <Text style={styles.actionLabel}>Retirer</Text>
+          <Text style={styles.actionLabel}>{t('common.card.remove')}</Text>
         </Pressable>
       </View>
 
@@ -168,9 +170,9 @@ export function NextEpisodeCard({
           accessibilityLabel={`${seriesName}, ${episodeLabel}`}
           accessibilityActions={[
             { name: 'activate' },
-            { name: 'check', label: 'Marquer comme vu' },
-            { name: 'abandon', label: 'Abandonner' },
-            { name: 'remove', label: 'Retirer' },
+            { name: 'check', label: t('common.check.markWatched') },
+            { name: 'abandon', label: t('common.card.abandon') },
+            { name: 'remove', label: t('common.card.remove') },
           ]}
           onAccessibilityAction={(e) => {
             if (e.nativeEvent.actionName === 'activate') onPress();

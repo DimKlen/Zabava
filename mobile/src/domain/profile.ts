@@ -1,4 +1,6 @@
 /** Profil — specs/docs/09 §9.2. */
+import { t } from '@/i18n';
+
 import { COUNTRY_NAMES } from './availability';
 import { isGroupSelected, type ProviderGroup } from './providers';
 
@@ -12,7 +14,12 @@ export const REGIONS: readonly { value: string; label: string }[] = [
   'BE',
   'CH',
   'US',
-].map((code) => ({ value: code, label: COUNTRY_NAMES[code] ?? code }));
+].map((code) => ({
+  value: code,
+  get label() {
+    return COUNTRY_NAMES[code] ?? code;
+  },
+}));
 
 /** « Canada » ; le code tel quel s'il est inconnu, rien sans région. */
 export function regionLabel(region: string | undefined): string {
@@ -32,12 +39,17 @@ export const NOTIFICATION_SWITCHES: readonly NotificationSwitch[] = [
 
 /** « 9 h ». */
 export function digestLabel(hour: number): string {
-  return `${hour} h`;
+  return t('common.format.digestHour', { hour });
 }
 
 /** Heures du récapitulatif quotidien, dans l'ordre de la spec. */
 export const DIGEST_HOURS: readonly { value: string; label: string }[] = [8, 9, 12, 18, 20].map(
-  (hour) => ({ value: String(hour), label: digestLabel(hour) }),
+  (hour) => ({
+    value: String(hour),
+    get label() {
+      return digestLabel(hour);
+    },
+  }),
 );
 
 const PROVIDER_NAMES: Record<string, string> = { google: 'Google', apple: 'Apple' };
@@ -54,5 +66,5 @@ export function platformsSummary(
   selectedIds: readonly number[],
 ): string {
   const names = providers.filter((p) => isGroupSelected(p, selectedIds)).map((p) => p.name);
-  return names.length > 0 ? names.join(', ') : 'Aucune';
+  return names.length > 0 ? names.join(', ') : t('common.profile.noPlatform');
 }

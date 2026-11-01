@@ -1,4 +1,6 @@
 /** Fiche film : méta, bandeau de statut, Équipe et Infos — specs/docs/07 §7.1, docs/01 §5. */
+import { t } from '@/i18n';
+
 import {
   countryLabel,
   isAfterToday,
@@ -27,22 +29,22 @@ export function movieStatus(movie: MovieAvailability, now: Date): MovieStatus {
         state,
         digital: false,
         text: movie.releaseTheatrical
-          ? `En salle le ${formatShortDate(movie.releaseTheatrical)}`
-          : 'Pas encore de date',
+          ? t('common.movie.inTheatersOn', { date: formatShortDate(movie.releaseTheatrical) })
+          : t('common.movie.noDateYet'),
       };
     case 'cinema':
-      return { state, digital: false, text: 'Au cinéma maintenant' };
+      return { state, digital: false, text: t('common.movie.inCinemaNow') };
     case 'avail':
       // Une date numérique à venir (offre en précommande) ne dit pas « depuis ».
       return movie.releaseDigital && !isAfterToday(movie.releaseDigital, now)
         ? {
             state,
             digital: true,
-            text: `Disponible en numérique depuis le ${formatShortDate(movie.releaseDigital)}`,
+            text: t('common.movie.digitalSince', { date: formatShortDate(movie.releaseDigital) }),
           }
-        : { state, digital: false, text: 'Disponible en streaming' };
+        : { state, digital: false, text: t('common.movie.streaming') };
     case 'unknown':
-      return { state, digital: false, text: 'Pas encore de date' };
+      return { state, digital: false, text: t('common.movie.noDateYet') };
   }
 }
 
@@ -56,15 +58,19 @@ export function noOfferText(
   now: Date,
 ): string {
   const parts: string[] = [];
-  if (movieState(movie, now) === 'cinema') parts.push("Seulement au cinéma pour l'instant.");
+  if (movieState(movie, now) === 'cinema') parts.push(t('common.movie.onlyCinema'));
   if (isAfterToday(movie.releaseDigital, now)) {
     const country = movie.releaseDigitalCountry
       ? countryLabel([movie.releaseDigitalCountry], region)
       : undefined;
     const date = formatLongDate(movie.releaseDigital);
-    parts.push(`En numérique le ${date}${country ? ` ${country}` : ''}.`);
+    parts.push(
+      country
+        ? t('common.movie.digitalOnIn', { date, country })
+        : t('common.movie.digitalOn', { date }),
+    );
   }
-  return parts.length > 0 ? parts.join(' ') : 'Disponibilité inconnue.';
+  return parts.length > 0 ? parts.join(' ') : t('common.movie.availabilityUnknown');
 }
 
 export type InfoRow = {
@@ -98,8 +104,8 @@ export function movieCrew(movie: {
   writerIds?: number[];
 }): InfoRow[] {
   return [
-    ...personRow('Réalisation', movie.directors, movie.directorIds ?? []),
-    ...personRow('Scénario', movie.writers, movie.writerIds ?? []),
+    ...personRow(t('common.crew.direction'), movie.directors, movie.directorIds ?? []),
+    ...personRow(t('common.crew.writing'), movie.writers, movie.writerIds ?? []),
   ];
 }
 
@@ -114,10 +120,13 @@ export type MovieInfoInput = {
 /** Lignes « Infos ». */
 export function movieInfos(movie: MovieInfoInput): InfoRow[] {
   return rows([
-    ['Titre original', movie.originalTitle],
-    ['Sortie', movie.releaseTheatrical ? formatLongDate(movie.releaseTheatrical) : undefined],
-    ['Langue originale', movie.originalLanguage],
-    ['Pays', movie.country],
-    ['Studio', movie.studio],
+    [t('common.info.originalTitle'), movie.originalTitle],
+    [
+      t('common.info.release'),
+      movie.releaseTheatrical ? formatLongDate(movie.releaseTheatrical) : undefined,
+    ],
+    [t('common.info.originalLanguage'), movie.originalLanguage],
+    [t('common.info.country'), movie.country],
+    [t('common.info.studio'), movie.studio],
   ]);
 }

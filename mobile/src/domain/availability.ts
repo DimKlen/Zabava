@@ -1,4 +1,6 @@
 /** Disponibilité d'un film dans la région — specs/docs/01 §5 (`A.mState`, `A.bestPlat`). */
+import { t } from '@/i18n';
+
 import { daysFromToday } from './dates';
 import {
   groupProviders,
@@ -92,17 +94,14 @@ export function whereToWatch(
 }
 
 /** Noms des pays proposés par le serveur. */
-export const COUNTRY_NAMES: Record<string, string> = {
-  CA: 'Canada',
-  FR: 'France',
-  BE: 'Belgique',
-  CH: 'Suisse',
-  US: 'États-Unis',
-  GB: 'Royaume-Uni',
-  DE: 'Allemagne',
-  ES: 'Espagne',
-  IT: 'Italie',
-};
+export const COUNTRY_NAMES: Record<string, string> = {};
+for (const code of ['CA', 'FR', 'BE', 'CH', 'US', 'GB', 'DE', 'ES', 'IT'] as const) {
+  // Lu à l'affichage : le nom suit la langue courante.
+  Object.defineProperty(COUNTRY_NAMES, code, {
+    enumerable: true,
+    get: () => t(`common.country.${code}`),
+  });
+}
 
 /** Centre approximatif des pays proposés par le serveur (latitude, longitude en degrés). */
 const COUNTRY_CENTERS: Record<string, readonly [number, number]> = {

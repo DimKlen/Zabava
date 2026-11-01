@@ -6,6 +6,7 @@ import { Button } from '@/components/Button';
 import { StarRating } from '@/components/StarRating';
 import { Text } from '@/components/Text';
 import type { UserTitle } from '@/domain/types';
+import { useT } from '@/i18n';
 import { openRatingSheet } from '@/store/ui';
 import { colors, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
@@ -16,6 +17,7 @@ type Props = { movie: ListTitle; userTitle: UserTitle };
 
 /** « Ma note » d'un film vu : visible par moi seul ; la toucher la modifie. */
 export function MyReview({ movie, userTitle }: Props) {
+  const { t } = useT();
   const { rating, comment } = userTitle;
   const edit = () => openRatingSheet({ title: movie, mode: 'edit', rating, comment });
 
@@ -27,17 +29,19 @@ export function MyReview({ movie, userTitle }: Props) {
           height={44}
           icon={StarIcon}
           iconSize={18}
-          label="Noter ce film"
+          label={t('title.review.rate')}
           onPress={edit}
         />
       </View>
     );
   }
+  const ratingText = rating ? t('title.review.outOf', { rating }) : t('title.review.noneLower');
+  const reviewSummary = comment ? `${ratingText}, ${comment}` : ratingText;
   return (
-    <InfoSection title="Ma note">
+    <InfoSection title={t('title.review.title')}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Ma note : ${rating ? `${rating} sur 10` : 'pas de note'}${comment ? `, ${comment}` : ''}. Modifier`}
+        accessibilityLabel={t('title.review.a11y', { value: reviewSummary })}
         onPress={edit}
         style={({ pressed }) => [styles.card, pressed && styles.pressed]}
       >
@@ -48,7 +52,7 @@ export function MyReview({ movie, userTitle }: Props) {
               <Text style={styles.value}>{rating}/10</Text>
             </>
           ) : (
-            <Text style={styles.value}>Pas de note</Text>
+            <Text style={styles.value}>{t('title.rating.none')}</Text>
           )}
           <View style={styles.spacer} />
           <PencilSimpleIcon size={16} color={colors.neutral400} />

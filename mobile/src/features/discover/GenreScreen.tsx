@@ -19,6 +19,7 @@ import {
   type GenreKey,
 } from '@/domain/advancedSearch';
 import type { MediaType } from '@/domain/types';
+import { useT } from '@/i18n';
 import { goBack } from '@/lib/navigation';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
@@ -31,6 +32,7 @@ type Props = { type: MediaType; genre: GenreKey };
 
 /** Liste par genre (specs/docs/07 §7.4) : tri et filtres, plus récents d'abord, chargement infini. */
 export function GenreScreen({ type, genre }: Props) {
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const [filters, setFilters] = useState<GenreFilters>(DEFAULT_GENRE_FILTERS);
   const query = useGenreTitles(type, genre, filters);
@@ -48,7 +50,7 @@ export function GenreScreen({ type, genre }: Props) {
           icon={CaretLeftIcon}
           iconSize={22}
           color={colors.text}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('discover.genre.back')}
           onPress={goBack}
         />
         <View>
@@ -88,7 +90,7 @@ export function GenreScreen({ type, genre }: Props) {
           ListEmptyComponent={
             <View style={styles.empty}>
               <FilmStripIcon size={40} color={colors.neutral600} />
-              <Text style={styles.emptyText}>Aucun titre dans ce genre pour l&apos;instant</Text>
+              <Text style={styles.emptyText}>{t('discover.genre.empty')}</Text>
             </View>
           }
         />
@@ -105,6 +107,7 @@ function GenreFilterChips({
   filters: GenreFilters;
   onChange: (filters: GenreFilters) => void;
 }) {
+  const { t } = useT();
   return (
     <ScrollView
       horizontal
@@ -122,12 +125,12 @@ function GenreFilterChips({
       ))}
       <View style={styles.divider} />
       <Chip
-        label="Sur mes plateformes"
+        label={t('discover.genre.mine')}
         active={filters.mine}
         onPress={() => onChange({ ...filters, mine: !filters.mine })}
       />
       <Chip
-        label={`Note ${GENRE_MIN_RATING}+`}
+        label={t('discover.genre.rating', { min: GENRE_MIN_RATING })}
         active={filters.minRating > 0}
         onPress={() =>
           onChange({ ...filters, minRating: filters.minRating > 0 ? 0 : GENRE_MIN_RATING })

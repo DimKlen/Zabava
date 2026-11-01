@@ -6,6 +6,7 @@ import type { TitleDetail } from '@/api/titles';
 import { useMovieWatchlist } from '@/api/watchlist';
 import { RatingChips } from '@/components/RatingChips';
 import { movieCrew, movieInfos, movieMeta, movieStatus, noOfferText } from '@/domain/movieDetail';
+import { useT } from '@/i18n';
 import { useAfterFirstFrame } from '@/lib/useAfterFirstFrame';
 import { useUiStore } from '@/store/ui';
 import { colors } from '@/theme/tokens';
@@ -109,23 +110,24 @@ function MovieBody({ movie }: { movie: TitleDetail }) {
 }
 
 function MovieMore({ movie, libraryIds }: { movie: TitleDetail; libraryIds: Set<string> }) {
+  const { t } = useT();
   const crew = movieCrew(movie);
   const infos = movieInfos(movie);
   return (
     <>
       <CastCarousel cast={movie.cast} />
       {crew.length > 0 ? (
-        <InfoSection title="Équipe" titleGap={8}>
+        <InfoSection title={t('title.crew.team')} titleGap={8}>
           <InfoRows rows={crew} />
         </InfoSection>
       ) : null}
       {infos.length > 0 ? (
-        <InfoSection title="Infos" titleGap={8} paddingTop={16}>
+        <InfoSection title={t('title.infos')} titleGap={8} paddingTop={16}>
           <InfoRows rows={infos} />
         </InfoSection>
       ) : null}
-      <PosterCarousel title="Saga" titles={movie.collection} libraryIds={libraryIds} />
-      <PosterCarousel title="Titres similaires" titles={movie.similar} libraryIds={libraryIds} />
+      <PosterCarousel title={t('title.saga')} titles={movie.collection} libraryIds={libraryIds} />
+      <PosterCarousel title={t('title.similar')} titles={movie.similar} libraryIds={libraryIds} />
     </>
   );
 }

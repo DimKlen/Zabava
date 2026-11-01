@@ -14,6 +14,7 @@ import {
   type TitleHolder,
 } from '@/domain/social/followingSummary';
 import type { MediaType } from '@/domain/types';
+import { useT } from '@/i18n';
 import { colors, durations, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
@@ -28,13 +29,14 @@ type Props = { holders: TitleHolder[]; type: MediaType; title: string };
 
 /** « Tes abonnements » d'une fiche, puis la sheet de leurs statuts (specs/social/docs/03). */
 export function FollowingCard({ holders, type, title }: Props) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const text = followingText(followingNames(holders));
   return (
-    <InfoSection title="Tes abonnements">
+    <InfoSection title={t('social.following.title')}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Tes abonnements : ${text}`}
+        accessibilityLabel={t('social.following.a11y', { text })}
         onPress={() => setOpen(true)}
         style={({ pressed }) => [styles.card, pressed && styles.pressed]}
       >
@@ -66,6 +68,7 @@ function FollowingSheet({
   type,
   title,
 }: Props & { visible: boolean; onClose: () => void }) {
+  const { t } = useT();
   return (
     <BottomSheet
       visible={visible}
@@ -76,7 +79,7 @@ function FollowingSheet({
       <SheetHandle />
       <View style={styles.header}>
         <Text accessibilityRole="header" style={styles.sheetTitle}>
-          Tes abonnements
+          {t('social.following.title')}
         </Text>
         <Text style={styles.sheetSubtitle}>{title}</Text>
       </View>
@@ -105,7 +108,7 @@ function FollowingSheet({
       <Button
         variant="secondary"
         height={46}
-        label="Fermer"
+        label={t('social.close')}
         onPress={onClose}
         style={styles.close}
       />

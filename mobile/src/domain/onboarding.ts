@@ -1,4 +1,7 @@
 /** Onboarding — specs/docs/05-ecrans-auth-onboarding.md §5.2 et §5.3. */
+import { tPlural } from '@/lib/plural';
+import { t } from '@/i18n';
+
 import type { MediaType, UserTitle } from './types';
 
 /** Le pseudo vient en premier (specs/social/docs/04 §4.1). */
@@ -28,9 +31,8 @@ export function canSkip(step: OnboardingStep): boolean {
 
 /** Compteur de l'étape des titres (titres ajoutés pendant l'onboarding). */
 export function addedCountLabel(count: number): string {
-  if (count === 0) return "Touche une affiche pour l'ajouter";
-  if (count === 1) return '1 titre ajouté';
-  return `${count} titres ajoutés`;
+  if (count === 0) return t('common.onboarding.tapPoster');
+  return tPlural('common.onboarding.added', count);
 }
 
 /** Statut d'un titre ajouté : film → À voir, série ou animé → suivi. */

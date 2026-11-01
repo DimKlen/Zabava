@@ -28,7 +28,7 @@ describe('parseLocalDate', () => {
   });
 });
 
-describe('formats de date fr-CA', () => {
+describe('formats de date', () => {
   it('jour court', () => {
     expect(formatShortDate('2026-12-18')).toBe('18 déc.');
   });

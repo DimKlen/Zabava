@@ -1,5 +1,6 @@
 import { setEpisodesWatched, type ListTitle } from '@/api/libraryActions';
 import { previousDialogTitle, previousUnwatched, type SeriesEpisode } from '@/domain/series';
+import { t } from '@/i18n';
 import { openDialog } from '@/store/ui';
 
 /**
@@ -24,12 +25,12 @@ export function checkEpisode(
     title: previousDialogTitle(previous.length),
     actions: [
       {
-        label: 'Seulement celui-ci',
+        label: t('title.dialog.onlyThis'),
         variant: 'secondary',
         onPress: () => setEpisodesWatched(series, [episode], true),
       },
       {
-        label: 'Oui',
+        label: t('title.dialog.yes'),
         variant: 'primary',
         // Le retour haptique est déjà parti au tap sur la coche.
         onPress: () => setEpisodesWatched(series, [...previous, episode], true),

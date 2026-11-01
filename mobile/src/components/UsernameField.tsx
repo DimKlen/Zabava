@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { cleanUsername, type UsernameStatus } from '@/domain/social/username';
+import { useT, type MessageKey } from '@/i18n';
 import { colors, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
@@ -31,14 +32,11 @@ type Props = {
 /** Un tour du petit indicateur de vérification. */
 const SPIN_MS = 700;
 
-const MESSAGES: Partial<Record<UsernameStatus, { text: string; color: string }>> = {
-  checking: { text: 'Vérification…', color: colors.neutral500 },
-  available: { text: 'Disponible', color: colors.accent300 },
-  invalid: {
-    text: '3 à 20 caractères : lettres minuscules, chiffres, point et tiret bas.',
-    color: colors.neutral400,
-  },
-  offline: { text: 'Vérification impossible, réessaie', color: colors.neutral300 },
+const MESSAGES: Partial<Record<UsernameStatus, { key: MessageKey; color: string }>> = {
+  checking: { key: 'common.username.checking', color: colors.neutral500 },
+  available: { key: 'common.username.available', color: colors.accent300 },
+  invalid: { key: 'common.username.invalid', color: colors.neutral400 },
+  offline: { key: 'common.username.offline', color: colors.neutral300 },
 };
 
 /** Champ pseudo (specs/social/docs/03 › UsernameField) : « @ », vérification en direct, propositions. */
@@ -50,6 +48,7 @@ export function UsernameField({
   editable = true,
   onFocus,
 }: Props) {
+  const { t } = useT();
   const border =
     status === 'available'
       ? colors.accent
@@ -67,7 +66,7 @@ export function UsernameField({
           onChangeText={(text) => onChange(cleanUsername(text))}
           editable={editable}
           onFocus={onFocus}
-          accessibilityLabel="Pseudo"
+          accessibilityLabel={t('common.username.label')}
           autoCapitalize="none"
           autoCorrect={false}
           autoComplete="off"
@@ -86,14 +85,14 @@ export function UsernameField({
       </View>
       {message ? (
         <Text accessibilityLiveRegion="polite" style={[styles.message, { color: message.color }]}>
-          {message.text}
+          {t(message.key)}
         </Text>
       ) : null}
       {status === 'taken' ? (
         <>
           <View accessibilityLiveRegion="polite" style={styles.takenRow}>
             <XCircleIcon size={16} color={colors.neutral100} />
-            <Text style={[styles.message, styles.taken]}>Déjà pris. Essaie plutôt :</Text>
+            <Text style={[styles.message, styles.taken]}>{t('common.username.taken')}</Text>
           </View>
           <View style={styles.suggestions}>
             {suggestions.map((suggestion) => (
@@ -113,6 +112,7 @@ export function UsernameField({
 
 /** Anneau de 16 qui tourne (bord neutral700, haut accent). */
 function Spinner() {
+  const { t } = useT();
   const turn = useSharedValue(0);
 
   useEffect(() => {
@@ -123,7 +123,10 @@ function Spinner() {
   const style = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.get() * 360}deg` }] }));
 
   return (
-    <Animated.View accessibilityLabel="Vérification en cours" style={[styles.spinner, style]} />
+    <Animated.View
+      accessibilityLabel={t('common.username.checkingA11y')}
+      style={[styles.spinner, style]}
+    />
   );
 }
 

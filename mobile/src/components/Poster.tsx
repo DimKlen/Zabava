@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
+import { useT } from '@/i18n';
 import type { PosterBadge } from '@/domain/badge';
 import { posterInitial } from '@/domain/initials';
 import type { Title } from '@/domain/types';
@@ -144,6 +145,7 @@ function AddButton({
   inList: boolean;
   onToggle?: () => void;
 }) {
+  const { t } = useT();
   // Pas de pop au premier affichage d'une affiche déjà cochée.
   const [prevInList, setPrevInList] = useState(inList);
   const [popping, setPopping] = useState(false);
@@ -155,7 +157,9 @@ function AddButton({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${inList ? 'Retirer' : 'Ajouter'} ${title}`}
+      accessibilityLabel={
+        inList ? t('common.poster.remove', { title }) : t('common.poster.add', { title })
+      }
       onPress={onToggle}
       hitSlop={4}
       style={styles.addZone}

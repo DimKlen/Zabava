@@ -18,6 +18,7 @@ import {
   type FilmographySort,
   type FilmographyTab,
 } from '@/domain/person';
+import { useT } from '@/i18n';
 import { goBack } from '@/lib/navigation';
 import { colors, radii } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
@@ -29,18 +30,9 @@ import { useLibraryMembership, useMyProviderIds } from '../catalog/useLibraryMem
 import { personPreview, type PersonPreview } from './openPerson';
 import { PersonBio } from './PersonBio';
 
-const TABS = [
-  { key: 'movie', label: 'Films' },
-  { key: 'tv', label: 'Séries' },
-] as const;
-
-const SORTS: readonly { key: FilmographySort; label: string }[] = [
-  { key: 'pop', label: 'Popularité' },
-  { key: 'recent', label: 'Plus récent' },
-];
-
 /** Fiche personne (specs/docs/07 §7.3) : identité, biographie, filmographie. */
 export function PersonScreen({ id }: { id: number }) {
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const query = usePerson(id);
 
@@ -53,7 +45,7 @@ export function PersonScreen({ id }: { id: number }) {
           icon={CaretLeftIcon}
           iconSize={22}
           color={colors.text}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('misc.back')}
           onPress={goBack}
         />
       </View>
@@ -71,6 +63,15 @@ export function PersonScreen({ id }: { id: number }) {
  * l'équipe ou la recherche) restent en place, le reste arrive à la place des squelettes.
  */
 function PersonContent({ person, preview }: { person?: PersonDetail; preview?: PersonPreview }) {
+  const { t } = useT();
+  const tabs = [
+    { key: 'movie', label: t('misc.person.movies') },
+    { key: 'tv', label: t('misc.person.series') },
+  ] as const;
+  const sorts: readonly { key: FilmographySort; label: string }[] = [
+    { key: 'pop', label: t('misc.person.sortPopular') },
+    { key: 'recent', label: t('misc.person.sortRecent') },
+  ];
   const [tab, setTab] = useState<FilmographyTab>('movie');
   const [sort, setSort] = useState<FilmographySort>('pop');
   const titles = person ? filmography(person.credits, tab, sort) : [];
@@ -129,12 +130,12 @@ function PersonContent({ person, preview }: { person?: PersonDetail; preview?: P
       {identity}
       {biography ? <PersonBio text={biography} /> : null}
       <Text accessibilityRole="header" style={styles.filmography}>
-        Filmographie
+        {t('misc.person.filmography')}
       </Text>
       <View style={styles.controls}>
-        <UnderlineTabs tabs={TABS} value={tab} onChange={setTab} style={styles.tabs} />
+        <UnderlineTabs tabs={tabs} value={tab} onChange={setTab} style={styles.tabs} />
         <View style={styles.sorts}>
-          {SORTS.map((option) => (
+          {sorts.map((option) => (
             <Chip
               key={option.key}
               label={option.label}
@@ -164,7 +165,7 @@ function PersonContent({ person, preview }: { person?: PersonDetail; preview?: P
           width={width}
         />
       )}
-      ListEmptyComponent={<Text style={styles.empty}>Aucun titre dans cette catégorie.</Text>}
+      ListEmptyComponent={<Text style={styles.empty}>{t('misc.person.empty')}</Text>}
     />
   );
 }

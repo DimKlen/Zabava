@@ -7,6 +7,7 @@ import type { PersonResult, TitleResult } from '@/api/search';
 import { GradientFill } from '@/components/GradientFill';
 import { Text } from '@/components/Text';
 import { personRowSubtitle, titleRowSubtitle } from '@/domain/search';
+import { useT } from '@/i18n';
 import { tmdbImage } from '@/lib/tmdb';
 import { colors, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
@@ -30,6 +31,7 @@ export const TitleRow = memo(function TitleRow({
   onPressIn,
   onToggle,
 }: TitleRowProps) {
+  const { t } = useT();
   const poster = tmdbImage(title.posterPath, 'w92');
   return (
     <Pressable
@@ -60,7 +62,9 @@ export const TitleRow = memo(function TitleRow({
       </View>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${inList ? 'Retirer' : 'Ajouter'} ${title.title}`}
+        accessibilityLabel={t(inList ? 'search.row.remove' : 'search.row.add', {
+          title: title.title,
+        })}
         onPress={onToggle}
         style={styles.addZone}
         testID="row-add"

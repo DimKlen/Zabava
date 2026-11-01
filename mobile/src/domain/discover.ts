@@ -1,4 +1,6 @@
 /** Découvrir — specs/docs/08 §8.3. */
+import { t, type MessageKey } from '@/i18n';
+
 import type { MediaType } from './types';
 
 export type DiscoverList =
@@ -13,22 +15,32 @@ export type DiscoverList =
 
 export type DiscoverSection = { list: DiscoverList; title: string };
 
+/** Section dont le titre suit la langue courante (lu à l'affichage). */
+function section(list: DiscoverList, key: MessageKey): DiscoverSection {
+  return {
+    list,
+    get title() {
+      return t(key);
+    },
+  };
+}
+
 const SERIES_SECTIONS: readonly DiscoverSection[] = [
-  { list: 'trending', title: 'Tendances' },
-  { list: 'new_seasons', title: 'Nouvelles saisons cette semaine' },
-  { list: 'popular_on_mine', title: 'Populaires sur mes plateformes' },
-  { list: 'top_rated', title: 'Les mieux notés' },
+  section('trending', 'common.discover.trending'),
+  section('new_seasons', 'common.discover.newSeasons'),
+  section('popular_on_mine', 'common.discover.popularOnMine'),
+  section('top_rated', 'common.discover.topRated'),
 ];
 
 /** Carrousels d'un onglet, dans l'ordre de la spec. */
 export const DISCOVER_SECTIONS: Record<MediaType, readonly DiscoverSection[]> = {
   movie: [
-    { list: 'trending', title: 'Tendances de la semaine' },
-    { list: 'now_playing', title: 'Au cinéma' },
-    { list: 'upcoming', title: 'Bientôt en salle' },
-    { list: 'new_on_mine', title: 'Nouveautés sur mes plateformes' },
-    { list: 'top_rated', title: 'Les mieux notés' },
+    section('trending', 'common.discover.trendingWeek'),
+    section('now_playing', 'common.discover.nowPlaying'),
+    section('upcoming', 'common.discover.upcoming'),
+    section('new_on_mine', 'common.discover.newOnMine'),
+    section('top_rated', 'common.discover.topRated'),
   ],
   tv: SERIES_SECTIONS,
-  anime: [...SERIES_SECTIONS, { list: 'season_anime', title: 'Animés de la saison en cours' }],
+  anime: [...SERIES_SECTIONS, section('season_anime', 'common.discover.seasonAnime')],
 };

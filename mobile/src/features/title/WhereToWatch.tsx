@@ -5,6 +5,7 @@ import { Text } from '@/components/Text';
 import { whereToWatch } from '@/domain/availability';
 import { baseProviderName, isGroupSelected } from '@/domain/providers';
 import type { Availability, Provider } from '@/domain/types';
+import { t, useT } from '@/i18n';
 import { showToast } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
@@ -23,23 +24,19 @@ type Props = {
 function open(provider: Provider, fallbackLink: string | undefined) {
   const link = provider.link ?? fallbackLink;
   if (link) void Linking.openURL(link).catch(() => undefined);
-  showToast(`Ouverture de ${baseProviderName(provider.name)}…`);
+  showToast(t('title.whereToWatch.opening', { name: baseProviderName(provider.name) }));
 }
 
 /**
  * « Où regarder » : toutes les plateformes, avec le pays le plus proche quand elles ne proposent
  * pas le titre dans ma région ; les miennes en premier et cerclées.
  */
-export function WhereToWatch({
-  availability,
-  myProviderIds,
-  region,
-  emptyText = 'Disponibilité inconnue.',
-}: Props) {
+export function WhereToWatch({ availability, myProviderIds, region, emptyText }: Props) {
+  const { t } = useT();
   const providers = whereToWatch(availability, myProviderIds);
 
   return (
-    <InfoSection title="Où regarder">
+    <InfoSection title={t('title.whereToWatch')}>
       {providers.length > 0 ? (
         <View style={styles.logos}>
           {providers.map((provider) => (
@@ -53,7 +50,7 @@ export function WhereToWatch({
           ))}
         </View>
       ) : (
-        <Text style={styles.unknown}>{emptyText}</Text>
+        <Text style={styles.unknown}>{emptyText ?? t('title.whereToWatch.unknown')}</Text>
       )}
     </InfoSection>
   );

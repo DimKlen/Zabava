@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet } from 'react-native';
 
+import { useT } from '@/i18n';
 import { useUiStore } from '@/store/ui';
 import { colors, durations, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
@@ -14,6 +15,7 @@ import { Text } from './Text';
  * de l'animation de sortie, qui peut être interrompue).
  */
 export function ActionSheetHost() {
+  const { t } = useT();
   const sheet = useUiStore((s) => s.actionSheet);
   const open = useUiStore((s) => s.actionSheetOpen);
   const close = useUiStore((s) => s.closeActionSheet);
@@ -47,7 +49,7 @@ export function ActionSheetHost() {
       <Button
         variant="secondary"
         height={46}
-        label="Annuler"
+        label={t('common.cancel')}
         onPress={close}
         style={styles.cancel}
       />

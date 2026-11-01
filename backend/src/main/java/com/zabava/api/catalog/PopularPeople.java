@@ -114,7 +114,7 @@ public class PopularPeople {
         try {
             for (int page = 1; page <= pageCount; page++) {
                 JsonNode body = tmdb.get("/person/popular", TmdbClient.params(
-                        "language", "fr-CA",
+                        "language", "fr",
                         "page", String.valueOf(page)));
                 for (JsonNode node : Json.array(body, "results")) {
                     if (Json.bool(node, "adult")) continue;

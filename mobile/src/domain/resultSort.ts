@@ -1,11 +1,28 @@
 /** Tri des résultats de recherche (classique et avancée), sur le modèle du tri de la liste de films. */
 
+import { t, type MessageKey } from '@/i18n';
+
 export type ResultSort = 'relevance' | 'release' | 'rating';
 
 export const RESULT_SORTS: readonly { value: ResultSort; label: string }[] = [
-  { value: 'relevance', label: 'Pertinence' },
-  { value: 'release', label: 'Date de sortie' },
-  { value: 'rating', label: 'Mieux notés' },
+  {
+    value: 'relevance',
+    get label() {
+      return t('common.sort.relevance');
+    },
+  },
+  {
+    value: 'release',
+    get label() {
+      return t('common.sort.releaseDate');
+    },
+  },
+  {
+    value: 'rating',
+    get label() {
+      return t('common.sort.topRated');
+    },
+  },
 ];
 
 export type ResultOrder = { sort: ResultSort; reversed: boolean };
@@ -14,14 +31,14 @@ export type ResultOrder = { sort: ResultSort; reversed: boolean };
 export const DEFAULT_RESULT_ORDER: ResultOrder = { sort: 'relevance', reversed: false };
 
 /** Libellés du sens de chaque tri : [sens par défaut, sens inversé]. */
-const DIRECTION_LABELS: Record<ResultSort, readonly [string, string]> = {
-  relevance: ['Plus pertinents', 'Moins pertinents'],
-  release: ['Plus récents', 'Plus anciens'],
-  rating: ['Mieux notés', 'Moins bien notés'],
+const DIRECTION_LABELS: Record<ResultSort, readonly [MessageKey, MessageKey]> = {
+  relevance: ['common.sort.mostRelevant', 'common.sort.leastRelevant'],
+  release: ['common.sort.newest', 'common.sort.oldest'],
+  rating: ['common.sort.topRated', 'common.sort.lowestRated'],
 };
 
 export function resultDirectionLabel(sort: ResultSort, reversed: boolean): string {
-  return DIRECTION_LABELS[sort][reversed ? 1 : 0];
+  return t(DIRECTION_LABELS[sort][reversed ? 1 : 0]);
 }
 
 export type Sortable = { year?: number; releaseDate?: string; voteAverage?: number };

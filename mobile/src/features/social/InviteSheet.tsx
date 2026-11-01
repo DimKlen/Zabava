@@ -12,6 +12,7 @@ import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
 import { ToastHost } from '@/components/Toast';
 import { inviteLink, inviteMessage } from '@/domain/social/links';
+import { useT } from '@/i18n';
 import { closeInviteSheet, showToast, useUiStore } from '@/store/ui';
 import { colors, durations, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
@@ -24,6 +25,7 @@ const AVATAR_BORDER = 4;
 
 /** Sheet « Inviter » (specs/social/docs/04 §4.7), montée une fois dans le layout racine. */
 export function InviteSheetHost() {
+  const { t } = useT();
   const open = useUiStore((s) => s.inviteOpen);
   const profile = useProfile(open).data;
   const username = profile?.username;
@@ -41,7 +43,7 @@ export function InviteSheetHost() {
       <SheetHandle />
       <View style={styles.header}>
         <Text accessibilityRole="header" style={styles.title}>
-          Inviter
+          {t('social.invite.title')}
         </Text>
         <Button
           variant="icon"
@@ -49,7 +51,7 @@ export function InviteSheetHost() {
           icon={XIcon}
           iconSize={20}
           color={colors.text}
-          accessibilityLabel="Fermer"
+          accessibilityLabel={t('social.close')}
           onPress={closeInviteSheet}
         />
       </View>
@@ -61,7 +63,7 @@ export function InviteSheetHost() {
             height={48}
             fontSize={15}
             icon={ShareNetworkIcon}
-            label="Partager mon lien"
+            label={t('social.invite.share')}
             onPress={() =>
               void Share.share({ message: inviteMessage(config.inviteDomain, username) }).catch(
                 () => undefined,
@@ -73,10 +75,10 @@ export function InviteSheetHost() {
               variant="secondary"
               height={44}
               icon={LinkIcon}
-              label="Copier le lien"
+              label={t('social.invite.copy')}
               onPress={() => {
                 void Clipboard.setStringAsync(inviteLink(config.inviteDomain, username))
-                  .then(() => showToast('Lien copié'))
+                  .then(() => showToast(t('social.invite.copied')))
                   .catch(() => undefined);
               }}
               style={styles.half}
@@ -85,7 +87,7 @@ export function InviteSheetHost() {
               variant="secondary"
               height={44}
               icon={ScanIcon}
-              label="Scanner un code"
+              label={t('social.scan.title')}
               onPress={() => {
                 closeInviteSheet();
                 router.push('/scan');
@@ -109,9 +111,10 @@ function QrCard({
   name: string;
   avatarUrl?: string | null;
 }) {
+  const { t } = useT();
   return (
     <View style={styles.card}>
-      <View accessible accessibilityLabel="QR code de ton profil" style={styles.qr}>
+      <View accessible accessibilityLabel={t('social.invite.qr')} style={styles.qr}>
         <QRCode
           value={inviteLink(config.inviteDomain, username)}
           size={QR_SIZE}

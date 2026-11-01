@@ -10,6 +10,7 @@ import { FlagIcon, ShareNetworkIcon, UserMinusIcon } from 'phosphor-react-native
 import { Share } from 'react-native';
 
 import { type Member } from '@/domain/social/members';
+import { t } from '@/i18n';
 import { hapticLight } from '@/lib/haptics';
 import { profileLink } from '@/lib/links';
 import { openActionSheet, showToast } from '@/store/ui';
@@ -18,10 +19,6 @@ import { ApiError, api } from './http';
 import { profileKey, type Profile } from './profile';
 import { queryClient } from './queryClient';
 import { userKey, type Page, type UserProfile } from './social';
-
-export const OFFLINE = 'Connexion requise';
-export const SAVE_FAILED = "Impossible d'enregistrer, réessaie";
-const FOLLOW_LIMIT = 'Tu as atteint la limite de 200 suivis par jour';
 
 /** Requêtes où un membre peut apparaître (profils, listes, recherche, fil, fiches). */
 const MEMBER_ROOTS = new Set(['user', 'members', 'recentProfiles', 'feed', 'title']);
@@ -32,7 +29,7 @@ const isMemberQuery = ({ queryKey }: { queryKey: QueryKey }) =>
 /** Hors ligne : rien ne change, toast « Connexion requise ». */
 export function requireOnline(): boolean {
   if (onlineManager.isOnline()) return true;
-  showToast(OFFLINE);
+  showToast(t('common.toast.offlineRequired'));
   return false;
 }
 
@@ -128,8 +125,8 @@ function refreshProfile(username: string): void {
 }
 
 function failureMessage(error: unknown): string {
-  if (error instanceof ApiError && error.status === 429) return FOLLOW_LIMIT;
-  return SAVE_FAILED;
+  if (error instanceof ApiError && error.status === 429) return t('common.toast.followLimit');
+  return t('common.toast.saveFailed');
 }
 
 type Change = { apply: () => void; revert: () => void; request: () => Promise<unknown> };
@@ -173,7 +170,7 @@ export function followMember(member: Member): void {
   void send(change).then((done) => {
     if (!done) return;
     reloadMyFollowing();
-    showToast(`Tu suis @${member.username}`, () => {
+    showToast(t('common.toast.following', { username: member.username }), () => {
       if (!requireOnline()) return;
       void send(
         inverse(change, () => api(`/users/${member.username}/follow`, { method: 'DELETE' })),
@@ -207,7 +204,7 @@ export function unfollowMember(member: Member): void {
   void send(change).then((done) => {
     if (!done) return;
     refreshProfile(member.username);
-    showToast(`Tu ne suis plus @${member.username}`, () => {
+    showToast(t('common.toast.unfollowed', { username: member.username }), () => {
       if (!requireOnline()) return;
       // Le serveur rétablit le suivi d'origine (même date).
       void send(
@@ -228,7 +225,11 @@ export function pressFollow(member: Member): void {
     openActionSheet({
       title: `@${member.username}`,
       options: [
-        { label: 'Ne plus suivre', icon: UserMinusIcon, onPress: () => unfollowMember(member) },
+        {
+          label: t('common.member.unfollow'),
+          icon: UserMinusIcon,
+          onPress: () => unfollowMember(member),
+        },
       ],
     });
     return;
@@ -238,24 +239,20 @@ export function pressFollow(member: Member): void {
 
 // ─── Signalement et partage ────────────────────────────────────────────────
 
-const REPORT_REASONS = [
-  { reason: 'inappropriate', label: 'Pseudo ou avatar inapproprié' },
-  { reason: 'impersonation', label: "Usurpation d'identité" },
-  { reason: 'spam', label: 'Spam' },
-] as const;
+const REPORT_REASONS = ['inappropriate', 'impersonation', 'spam'] as const;
 
 /** Signaler : choix du motif, puis envoi. */
 export function reportMember(member: Member): void {
   if (!requireOnline()) return;
   openActionSheet({
-    title: `Signaler @${member.username}`,
-    options: REPORT_REASONS.map(({ reason, label }) => ({
-      label,
+    title: t('common.member.reportTitle', { username: member.username }),
+    options: REPORT_REASONS.map((reason) => ({
+      label: t(`common.member.reason.${reason}`),
       onPress: () => {
         if (!requireOnline()) return;
         api(`/users/${member.username}/report`, { method: 'POST', body: { reason } })
-          .then(() => showToast('Signalement envoyé, merci'))
-          .catch(() => showToast(SAVE_FAILED));
+          .then(() => showToast(t('common.toast.reportSent')))
+          .catch(() => showToast(t('common.toast.saveFailed')));
       },
     })),
   });
@@ -272,20 +269,20 @@ export function openMemberMenu(member: Member): void {
     title: `@${member.username}`,
     options: [
       {
-        label: 'Partager le profil',
+        label: t('common.member.shareProfile'),
         icon: ShareNetworkIcon,
         onPress: () => shareProfile(member.username),
       },
       ...(member.followState === 'following'
         ? [
             {
-              label: 'Ne plus suivre',
+              label: t('common.member.unfollow'),
               icon: UserMinusIcon,
               onPress: () => unfollowMember(member),
             },
           ]
         : []),
-      { label: 'Signaler', icon: FlagIcon, onPress: () => reportMember(member) },
+      { label: t('common.member.report'), icon: FlagIcon, onPress: () => reportMember(member) },
     ],
   });
 }

@@ -11,25 +11,26 @@ import { PosterGrid } from '@/components/PosterGrid';
 import { SkeletonPoster } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { UnderlineTabs } from '@/components/UnderlineTabs';
-import { addedCountLabel } from '@/domain/onboarding';
 import type { MediaType } from '@/domain/types';
+import { useT } from '@/i18n';
 import { colors } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
+import { addedCountKey } from './addedCountKey';
 import { OnboardingFooter } from './OnboardingFooter';
 import { StepIntro } from './StepIntro';
 import { useOnboardingTitles } from './useOnboardingTitles';
-
-const TABS = [
-  { key: 'movie', label: 'Films' },
-  { key: 'tv', label: 'Séries' },
-  { key: 'anime', label: 'Animés' },
-] as const;
 
 const SKELETONS = Array.from({ length: 9 }, (_, index) => index);
 
 /** Étape 3 — Premiers titres (specs/docs/05 §5.2). Pas de toast. */
 export function TitlesScreen() {
+  const { t } = useT();
+  const tabs = [
+    { key: 'movie', label: t('onboarding.titles.movies') },
+    { key: 'tv', label: t('onboarding.titles.series') },
+    { key: 'anime', label: t('onboarding.titles.anime') },
+  ] as const;
   const queryClient = useQueryClient();
   const [type, setType] = useState<MediaType>('movie');
   const popular = usePopularTitles(type);
@@ -50,12 +51,12 @@ export function TitlesScreen() {
   const header = (
     <View>
       <StepIntro
-        title="Tes premiers titres"
-        text="Touche ce que tu veux voir ou suivre."
+        title={t('onboarding.titles.title')}
+        text={t('onboarding.titles.text')}
         textMarginBottom={8}
       />
       <UnderlineTabs
-        tabs={TABS}
+        tabs={tabs}
         value={type}
         onChange={setType}
         variant="compact"
@@ -96,9 +97,13 @@ export function TitlesScreen() {
           renderPoster={(_, width) => <SkeletonPoster style={{ width }} />}
         />
       )}
-      <OnboardingFooter label="Terminer" onPress={finish} disabled={updateProfile.isPending}>
+      <OnboardingFooter
+        label={t('onboarding.titles.finish')}
+        onPress={finish}
+        disabled={updateProfile.isPending}
+      >
         <Text accessibilityLiveRegion="polite" style={styles.count}>
-          {addedCountLabel(added.size)}
+          {t(addedCountKey(added.size), { count: added.size })}
         </Text>
       </OnboardingFooter>
     </View>

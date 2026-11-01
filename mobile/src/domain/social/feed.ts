@@ -2,6 +2,8 @@
  * Fil d'activité — specs/social/docs/04 §4.11 et docs/07 §1 (`A.actVM`, `dayLabel`, `when` du
  * prototype).
  */
+import { t, type MessageKey } from '@/i18n';
+
 import { calendarDaysBetween } from '../dates';
 import { episodeCode, formatRelativeDay, formatShortDate, formatTime } from '../format';
 import type { MediaType } from '../types';
@@ -68,31 +70,51 @@ export function activitySentence(
   const base = { name, title, tail: '', visual: 'poster' as ActivityVisual };
   switch (activity.type) {
     case 'added':
-      return { ...base, verb: 'a ajouté', tail: ' à sa liste' };
+      return { ...base, ...around('social.activity.added') };
     case 'watched_movie':
-      return { ...base, verb: 'a vu' };
+      return { ...base, ...around('social.activity.watchedMovie') };
     case 'started_show':
-      return { ...base, verb: 'a commencé' };
+      return { ...base, ...around('social.activity.startedShow') };
     case 'finished_show':
-      return { ...base, verb: 'a terminé' };
+      return { ...base, ...around('social.activity.finishedShow') };
     case 'watched_episodes':
       return { ...base, ...episodesVerb(activity, myWatchedEpisodes, spoilerProtection) };
   }
+}
+
+const TITLE_MARK = '\u0000';
+
+/**
+ * Phrase traduite coupée autour de `{title}` (en gras à l'écran) : ce qui précède (verbe) et ce
+ * qui suit (« à sa liste »). L'ordre des mots dépend de la langue.
+ */
+function around(
+  key: MessageKey,
+  params: Record<string, string | number> = {},
+): { verb: string; tail: string } {
+  const [before = '', after = ''] = t(key, { ...params, title: TITLE_MARK }).split(TITLE_MARK);
+  return { verb: before.trim(), tail: after };
 }
 
 function episodesVerb(
   { episode, count }: FeedActivity,
   myWatchedEpisodes: ReadonlySet<number>,
   spoilerProtection: boolean,
-): { verb: string; visual: ActivityVisual } {
-  if (count > 1 || !episode) return { verb: `a vu ${count} épisodes de`, visual: 'poster' };
+): { verb: string; tail: string; visual: ActivityVisual } {
+  if (count > 1 || !episode) {
+    const key = count === 1 ? 'social.activity.episodes.one' : 'social.activity.episodes.other';
+    return { ...around(key, { count }), visual: 'poster' };
+  }
   const code = episodeCode(episode.season, episode.number);
   const masked = spoilerProtection && !myWatchedEpisodes.has(episode.id);
   if (masked || !episode.name) {
-    return { verb: `a vu ${code} de`, visual: !masked && episode.stillPath ? 'still' : 'poster' };
+    return {
+      ...around('social.activity.episode', { code }),
+      visual: !masked && episode.stillPath ? 'still' : 'poster',
+    };
   }
   return {
-    verb: `a vu ${code} « ${episode.name} » de`,
+    ...around('social.activity.episodeNamed', { code, name: episode.name }),
     visual: episode.stillPath ? 'still' : 'poster',
   };
 }
@@ -101,7 +123,10 @@ export type ActivityDay = { key: string; label: string; items: FeedActivity[] };
 
 /** Libellé d'un jour du fil : « Aujourd'hui », « Hier », puis « Mar. 20 oct. ». */
 export function dayLabel(date: Date, now: Date): string {
-  const label = calendarDaysBetween(now, date) === -1 ? 'Hier' : formatRelativeDay(date, now);
+  const label =
+    calendarDaysBetween(now, date) === -1
+      ? t('social.day.yesterday')
+      : formatRelativeDay(date, now);
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
@@ -110,7 +135,7 @@ export function groupByDay(activities: readonly FeedActivity[], now: Date): Acti
   const days: ActivityDay[] = [];
   for (const activity of activities) {
     const date = new Date(activity.createdAt);
-    const key = date.toLocaleDateString('fr-CA');
+    const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
     const last = days.at(-1);
     if (last?.key === key) last.items.push(activity);
     else days.push({ key, label: dayLabel(date, now), items: [activity] });
@@ -122,7 +147,7 @@ export function groupByDay(activities: readonly FeedActivity[], now: Date): Acti
 export function cardWhen(date: Date, now: Date): string {
   const days = calendarDaysBetween(now, date);
   if (days === 0) return formatTime(date);
-  if (days === -1) return 'Hier';
+  if (days === -1) return t('social.day.yesterday');
   return formatShortDate(date);
 }
 

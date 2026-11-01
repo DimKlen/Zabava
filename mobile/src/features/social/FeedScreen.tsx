@@ -12,6 +12,7 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { SkeletonMemberRow } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { groupByDay, type ActivityDay } from '@/domain/social/feed';
+import { useT } from '@/i18n';
 import { goBack } from '@/lib/navigation';
 import { colors, spacing } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
@@ -26,6 +27,7 @@ const SKELETONS = 5;
  * Hors ligne : le dernier fil en cache, en lecture seule.
  */
 export function FeedScreen() {
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const feed = useFeed();
   const sentenceOf = useActivitySentence();
@@ -58,10 +60,10 @@ export function FeedScreen() {
         ListEmptyComponent={
           <EmptyState
             icon={UsersThreeIcon}
-            title="Suis des membres pour voir ce qu'ils regardent"
+            title={t('social.feed.empty')}
             paddingTop={48}
             action={{
-              label: "Suivre quelqu'un",
+              label: t('social.followSomeone'),
               onPress: () => router.push({ pathname: '/search', params: { tab: 'members' } }),
             }}
           />
@@ -94,11 +96,11 @@ export function FeedScreen() {
           icon={CaretLeftIcon}
           iconSize={22}
           color={colors.text}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('social.back')}
           onPress={goBack}
         />
         <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
-          Activité de tes abonnements
+          {t('social.feed.title')}
         </Text>
       </View>
       {body}

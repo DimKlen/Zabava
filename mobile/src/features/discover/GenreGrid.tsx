@@ -6,15 +6,17 @@ import { PressableScale } from '@/components/PressableScale';
 import { Text } from '@/components/Text';
 import { GENRES } from '@/domain/advancedSearch';
 import type { MediaType } from '@/domain/types';
+import { useT } from '@/i18n';
 import { colors, motion, radii, spacing } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
 
 /** « Par genre » : 10 tuiles en 2 colonnes, tap → liste du genre pour le type de l'onglet. */
 export function GenreGrid({ type }: { type: MediaType }) {
+  const { t } = useT();
   return (
     <View style={styles.block}>
       <Text accessibilityRole="header" style={styles.title}>
-        Par genre
+        {t('discover.genre.title')}
       </Text>
       <View style={styles.grid}>
         {GENRES.map((genre, index) => (

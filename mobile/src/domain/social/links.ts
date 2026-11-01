@@ -1,4 +1,6 @@
 /** Liens de profil (specs/social/docs/02 §4, docs/07 §5) : invitation, QR, liens profonds. */
+import { t } from '@/i18n';
+
 import { isWellFormedUsername } from './username';
 
 /** Lien d'invitation : https://{domaine}/u/{pseudo}. */
@@ -8,7 +10,7 @@ export function inviteLink(domain: string, username: string): string {
 
 /** Texte prérempli de « Partager mon lien ». */
 export function inviteMessage(domain: string, username: string): string {
-  return `Suis-moi sur Zabava : ${inviteLink(domain, username)}`;
+  return t('social.invite.message', { link: inviteLink(domain, username) });
 }
 
 /**

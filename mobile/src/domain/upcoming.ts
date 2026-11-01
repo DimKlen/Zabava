@@ -1,4 +1,6 @@
 /** À venir — specs/docs/09 §9.1 (prototype : `vals()` › upcoming). */
+import { currentLanguage, t } from '@/i18n';
+
 import { calendarDaysBetween, parseLocalDate, startOfDay } from './dates';
 import { episodeCode, formatRelativeDay, formatTime } from './format';
 import type { MediaType } from './types';
@@ -66,18 +68,20 @@ export function itemLine(event: UpcomingEvent): string {
       return event.airstamp ? `${code} · ${formatTime(new Date(event.airstamp))}` : code;
     }
     case 'theatrical':
-      return 'Sortie en salle';
+      return t('common.upcoming.theatrical');
     case 'streaming':
-      return event.provider ? `Arrive sur ${event.provider}` : 'Disponible en streaming';
+      return event.provider
+        ? t('common.upcoming.arrivesOn', { provider: event.provider })
+        : t('common.upcoming.streaming');
     case 'digital':
-      return 'Disponible en numérique';
+      return t('common.upcoming.digital');
   }
 }
 
 /** Tag à droite : plateforme ou chaîne d'un épisode, « Cinéma » d'une sortie en salle. */
 export function itemTag(event: UpcomingEvent): string | undefined {
   if (event.kind === 'episode') return event.provider;
-  if (event.kind === 'theatrical') return 'Cinéma';
+  if (event.kind === 'theatrical') return t('common.upcoming.cinemaTag');
   return undefined;
 }
 
@@ -106,7 +110,7 @@ export function groupUpcoming(events: readonly UpcomingEvent[], now: Date): Upco
     .sort(
       (a, b) =>
         sortTime(a) - sortTime(b) ||
-        a.title.title.localeCompare(b.title.title, 'fr-CA') ||
+        a.title.title.localeCompare(b.title.title, currentLanguage()) ||
         (a.season ?? 0) - (b.season ?? 0) ||
         (a.episode ?? 0) - (b.episode ?? 0),
     );
@@ -130,5 +134,5 @@ export function groupUpcoming(events: readonly UpcomingEvent[], now: Date): Upco
 
 /** « Saison 4 annoncée, date à venir ». */
 export function noDateLine(nextSeason: number): string {
-  return `Saison ${nextSeason} annoncée, date à venir`;
+  return t('common.upcoming.noDate', { season: nextSeason });
 }

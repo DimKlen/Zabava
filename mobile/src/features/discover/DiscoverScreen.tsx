@@ -7,20 +7,21 @@ import { EmptyState } from '@/components/EmptyState';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { UnderlineTabs } from '@/components/UnderlineTabs';
+import { useT } from '@/i18n';
 import { openSearch } from '@/lib/discover';
 import { useUiStore } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 
 import { DiscoverTab } from './DiscoverTab';
 
-const TABS = [
-  { key: 'movie', label: 'Films' },
-  { key: 'tv', label: 'Séries' },
-  { key: 'anime', label: 'Animés' },
-] as const;
-
 /** Découvrir (specs/docs/08 §8.3) : carrousels par type et grille Par genre. */
 export function DiscoverScreen() {
+  const { t } = useT();
+  const tabs = [
+    { key: 'movie', label: t('discover.tabs.movie') },
+    { key: 'tv', label: t('discover.tabs.tv') },
+    { key: 'anime', label: t('discover.tabs.anime') },
+  ] as const;
   const insets = useSafeAreaInsets();
   const tab = useUiStore((s) => s.discoverTab);
   const setTab = useUiStore((s) => s.setDiscoverTab);
@@ -29,13 +30,13 @@ export function DiscoverScreen() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <OfflineBanner />
-      <ScreenHeader title="Découvrir" onSearch={openSearch} />
-      <UnderlineTabs tabs={TABS} value={tab} onChange={setTab} />
+      <ScreenHeader title={t('discover.title')} onSearch={openSearch} />
+      <UnderlineTabs tabs={tabs} value={tab} onChange={setTab} />
       {offline ? (
         <EmptyState
           icon={CloudSlashIcon}
-          title="Découvrir est indisponible hors ligne"
-          text="Ta liste et À venir restent accessibles depuis le cache."
+          title={t('discover.offline.title')}
+          text={t('discover.offline.text')}
         />
       ) : (
         <DiscoverTab key={tab} type={tab} />

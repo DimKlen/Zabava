@@ -8,12 +8,13 @@ import type { SeriesEpisode } from '@/domain/series';
 import type { LibrarySeries } from '@/domain/seriesList';
 import type { Availability, MediaType, UserTitle } from '@/domain/types';
 import type { LibraryMovie } from '@/domain/watchlist';
+import { t } from '@/i18n';
 import { hapticLight } from '@/lib/haptics';
 import { showToast, useUiStore } from '@/store/ui';
 
 import { episodesKey } from './episodes';
 import type { Review } from './library';
-import { cancelGroup, enqueue, SAVE_FAILED, type Op } from './mutationQueue';
+import { cancelGroup, enqueue, type Op } from './mutationQueue';
 import { queryClient } from './queryClient';
 import { titleKey, type TitleDetail } from './titles';
 import { watchlistKey } from './watchlist';
@@ -293,7 +294,7 @@ function run<S>({ title, apply, restore, send, sendBack, message, undoable }: St
   const forward = enqueue(title.type, send(saved));
   forward.done.catch(() => {
     restore(saved);
-    showToast(SAVE_FAILED);
+    showToast(t('common.toast.saveFailed'));
   });
 
   const undo = () => {
@@ -303,7 +304,7 @@ function run<S>({ title, apply, restore, send, sendBack, message, undoable }: St
     if (cancelGroup(forward.group)) return;
     enqueue(title.type, sendBack(saved)).done.catch(() => {
       void queryClient.invalidateQueries({ predicate: isTypeQuery(title.type) });
-      showToast(SAVE_FAILED);
+      showToast(t('common.toast.saveFailed'));
     });
   };
 
@@ -378,7 +379,7 @@ export function toggleInList(title: ListTitle): void {
   change({
     title,
     next: newUserTitle(title, initialStatus(title.type)),
-    message: title.type === 'movie' ? 'Ajouté à ma liste' : 'Série suivie',
+    message: title.type === 'movie' ? t('common.toast.addedMovie') : t('common.toast.addedSeries'),
     undoable: true,
   });
 }
@@ -387,7 +388,7 @@ export function toggleInList(title: ListTitle): void {
  * Retire le titre. `message` : « Retiré de ma liste » (affiche, fiche film),
  * « Retirée de ma liste » (swipe d'une série), « Série retirée » (Ne plus suivre).
  */
-export function removeFromList(title: ListTitle, message = 'Retiré de ma liste'): void {
+export function removeFromList(title: ListTitle, message = t('common.toast.removed')): void {
   change({ title, next: undefined, message, undoable: true });
 }
 
@@ -402,7 +403,7 @@ export function setMovieWatched(title: ListTitle, watched: boolean, review?: Rev
   change({
     title,
     next: { ...next, ...reviewFields(review ?? current) },
-    message: watched ? 'Marqué comme vu' : 'Remis dans À voir',
+    message: watched ? t('common.toast.markedWatched') : t('common.toast.backToWatch'),
     undoable: true,
   });
 }
@@ -414,7 +415,7 @@ export function setMovieReview(title: ListTitle, review: Review): void {
   change({
     title,
     next: { ...current, ...reviewFields(review) },
-    message: 'Note enregistrée',
+    message: t('common.toast.ratingSaved'),
     undoable: true,
   });
 }
@@ -432,7 +433,7 @@ export function setSeriesAbandoned(title: ListTitle, abandoned: boolean): void {
   change({
     title,
     next: { ...current, status: abandoned ? 'abandoned' : 'following' },
-    message: abandoned ? 'Série abandonnée' : 'Suivi repris',
+    message: abandoned ? t('common.toast.seriesAbandoned') : t('common.toast.followResumed'),
     undoable: true,
   });
 }
@@ -440,7 +441,7 @@ export function setSeriesAbandoned(title: ListTitle, abandoned: boolean): void {
 /** Cloche d'une fiche : bascule les alertes du titre (toast sans « Annuler »). */
 export function setTitleAlerts(title: ListTitle, enabled: boolean): void {
   const current = currentUserTitle(title);
-  const message = enabled ? 'Alertes activées pour ce titre' : 'Alertes coupées pour ce titre';
+  const message = enabled ? t('common.toast.alertsOn') : t('common.toast.alertsOff');
   if (!current) {
     // Hors liste : préférence locale, reprise si le titre est ajouté ensuite.
     useUiStore.getState().setAlertsOff(title.id, !enabled);
@@ -467,8 +468,13 @@ type EpisodesSaved = {
 };
 
 function episodesMessage(count: number, watched: boolean): string {
-  if (watched) return count > 1 ? `${count} épisodes marqués comme vus` : 'Épisode marqué comme vu';
-  return count > 1 ? 'Saison décochée' : 'Épisode décoché';
+  const many = count > 1;
+  if (watched) {
+    return t(many ? 'common.toast.episodeWatched.other' : 'common.toast.episodeWatched.one', {
+      count,
+    });
+  }
+  return t(many ? 'common.toast.episodeUnwatched.other' : 'common.toast.episodeUnwatched.one');
 }
 
 /**

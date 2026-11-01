@@ -7,6 +7,7 @@ import { HorizontalCarousel } from '@/components/HorizontalCarousel';
 import { Text } from '@/components/Text';
 import { initials } from '@/domain/initials';
 import { tmdbImage } from '@/lib/tmdb';
+import { useT } from '@/i18n';
 import { colors } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
 
@@ -18,9 +19,10 @@ const PHOTO = 64;
 
 /** Casting : les 15 premiers membres ; tap → fiche personne. */
 export function CastCarousel({ cast }: { cast: CastMember[] }) {
+  const { t } = useT();
   if (cast.length === 0) return null;
   return (
-    <InfoSection title="Casting" fullWidth>
+    <InfoSection title={t('title.cast')} fullWidth>
       <HorizontalCarousel
         data={cast.slice(0, MAX_CAST)}
         keyExtractor={(member) => String(member.id)}

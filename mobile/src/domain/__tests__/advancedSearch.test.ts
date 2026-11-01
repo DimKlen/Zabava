@@ -78,18 +78,18 @@ describe('countButtonLabel', () => {
     [1, 'Voir le résultat'],
     [2, 'Voir les 2 résultats'],
     [148, 'Voir les 148 résultats'],
-    [44774, `Voir les ${(44774).toLocaleString('fr-CA')} résultats`],
+    [44774, `Voir les ${(44774).toLocaleString('fr')} résultats`],
   ])('%p → %p', (count, label) => {
     expect(countButtonLabel(count)).toBe(label);
   });
 });
 
 describe('genreCountLabel', () => {
-  it('singulier, pluriel et séparateur de milliers fr-CA', () => {
+  it('singulier, pluriel et séparateur de milliers', () => {
     expect(genreCountLabel(1, 'movie')).toBe('1 film');
     expect(genreCountLabel(0, 'tv')).toBe('0 série');
     expect(genreCountLabel(12, 'anime')).toBe('12 animés');
-    expect(genreCountLabel(1240, 'movie')).toBe(`${(1240).toLocaleString('fr-CA')} films`);
+    expect(genreCountLabel(1240, 'movie')).toBe(`${(1240).toLocaleString('fr')} films`);
   });
 });
 

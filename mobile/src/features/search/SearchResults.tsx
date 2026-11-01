@@ -9,6 +9,7 @@ import { Text } from '@/components/Text';
 import { UnderlineTabs } from '@/components/UnderlineTabs';
 import type { ResultOrder } from '@/domain/resultSort';
 import { SEARCH_TABS, type SearchTab } from '@/domain/search';
+import { useT } from '@/i18n';
 import { searchQuery } from '@/domain/social/username';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
@@ -52,6 +53,7 @@ export function SearchResults({
   onAdvanced,
   isInList,
 }: Props) {
+  const { t } = useT();
   const members = tab === 'members';
   // Onglet Membres : pas de recherche du catalogue.
   const search = useSearch(members ? '' : query, members ? 'all' : tab);
@@ -77,11 +79,11 @@ export function SearchResults({
     body = (
       <View style={styles.none}>
         <MagnifyingGlassIcon size={36} color={colors.neutral600} />
-        <Text style={styles.noneText}>Aucun résultat pour «&nbsp;{query}&nbsp;»</Text>
+        <Text style={styles.noneText}>{t('search.none', { query })}</Text>
         <Button
           variant="primary"
           height={44}
-          label="Essayer la recherche avancée"
+          label={t('search.none.advanced')}
           onPress={onAdvanced}
           style={styles.noneButton}
         />
