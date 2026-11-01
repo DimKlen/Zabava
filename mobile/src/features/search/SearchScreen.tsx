@@ -9,6 +9,7 @@ import type { PersonResult, TitleResult } from '@/api/search';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 import { defaultFilters, type AdvancedFilters } from '@/domain/advancedSearch';
+import { DEFAULT_RESULT_ORDER, type ResultOrder } from '@/domain/resultSort';
 import { SEARCH_DEBOUNCE_MS, tabForInput, type SearchTab } from '@/domain/search';
 import { useRecentSearches } from '@/store/recentSearches';
 import { colors } from '@/theme/tokens';
@@ -37,6 +38,7 @@ export function SearchScreen() {
   const [filters, setFilters] = useState<AdvancedFilters>(() => defaultFilters(new Date()));
   const [appliedFilters, setAppliedFilters] = useState<AdvancedFilters | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [order, setOrder] = useState<ResultOrder>(DEFAULT_RESULT_ORDER);
   const addRecent = useRecentSearches((s) => s.add);
   const isInList = useLibraryMembership();
   const debounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -61,15 +63,6 @@ export function SearchScreen() {
   // Les recherches de membres ne vont pas dans les recherches récentes (titres et personnes).
   const remember = () => {
     if (tab !== 'members') addRecent(text);
-  };
-
-  /** « Chercher un membre » : champ vide, onglet Membres actif (pas de « @ » à taper). */
-  const searchMembers = () => {
-    clearTimeout(debounce.current);
-    setText('');
-    setQuery('');
-    setTab('members');
-    field.current?.focus();
   };
 
   const showTitle = (title: TitleResult) => {
@@ -97,6 +90,8 @@ export function SearchScreen() {
     body = (
       <AdvancedResults
         filters={appliedFilters}
+        order={order}
+        onOrderChange={setOrder}
         onEdit={openSheet}
         onExit={() => setAppliedFilters(null)}
       />
@@ -104,7 +99,6 @@ export function SearchScreen() {
   } else if (!text.trim() && tab !== 'members') {
     body = (
       <SearchIdle
-        onSearchMembers={searchMembers}
         onPickRecent={searchNow}
         onOpenTitle={showTitle}
         onToggleTitle={toggleTitle}
@@ -117,6 +111,8 @@ export function SearchScreen() {
         query={query}
         typing={text.trim() !== query}
         tab={tab}
+        order={order}
+        onOrderChange={setOrder}
         onChangeTab={setTab}
         onOpenTitle={showTitle}
         onToggleTitle={toggleTitle}

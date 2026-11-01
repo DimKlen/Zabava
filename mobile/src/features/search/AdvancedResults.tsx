@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { flattenPages, useAdvancedResults } from '@/api/discover';
@@ -6,6 +7,7 @@ import { LoadError, showsLoadError } from '@/components/LoadError';
 import { PosterGrid } from '@/components/PosterGrid';
 import { Text } from '@/components/Text';
 import type { AdvancedFilters } from '@/domain/advancedSearch';
+import { sortResults, type ResultOrder } from '@/domain/resultSort';
 import { resultsCountLabel } from '@/domain/search';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
@@ -13,19 +15,23 @@ import { fonts } from '@/theme/typography';
 import { CatalogPoster } from '../catalog/CatalogPoster';
 import { GridFooter, GridSkeleton } from '../catalog/GridSkeleton';
 import { useLibraryMembership, useMyProviderIds } from '../catalog/useLibraryMembership';
+import { ResultSortBar } from './ResultSortBar';
 
 type Props = {
   filters: AdvancedFilters;
+  order: ResultOrder;
+  onOrderChange: (order: ResultOrder) => void;
   onEdit: () => void;
   onExit: () => void;
 };
 
 /** Mode « recherche avancée appliquée » : en-tête, grille d'affiches, chargement infini. */
-export function AdvancedResults({ filters, onEdit, onExit }: Props) {
+export function AdvancedResults({ filters, order, onOrderChange, onEdit, onExit }: Props) {
   const results = useAdvancedResults(filters, true);
   const isInList = useLibraryMembership();
   const myProviderIds = useMyProviderIds();
-  const titles = flattenPages(results.data?.pages);
+  const pages = results.data?.pages;
+  const titles = useMemo(() => sortResults(flattenPages(pages), order), [pages, order]);
   const total = results.data?.pages[0]?.total;
 
   let body;
@@ -83,6 +89,7 @@ export function AdvancedResults({ filters, onEdit, onExit }: Props) {
           />
         </View>
       </View>
+      <ResultSortBar order={order} onChange={onOrderChange} />
       {body}
     </View>
   );

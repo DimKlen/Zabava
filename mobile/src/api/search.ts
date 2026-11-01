@@ -2,6 +2,7 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 import type { CatalogTab } from '@/domain/search';
+import { DEFAULT_RESULT_ORDER, sortResults, type ResultOrder } from '@/domain/resultSort';
 
 import { toPosterTitle, type PosterTitle } from './catalog';
 import { api } from './http';
@@ -23,7 +24,11 @@ export type PersonResult = {
 };
 
 /** Titre d'une ligne de résultat : affiche + année. */
-export type TitleResult = PosterTitle & { year?: number };
+export type TitleResult = PosterTitle & {
+  year?: number;
+  releaseDate?: string;
+  voteAverage?: number;
+};
 
 export type SearchPage = {
   people: PersonResult[];
@@ -44,7 +49,9 @@ export function toPersonResult(item: ApiPerson): PersonResult | null {
 
 export function toTitleResult(item: ApiTitleLite): TitleResult | null {
   const title = toPosterTitle(item, 'movie');
-  return title ? { ...title, year: item.year } : null;
+  return title
+    ? { ...title, year: item.year, releaseDate: item.releaseDate, voteAverage: item.voteAverage }
+    : null;
 }
 
 function isDefined<T>(value: T | null): value is T {
@@ -83,7 +90,7 @@ export function useSearch(q: string, tab: CatalogTab) {
 
 /**
  * Rangées d'une recherche : films, puis séries, puis animés (ordre de pertinence du serveur
- * conservé dans chaque type), puis les personnes (page 1 seulement), sans doublon.
+ * conservé dans chaque type, ou le tri choisi), puis les personnes (page 1 seulement), sans doublon.
  */
 export type SearchRow =
   | { kind: 'person'; key: string; person: PersonResult }
@@ -91,7 +98,10 @@ export type SearchRow =
 
 const TYPE_ORDER: Record<TitleResult['type'], number> = { movie: 0, tv: 1, anime: 2 };
 
-export function searchRows(pages: readonly SearchPage[] | undefined): SearchRow[] {
+export function searchRows(
+  pages: readonly SearchPage[] | undefined,
+  order: ResultOrder = DEFAULT_RESULT_ORDER,
+): SearchRow[] {
   const rows: SearchRow[] = [];
   const seen = new Set<string>();
   const push = (row: SearchRow) => {
@@ -100,9 +110,12 @@ export function searchRows(pages: readonly SearchPage[] | undefined): SearchRow[
     rows.push(row);
   };
   // Tri stable : à type égal, on garde l'ordre de pertinence du serveur.
-  const titles = (pages ?? [])
+  const byType = (pages ?? [])
     .flatMap((page) => page.titles)
     .sort((a, b) => TYPE_ORDER[a.type] - TYPE_ORDER[b.type]);
+  // Par pertinence, les types restent groupés ; sinon le tri choisi s'applique à tous les titres.
+  const titles =
+    order.sort === 'relevance' && !order.reversed ? byType : sortResults(byType, order);
   titles.forEach((title) => push({ kind: 'title', key: title.id, title }));
   for (const page of pages ?? []) {
     page.people.forEach((person) => push({ kind: 'person', key: `person-${person.id}`, person }));

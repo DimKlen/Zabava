@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { api } from '@/api/http';
 import { toggleInList } from '@/api/libraryActions';
+import { useUiStore } from '@/store/ui';
 import { useRecentSearches } from '@/store/recentSearches';
 
 import { SearchScreen } from '../SearchScreen';
@@ -220,11 +221,34 @@ describe('SearchScreen', () => {
     expect(useRecentSearches.getState().recents).toEqual([]);
   });
 
-  it('« Chercher un membre » ouvre Membres avec un champ vide', async () => {
+  it('trie les résultats : pertinence par défaut, sens inversé au toucher, critère par la feuille', async () => {
     await renderSearch();
-    await fireEvent.press(screen.getByText('Chercher un membre'));
-    expect(screen.getByLabelText('Rechercher').props.value).toBe('');
-    expect(await screen.findByText('Tape au moins 2 caractères du pseudo ou du nom.')).toBeTruthy();
+    await fireEvent.changeText(screen.getByLabelText('Rechercher'), 'zen');
+    await screen.findByText('Zen');
+    expect(screen.getByLabelText('Trier par : Pertinence')).toBeTruthy();
+    expect(screen.getByText('Plus pertinents')).toBeTruthy();
+
+    await fireEvent.press(screen.getByText('Plus pertinents'));
+    expect(screen.getByText('Moins pertinents')).toBeTruthy();
+
+    await fireEvent.press(screen.getByLabelText('Trier par : Pertinence'));
+    const sheet = useUiStore.getState().actionSheet;
+    expect(sheet?.options.map((option) => option.label)).toEqual([
+      'Pertinence · Moins pertinents',
+      'Date de sortie',
+      'Mieux notés',
+    ]);
+    await act(() => sheet?.options[1]?.onPress());
+    expect(screen.getByText('Plus récents')).toBeTruthy();
+  });
+
+  it('le tri ne s’affiche pas sur Personnes', async () => {
+    await renderSearch();
+    await fireEvent.changeText(screen.getByLabelText('Rechercher'), 'zen');
+    await screen.findByText('Zen');
+    await fireEvent.press(screen.getByText('Personnes'));
+    await screen.findByText('Zendaya');
+    expect(screen.queryByLabelText('Trier par : Pertinence')).toBeNull();
   });
 
   it('?tab=members ouvre directement sur Membres', async () => {
