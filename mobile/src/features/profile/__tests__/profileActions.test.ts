@@ -1,9 +1,15 @@
 import { api } from '@/api/http';
 import { profileKey, type Profile } from '@/api/profile';
 import { queryClient } from '@/api/queryClient';
+import { useLanguageStore } from '@/i18n';
 import { showToast } from '@/store/ui';
 
-import { changeCatalogSetting, toggleProvider, updatePreference } from '../profileActions';
+import {
+  changeCatalogSetting,
+  chooseLanguage,
+  toggleProvider,
+  updatePreference,
+} from '../profileActions';
 
 jest.mock('@/api/http', () => ({ api: jest.fn() }));
 // Le client de l'app garde ses requêtes 7 jours : ses minuteurs empêcheraient Jest de finir.
@@ -87,6 +93,38 @@ describe('changeCatalogSetting', () => {
     await expect(changeCatalogSetting({ language: 'en-US' })).resolves.toBe(false);
     expect(profile()?.language).toBe('fr-CA');
     expect(showToast).toHaveBeenCalledWith("Impossible d'enregistrer, réessaie");
+  });
+});
+
+describe('chooseLanguage', () => {
+  beforeEach(() => useLanguageStore.setState({ preference: 'auto' }));
+
+  it('enregistre la langue choisie dans le profil et la garde sur l’appareil', async () => {
+    mockApi.mockResolvedValueOnce({ ...PROFILE, language: 'ja' });
+    await expect(chooseLanguage('ja')).resolves.toBe(true);
+    expect(mockApi).toHaveBeenCalledWith('/me/profile', {
+      method: 'PUT',
+      body: { language: 'ja' },
+    });
+    expect(useLanguageStore.getState().preference).toBe('ja');
+  });
+
+  it('« auto » enregistre la langue du téléphone (français dans les tests)', async () => {
+    useLanguageStore.setState({ preference: 'en' });
+    mockApi.mockResolvedValueOnce({ ...PROFILE, language: 'fr' });
+    await expect(chooseLanguage('auto')).resolves.toBe(true);
+    expect(mockApi).toHaveBeenCalledWith('/me/profile', {
+      method: 'PUT',
+      body: { language: 'fr' },
+    });
+    expect(useLanguageStore.getState().preference).toBe('auto');
+  });
+
+  it('échec : le choix d’avant revient', async () => {
+    useLanguageStore.setState({ preference: 'de' });
+    mockApi.mockRejectedValueOnce(new Error('réseau'));
+    await expect(chooseLanguage('es')).resolves.toBe(false);
+    expect(useLanguageStore.getState().preference).toBe('de');
   });
 });
 

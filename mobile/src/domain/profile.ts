@@ -21,14 +21,13 @@ export function regionLabel(region: string | undefined): string {
 
 export type NotificationSwitch = {
   key: 'episodes' | 'cinema' | 'streaming' | 'seasons';
-  label: string;
 };
 
 export const NOTIFICATION_SWITCHES: readonly NotificationSwitch[] = [
-  { key: 'episodes', label: 'Nouveaux épisodes' },
-  { key: 'cinema', label: 'Sorties en salle' },
-  { key: 'streaming', label: 'Disponibilité en streaming' },
-  { key: 'seasons', label: 'Nouvelles saisons' },
+  { key: 'episodes' },
+  { key: 'cinema' },
+  { key: 'streaming' },
+  { key: 'seasons' },
 ];
 
 /** « 9 h ». */

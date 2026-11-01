@@ -1,26 +1,6 @@
 /** Onboarding — specs/docs/05-ecrans-auth-onboarding.md §5.2 et §5.3. */
 import type { MediaType, UserTitle } from './types';
 
-export type LanguageCode = 'fr-CA' | 'fr-FR' | 'en-CA' | 'en-US';
-
-/** Deux langues proposées ; les anciens fr-FR et en-CA restent lus (même langue). */
-export const LANGUAGES: readonly { value: LanguageCode; label: string }[] = [
-  { value: 'fr-CA', label: 'Français' },
-  { value: 'en-US', label: 'Anglais' },
-];
-
-/** Langue proposée correspondant à un code enregistré (« fr-FR » → « fr-CA »). */
-export function languageChoice(code: string | undefined): LanguageCode {
-  return code?.startsWith('en') ? 'en-US' : 'fr-CA';
-}
-
-export function languageLabel(code: string | undefined): string {
-  const choice = languageChoice(code);
-  return LANGUAGES.find((language) => language.value === choice)?.label ?? '';
-}
-
-export const DEFAULT_LANGUAGE: LanguageCode = 'fr-CA';
-
 /** Le pseudo vient en premier (specs/social/docs/04 §4.1). */
 export const ONBOARDING_STEPS = ['username', 'region', 'platforms', 'titles'] as const;
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];

@@ -2,34 +2,50 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { useUpdateProfile } from '@/api/profile';
 import { SelectField } from '@/components/SelectField';
-import { DEFAULT_LANGUAGE, LANGUAGES, type LanguageCode } from '@/domain/onboarding';
+import { useLanguageOptions } from '@/i18n/useLanguageOptions';
+import { useT, type LanguagePreference } from '@/i18n';
+import { chooseLanguage } from '@/features/profile/profileActions';
 
 import { OnboardingFooter } from './OnboardingFooter';
 import { StepIntro } from './StepIntro';
 
 /** Étape 1 — Langue. */
 export function RegionScreen() {
-  const updateProfile = useUpdateProfile();
-  const [language, setLanguage] = useState<LanguageCode>(DEFAULT_LANGUAGE);
+  const { t } = useT();
+  const options = useLanguageOptions();
+  const [language, setLanguage] = useState<LanguagePreference>('auto');
+  const [pending, setPending] = useState(false);
 
-  const submit = () =>
-    updateProfile.mutate({ language }, { onSuccess: () => router.push('/onboarding/platforms') });
+  const submit = async () => {
+    setPending(true);
+    const ok = await chooseLanguage(language);
+    setPending(false);
+    if (ok) router.push('/onboarding/platforms');
+  };
 
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <StepIntro
-          title="Dans quelle langue ?"
-          text="Choisis la langue des titres et des descriptions."
+          title={t('onboarding.language.title')}
+          text={t('onboarding.language.text')}
           textMarginBottom={24}
         />
         <View style={styles.fields}>
-          <SelectField label="Langue" value={language} options={LANGUAGES} onChange={setLanguage} />
+          <SelectField
+            label={t('language.label')}
+            value={language}
+            options={options}
+            onChange={setLanguage}
+          />
         </View>
       </ScrollView>
-      <OnboardingFooter label="Continuer" onPress={submit} disabled={updateProfile.isPending} />
+      <OnboardingFooter
+        label={t('onboarding.continue')}
+        onPress={() => void submit()}
+        disabled={pending}
+      />
     </View>
   );
 }
