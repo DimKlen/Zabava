@@ -1,30 +1,22 @@
 import type { Messages } from './fr';
+import { core as core } from './core/en';
+import { common as common } from './common/en';
+import { watchlist as watchlist } from './watchlist/en';
+import { discover as discover } from './discover/en';
+import { search as search } from './search/en';
+import { title as title } from './title/en';
+import { social as social } from './social/en';
+import { onboarding as onboarding } from './onboarding/en';
+import { misc as misc } from './misc/en';
 
 export const en: Messages = {
-  'tabs.list': 'My list',
-  'tabs.discover': 'Discover',
-  'tabs.upcoming': 'Upcoming',
-  'tabs.profile': 'Profile',
-  'language.label': 'Language',
-  'language.auto': 'Phone language',
-  'settings.preferences': 'Preferences',
-  'settings.region': 'Region',
-  'settings.platforms': 'My platforms',
-  'settings.notifications': 'Notifications',
-  'notif.episodes': 'New episodes',
-  'notif.cinema': 'Theatrical releases',
-  'notif.streaming': 'Streaming availability',
-  'notif.seasons': 'New seasons',
-  'settings.digest': 'Daily digest',
-  'settings.spoilerGroup': 'Spoiler',
-  'settings.spoiler': 'Spoiler protection',
-  'settings.about': 'About',
-  'settings.aboutText':
-    'This product uses the TMDB API but is not endorsed or certified by TMDB. Streaming platforms provided by JustWatch. Ratings via OMDb.',
-  'settings.version': 'Version {version}',
-  'settings.signOut': 'Sign out',
-  'settings.deleteAccount': 'Delete my account',
-  'onboarding.language.title': 'Which language?',
-  'onboarding.language.text': 'Choose the language of the app, titles and descriptions.',
-  'onboarding.continue': 'Continue',
+  ...core,
+  ...common,
+  ...watchlist,
+  ...discover,
+  ...search,
+  ...title,
+  ...social,
+  ...onboarding,
+  ...misc,
 };

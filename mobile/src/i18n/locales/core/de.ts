@@ -1,0 +1,30 @@
+import type { Messages } from '../types';
+
+export const core: Messages<typeof import('./fr').core> = {
+  'tabs.list': 'Meine Liste',
+  'tabs.discover': 'Entdecken',
+  'tabs.upcoming': 'Demnächst',
+  'tabs.profile': 'Profil',
+  'language.label': 'Sprache',
+  'language.auto': 'Sprache des Telefons',
+  'settings.preferences': 'Einstellungen',
+  'settings.region': 'Region',
+  'settings.platforms': 'Meine Plattformen',
+  'settings.notifications': 'Benachrichtigungen',
+  'notif.episodes': 'Neue Folgen',
+  'notif.cinema': 'Kinostarts',
+  'notif.streaming': 'Verfügbarkeit im Streaming',
+  'notif.seasons': 'Neue Staffeln',
+  'settings.digest': 'Tägliche Zusammenfassung',
+  'settings.spoilerGroup': 'Spoiler-Schutz',
+  'settings.spoiler': 'Spoiler-Schutz',
+  'settings.about': 'Über',
+  'settings.aboutText':
+    'Dieses Produkt nutzt die TMDB-API, wird aber nicht von TMDB unterstützt oder zertifiziert. Streaming-Plattformen von JustWatch. Bewertungen über OMDb.',
+  'settings.version': 'Version {version}',
+  'settings.signOut': 'Abmelden',
+  'settings.deleteAccount': 'Mein Konto löschen',
+  'onboarding.language.title': 'In welcher Sprache?',
+  'onboarding.language.text': 'Wähle die Sprache der App, der Titel und der Beschreibungen.',
+  'onboarding.continue': 'Weiter',
+};
