@@ -66,14 +66,14 @@ class PrivacyIT extends SocialTest {
     }
 
     @Test
-    void uneDemandeEnvoyeeNeDonneAccesARien() throws Exception {
+    void etreSuiviNeDonneAccesARien() throws Exception {
         follow(dim, "autre.a");
+        // Je vois ses listes (je la suis)…
         mvc.perform(as(dim, get("/api/v1/users/autre.a")))
-                .andExpect(jsonPath("$.canSeeLists").value(false))
-                .andExpect(jsonPath("$.commonCount").value(0));
+                .andExpect(jsonPath("$.canSeeLists").value(true));
         mvc.perform(as(dim, get("/api/v1/users/autre.a/titles?type=movie&status=watched")))
-                .andExpect(status().isForbidden());
-        // Ni dans l'autre sens : recevoir une demande ne montre pas les listes du demandeur.
+                .andExpect(status().isOk());
+        // … mais elle, qui ne me suit pas, ne voit pas les miennes : être suivi ne donne aucun droit.
         mvc.perform(as(other, get("/api/v1/users/dim.k/titles?type=movie&status=watched")))
                 .andExpect(status().isForbidden());
     }

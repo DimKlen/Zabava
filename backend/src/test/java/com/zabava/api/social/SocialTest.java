@@ -25,16 +25,15 @@ abstract class SocialTest extends IntegrationTest {
         return id;
     }
 
-    /** « Ajouter en ami » : une demande, ou l'amitié si l'autre m'a déjà envoyé la sienne. */
+    /** « Suivre » : effectif tout de suite. */
     protected ResultActions follow(UUID me, String username) throws Exception {
         return mvc.perform(as(me, post("/api/v1/users/" + username + "/follow")));
     }
 
-    /** {@code a} et {@code b} deviennent amis : demande de {@code a}, acceptée par {@code b}. */
+    /** {@code a} et {@code b} se suivent l'un l'autre. */
     protected void befriend(UUID a, String aUsername, UUID b, String bUsername) throws Exception {
         follow(a, bUsername).andExpect(status().isOk());
-        mvc.perform(as(b, post("/api/v1/me/follow-requests/" + aUsername + "/accept")))
-                .andExpect(status().isNoContent());
+        follow(b, aUsername).andExpect(status().isOk());
     }
 
     protected MockHttpServletRequestBuilder json(UUID me, MockHttpServletRequestBuilder request, String body) {

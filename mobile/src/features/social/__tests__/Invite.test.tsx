@@ -64,7 +64,6 @@ const member = (username: string, displayName: string) => ({
   username,
   displayName,
   followState: 'none',
-  followsMe: false,
   commonCount: 0,
 });
 
@@ -168,7 +167,9 @@ describe('ScanScreen', () => {
   it('code Zabava : vibration, fermeture et profil ouvert une seule fois', async () => {
     mockPermissions.mockReturnValue([{ status: 'granted', granted: true }, jest.fn()]);
     await show(<ScanScreen />);
-    expect(screen.getByText("Vise le code Zabava d'un ami pour ouvrir son profil.")).toBeTruthy();
+    expect(
+      screen.getByText("Vise le code Zabava d'un membre pour ouvrir son profil."),
+    ).toBeTruthy();
     await scan('https://151-145-50-138.sslip.io/u/Lea.M');
     await scan('https://151-145-50-138.sslip.io/u/Lea.M');
     expect(hapticSuccess).toHaveBeenCalledTimes(1);

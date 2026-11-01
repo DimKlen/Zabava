@@ -47,7 +47,6 @@ const member = (username: string, displayName: string, extra: object = {}) => ({
   username,
   displayName,
   followState: 'following',
-  followsMe: false,
   commonCount: 0,
   ...extra,
 });
@@ -137,11 +136,11 @@ describe('FeedScreen', () => {
     expect(await screen.findByText(/« Tonnerre »/)).toBeTruthy();
   });
 
-  it('vide : « Ajoute des amis… » et « Ajouter un ami »', async () => {
+  it('vide : « Suis des membres… » et « Suivre quelqu’un »', async () => {
     routeFeed([]);
     await show(<FeedScreen />);
-    expect(await screen.findByText("Ajoute des amis pour voir ce qu'ils regardent")).toBeTruthy();
-    await fireEvent.press(screen.getByText('Ajouter un ami'));
+    expect(await screen.findByText("Suis des membres pour voir ce qu'ils regardent")).toBeTruthy();
+    await fireEvent.press(screen.getByText("Suivre quelqu'un"));
     expect(router.push).toHaveBeenCalledWith({ pathname: '/search', params: { tab: 'members' } });
   });
 });
@@ -151,14 +150,14 @@ describe('ActivityCarousel', () => {
     routeFeed([]);
     await show(<ActivityCarousel />);
     await settled(feedKey);
-    expect(screen.queryByText('Activité de tes amis')).toBeNull();
+    expect(screen.queryByText('Activité de tes abonnements')).toBeNull();
   });
 
   it('6 dernières activités et « Tout voir » vers le fil', async () => {
     const many = Array.from({ length: 8 }, (_, i) => ({ ...ACTIVITIES[1], id: String(i) }));
     routeFeed(many);
     await show(<ActivityCarousel />);
-    expect(await screen.findByText('Activité de tes amis')).toBeTruthy();
+    expect(await screen.findByText('Activité de tes abonnements')).toBeTruthy();
     expect(screen.getAllByText('Max')).toHaveLength(6);
     await fireEvent.press(screen.getByText('Tout voir'));
     expect(router.push).toHaveBeenCalledWith('/feed');
@@ -169,7 +168,7 @@ describe('ActivityCarousel', () => {
     await show(<ActivityCarousel />);
     await settled(feedKey);
     expect(queryClient.getQueryState(feedKey)?.status).toBe('error');
-    expect(screen.queryByText('Activité de tes amis')).toBeNull();
+    expect(screen.queryByText('Activité de tes abonnements')).toBeNull();
   });
 });
 
@@ -187,15 +186,15 @@ describe('TitleSocialBlocks', () => {
     });
   }
 
-  it('aucun ami sur ce titre : pas de carte', async () => {
+  it('aucun abonnement sur ce titre : pas de carte', async () => {
     routeSocial({ following: [] });
     await show(<TitleSocialBlocks type="movie" tmdbId={693134} title="Dune 3" />);
     await settled(['title', 'movie', 693134, 'social']);
-    expect(screen.queryByText('Tes amis')).toBeNull();
+    expect(screen.queryByText('Tes abonnements')).toBeNull();
     expect(screen.queryByText("Ils l'ont vu")).toBeNull();
   });
 
-  it('« Tes amis » : prénoms, puis la sheet de leurs statuts', async () => {
+  it('« Tes abonnements » : prénoms, puis la sheet de leurs statuts', async () => {
     routeSocial({
       following: [
         holder('sarah.l', 'Sarah Lefebvre', 'following', '2026-10-20T20:00:00Z'),
@@ -203,8 +202,8 @@ describe('TitleSocialBlocks', () => {
       ],
     });
     await show(<TitleSocialBlocks type="movie" tmdbId={693134} title="Dune 3" />);
-    expect(await screen.findByText('Tes amis')).toBeTruthy();
-    await fireEvent.press(screen.getByLabelText('Tes amis : Sarah et Léa'));
+    expect(await screen.findByText('Tes abonnements')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Tes abonnements : Sarah et Léa'));
     expect(await screen.findByText('Sarah Lefebvre')).toBeTruthy();
     expect(screen.getAllByText(/^Vu le /)).toHaveLength(2);
   });

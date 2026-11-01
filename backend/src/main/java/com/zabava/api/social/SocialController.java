@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.zabava.api.auth.CurrentUser;
-import com.zabava.api.social.dto.SocialDtos.AcceptAllResult;
 import com.zabava.api.social.dto.SocialDtos.Activity;
 import com.zabava.api.social.dto.SocialDtos.FollowResult;
 import com.zabava.api.social.dto.SocialDtos.MemberLite;
@@ -89,7 +88,7 @@ public class SocialController {
         return users.friends(user.id(), username, q, cursor);
     }
 
-    // ─── Amis (abonnements réciproques) ───────────────────────────────────────
+    // ─── Suivi ───────────────────────────────────────
 
     @PostMapping("/users/{username}/follow")
     public FollowResult follow(CurrentUser user, @PathVariable String username) {
@@ -100,28 +99,6 @@ public class SocialController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void unfollow(CurrentUser user, @PathVariable String username) {
         follows.unfollow(user.id(), username);
-    }
-
-    @GetMapping("/me/follow-requests")
-    public Page<MemberLite> followRequests(CurrentUser user, @RequestParam(required = false) String cursor) {
-        return follows.requests(user.id(), cursor);
-    }
-
-    @PostMapping("/me/follow-requests/{username}/accept")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void accept(CurrentUser user, @PathVariable String username) {
-        follows.accept(user.id(), username);
-    }
-
-    @PostMapping("/me/follow-requests/{username}/decline")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void decline(CurrentUser user, @PathVariable String username) {
-        follows.decline(user.id(), username);
-    }
-
-    @PostMapping("/me/follow-requests/accept-all")
-    public AcceptAllResult acceptAll(CurrentUser user) {
-        return new AcceptAllResult(follows.acceptAll(user.id()));
     }
 
     // ─── Signalement ──────────────────────────────────────────────────────────

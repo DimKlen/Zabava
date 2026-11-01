@@ -157,16 +157,10 @@ describe('openNotificationUrl', () => {
     expect(router.push).not.toHaveBeenCalled();
   });
 
-  it('demande d’ami acceptée : onglet Profil puis le profil', () => {
+  it('lien de profil : onglet Profil puis le profil', () => {
     openNotificationUrl('zabava://u/lea.m');
     expect(router.navigate).toHaveBeenCalledWith('/(tabs)/profile');
     expect(router.push).toHaveBeenCalledWith('/u/lea.m');
-  });
-
-  it('demande d’ami : Demandes d’amis', () => {
-    openNotificationUrl('zabava://follow-requests');
-    expect(router.navigate).toHaveBeenCalledWith('/(tabs)/profile');
-    expect(router.push).toHaveBeenCalledWith('/follow-requests');
   });
 
   it('lien inconnu : ignoré', () => {

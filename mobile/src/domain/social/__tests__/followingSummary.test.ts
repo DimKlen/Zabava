@@ -18,7 +18,6 @@ const holder = (
     username,
     displayName,
     followState,
-    followsMe: false,
     commonCount: 0,
   },
   status: 'watched',

@@ -5,15 +5,15 @@ import { Text } from '@/components/Text';
 import { colors, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
-/** À la place des listes d'un membre qui n'est pas encore un ami (docs/03 › LockedState). */
+/** À la place des listes d'un membre qui que je ne suis pas encore (docs/03 › LockedState). */
 export function ProfileNotice({ username }: { username: string }) {
   return (
     <View style={styles.card}>
       <View style={styles.circle}>
         <LockSimpleIcon size={26} color={colors.text} />
       </View>
-      <Text style={styles.title}>Réservé à ses amis</Text>
-      <Text style={styles.text}>{`Ajoute @${username} en ami pour voir ses listes`}</Text>
+      <Text style={styles.title}>Listes masquées</Text>
+      <Text style={styles.text}>{`Suis @${username} pour voir ses listes`}</Text>
     </View>
   );
 }

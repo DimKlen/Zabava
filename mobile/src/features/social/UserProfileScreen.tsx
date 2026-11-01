@@ -111,9 +111,9 @@ function OtherProfile({ profile }: { profile: UserProfile }) {
   const visible = !access.locked;
   const titles = useUserTitles(profile.username, tab, segment, visible);
 
-  // Amis d'un membre qui n'est pas un ami : pas de liste, un toast.
+  // Abonnements d'un membre que je ne suis pas : pas de liste, un toast.
   const friends = () => {
-    if (access.locked) showToast('Réservé à ses amis');
+    if (access.locked) showToast('Suis ce membre pour voir ses listes');
     else openFriends(profile.username);
   };
 

@@ -7,39 +7,29 @@ import {
   friendsLabel,
   profileAccess,
   showsCommon,
-  stateAfterFollow,
 } from '../members';
 
 describe('followButtonState', () => {
   it.each([
-    ['none', 'Ajouter en ami', 'userPlus', 'primary'],
-    ['requested', 'Accepter', 'userPlus', 'primary'],
-    ['pending', 'Demande envoyée', 'clock', 'secondary'],
-    ['following', 'Amis', 'check', 'secondary'],
+    ['none', 'Suivre', 'userPlus', 'primary'],
+    ['following', 'Suivi', 'check', 'secondary'],
   ] as const)('%s → %s', (followState, label, icon, variant) => {
     expect(followButtonState({ followState })).toMatchObject({ label, icon, variant });
   });
 
   it('libellés d’accessibilité', () => {
-    expect(followButtonA11y('add', 'lea.m')).toBe('Ajouter @lea.m en ami');
-    expect(followButtonA11y('accept', 'lea.m')).toBe('Accepter la demande de @lea.m');
-    expect(followButtonA11y('friends', 'lea.m')).toBe('Ami avec @lea.m, toucher pour le retirer');
-    expect(followButtonA11y('requested', 'lea.m')).toBe(
-      "Demande envoyée à @lea.m, toucher pour l'annuler",
+    expect(followButtonA11y('follow', 'lea.m')).toBe('Suivre @lea.m');
+    expect(followButtonA11y('following', 'lea.m')).toBe(
+      'Tu suis @lea.m, toucher pour ne plus suivre',
     );
-  });
-
-  it('ajouter en ami : une demande, ou amis tout de suite si sa demande était reçue', () => {
-    expect(stateAfterFollow({ followState: 'none' })).toBe('pending');
-    expect(stateAfterFollow({ followState: 'requested' })).toBe('following');
   });
 });
 
-describe('compteur d’amis', () => {
+describe('compteur d’abonnements', () => {
   it('singulier pour 0 et 1', () => {
-    expect(friendsLabel(0)).toBe('ami');
-    expect(friendsLabel(1)).toBe('ami');
-    expect(friendsLabel(2)).toBe('amis');
+    expect(friendsLabel(0)).toBe('abonnement');
+    expect(friendsLabel(1)).toBe('abonnement');
+    expect(friendsLabel(2)).toBe('abonnements');
   });
 
   it('abrège à partir de 10 000', () => {
@@ -64,10 +54,8 @@ describe('titres en commun', () => {
 });
 
 describe('profileAccess', () => {
-  it('pas encore amis (même avec une demande dans un sens ou dans l’autre) : verrouillé', () => {
-    for (const followState of ['none', 'pending', 'requested'] as const) {
-      expect(profileAccess({ isMe: false, followState }).locked).toBe(true);
-    }
+  it('je ne le suis pas : verrouillé, dès que je le suis : visible', () => {
+    expect(profileAccess({ isMe: false, followState: 'none' }).locked).toBe(true);
     expect(profileAccess({ isMe: false, followState: 'following' }).locked).toBe(false);
   });
 

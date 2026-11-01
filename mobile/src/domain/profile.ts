@@ -20,7 +20,7 @@ export function regionLabel(region: string | undefined): string {
 }
 
 export type NotificationSwitch = {
-  key: 'episodes' | 'cinema' | 'streaming' | 'seasons' | 'followRequests';
+  key: 'episodes' | 'cinema' | 'streaming' | 'seasons';
   label: string;
 };
 
@@ -29,8 +29,6 @@ export const NOTIFICATION_SWITCHES: readonly NotificationSwitch[] = [
   { key: 'cinema', label: 'Sorties en salle' },
   { key: 'streaming', label: 'Disponibilité en streaming' },
   { key: 'seasons', label: 'Nouvelles saisons' },
-  // Partie sociale : demandes d'ami reçues et acceptées, activé par défaut.
-  { key: 'followRequests', label: "Demandes d'amis" },
 ];
 
 /** « 9 h ». */

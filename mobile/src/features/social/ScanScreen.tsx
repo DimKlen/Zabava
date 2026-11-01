@@ -84,7 +84,9 @@ export function ScanScreen() {
             <View style={styles.scanLine} />
           </View>
         </View>
-        <Text style={styles.text}>Vise le code Zabava d&apos;un ami pour ouvrir son profil.</Text>
+        <Text style={styles.text}>
+          Vise le code Zabava d&apos;un membre pour ouvrir son profil.
+        </Text>
       </>
     );
   }

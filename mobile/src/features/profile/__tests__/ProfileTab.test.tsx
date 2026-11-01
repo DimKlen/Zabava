@@ -55,7 +55,6 @@ const PROFILE = {
   username: 'dim.k',
   displayName: 'Dim',
   friendsCount: 2,
-  followRequestsCount: 0,
   email: 'dim@exemple.ca',
   authProvider: 'apple',
   language: 'fr-CA',
@@ -112,16 +111,15 @@ beforeEach(async () => {
 });
 
 describe('onglet Profil', () => {
-  it('moi, « Mes amis · 2 », puis les réglages, sans « Modifier le profil »', async () => {
+  it('moi, « Mes abonnements · 2 », puis les réglages, sans « Modifier le profil »', async () => {
     await renderProfile();
     expect(screen.getByText('Profil')).toBeTruthy();
     expect(screen.getByText('Dim')).toBeTruthy();
     expect(screen.getByText('@dim.k')).toBeTruthy();
-    expect(screen.getByLabelText('Mes amis, 2')).toBeTruthy();
-    // Aucune demande : pas de ligne « Demandes d'amis ».
-    expect(screen.queryByLabelText(/^Demandes d'amis, /)).toBeNull();
+    expect(screen.getByLabelText('Mes abonnements, 2')).toBeTruthy();
+    // Plus de demandes d'amis : pas de ligne ni d'interrupteur.
+    expect(screen.queryByLabelText(/Demandes d'amis/)).toBeNull();
     expect(screen.queryByText('Modifier le profil')).toBeNull();
-    expect(screen.queryByText(/abonn/)).toBeNull();
     expect(screen.queryByText('dim@exemple.ca · Apple')).toBeNull();
     expect(screen.getByText('Français')).toBeTruthy();
     expect(await screen.findByText('Netflix, Crave')).toBeTruthy();
@@ -131,11 +129,11 @@ describe('onglet Profil', () => {
     expect(screen.getByLabelText('JustWatch')).toBeTruthy();
   });
 
-  it('revenir sur l’onglet relit mes amis et mes demandes (changés par les autres)', async () => {
+  it('revenir sur l’onglet relit mes abonnements', async () => {
     queryClient.clear();
     // Profil en cache d'une visite précédente : sans relecture, il resterait affiché.
-    queryClient.setQueryData(['profile'], { ...PROFILE, friendsCount: 0, followRequestsCount: 0 });
-    profile = { ...PROFILE, friendsCount: 1, followRequestsCount: 1 };
+    queryClient.setQueryData(['profile'], { ...PROFILE, friendsCount: 0 });
+    profile = { ...PROFILE, friendsCount: 1 };
     await render(
       <SafeAreaProvider initialMetrics={METRICS}>
         <QueryClientProvider client={queryClient}>
@@ -143,31 +141,23 @@ describe('onglet Profil', () => {
         </QueryClientProvider>
       </SafeAreaProvider>,
     );
-    expect(await screen.findByLabelText("Demandes d'amis, 1")).toBeTruthy();
-    expect(screen.getByLabelText('Mes amis, 1')).toBeTruthy();
+    expect(await screen.findByLabelText('Mes abonnements, 1')).toBeTruthy();
   });
 
-  it('« Mes amis » ouvre ma liste d’amis', async () => {
+  it('« Mes abonnements » ouvre ma liste', async () => {
     await renderProfile();
-    await fireEvent.press(screen.getByLabelText('Mes amis, 2'));
+    await fireEvent.press(screen.getByLabelText('Mes abonnements, 2'));
     expect(router.push).toHaveBeenCalledWith({
       pathname: '/u/[username]/friends',
       params: { username: 'dim.k' },
     });
   });
 
-  it('demandes reçues : ligne « Demandes d’amis » avec leur nombre', async () => {
-    profile = { ...PROFILE, followRequestsCount: 3 };
-    await renderProfile();
-    await fireEvent.press(screen.getByLabelText("Demandes d'amis, 3"));
-    expect(router.push).toHaveBeenCalledWith('/follow-requests');
-  });
-
   it('« + » : chercher un membre ou inviter', async () => {
     await renderProfile();
-    await fireEvent.press(screen.getByLabelText('Ajouter un ami'));
+    await fireEvent.press(screen.getByLabelText("Suivre quelqu'un"));
     const sheet = useUiStore.getState().actionSheet;
-    expect(sheet?.title).toBe('Ajouter un ami');
+    expect(sheet?.title).toBe("Suivre quelqu'un");
     expect(sheet?.options.map((option) => option.label)).toEqual(['Chercher un membre', 'Inviter']);
     await act(() => sheet?.options[0]?.onPress());
     expect(router.push).toHaveBeenCalledWith({ pathname: '/search', params: { tab: 'members' } });
@@ -266,17 +256,10 @@ describe('onglet Profil', () => {
     expect(screen.getByLabelText('Disney Plus')).toBeTruthy();
   });
 
-  it('notifications sociales : « Demandes d’amis » seulement', async () => {
+  it('notifications : plus d’interrupteur social', async () => {
     await renderProfile();
+    expect(screen.queryByLabelText("Demandes d'amis")).toBeNull();
     expect(screen.queryByLabelText('Nouvel abonné')).toBeNull();
-    await fireEvent.press(screen.getByLabelText("Demandes d'amis"));
-    expect(mockPermission).not.toHaveBeenCalled();
-    await waitFor(() =>
-      expect(mockApi).toHaveBeenCalledWith('/me/profile', {
-        method: 'PUT',
-        body: { notificationPrefs: { followRequests: false } },
-      }),
-    );
   });
 
   it('région : les 5 pays, la mienne cochée ; en choisir une l’enregistre', async () => {

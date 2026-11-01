@@ -13,7 +13,6 @@ const member = (username: string, displayName: string): Member => ({
   username,
   displayName,
   followState: 'following',
-  followsMe: false,
   commonCount: 0,
 });
 

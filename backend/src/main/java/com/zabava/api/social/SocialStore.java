@@ -30,22 +30,16 @@ public class SocialStore {
             String avatarUrl,
             int friendsCount) {}
 
-    /**
-     * Relation entre moi et un autre compte. {@code myStatus} : mon abonnement (null, pending,
-     * accepted) ; {@code followsMe} : son abonnement accepté à moi.
-     */
-    public record Relation(String myStatus, boolean followsMe) {
+    /** Relation de moi à un autre compte : mon suivi ({@code accepted}) ou rien (null). */
+    public record Relation(String myStatus) {
 
         public boolean following() {
             return "accepted".equals(myStatus);
         }
     }
 
-    /**
-     * Membre et sa relation avec moi, sans les titres en commun. {@code requestedMe} : il m'a envoyé
-     * une demande d'ami pas encore acceptée.
-     */
-    public record MemberRow(ProfileRow profile, String myStatus, boolean followsMe, boolean requestedMe) {}
+    /** Membre et ma relation avec lui, sans les titres en commun. */
+    public record MemberRow(ProfileRow profile, String myStatus) {}
 
     /** Titre de la liste d'un utilisateur. */
     public record ListRow(long titleId, String mediaType, String status, Instant addedAt, Instant watchedAt) {}
@@ -93,18 +87,12 @@ public class SocialStore {
     }
 
     public Relation relation(UUID me, UUID other) {
-        return db.sql("""
-                select
-                  (select status from follows where follower_id = :me and followee_id = :other) as my_status,
-                  exists (select 1 from follows where follower_id = :other and followee_id = :me
-                          and status = 'accepted') as follows_me
-                """)
+        return new Relation(db.sql("select status from follows where follower_id = :me and followee_id = :other")
                 .param("me", me)
                 .param("other", other)
-                .query((rs, n) -> new Relation(
-                        rs.getString("my_status"),
-                        rs.getBoolean("follows_me")))
-                .single();
+                .query(String.class)
+                .optional()
+                .orElse(null));
     }
 
     /** Membres et leur relation avec moi, par identifiant. */
@@ -113,27 +101,22 @@ public class SocialStore {
         Map<UUID, MemberRow> result = new HashMap<>();
         db.sql("""
                 select p.id, p.username, p.display_name, p.avatar_url, p.following_count,
-                  mine.status as my_status,
-                  coalesce(theirs.status = 'accepted', false) as follows_me,
-                  coalesce(theirs.status = 'pending', false) as requested_me
+                  mine.status as my_status
                 from profiles p
                 left join follows mine on mine.follower_id = :me and mine.followee_id = p.id
-                left join follows theirs on theirs.follower_id = p.id and theirs.followee_id = :me
                 where p.id in (:ids)
                 """)
                 .param("me", me)
                 .param("ids", ids)
                 .query((rs, n) -> result.put(rs.getObject("id", UUID.class), new MemberRow(
-                        profile(rs, n), rs.getString("my_status"), rs.getBoolean("follows_me"),
-                        rs.getBoolean("requested_me"))))
+                        profile(rs, n), rs.getString("my_status"))))
                 .list();
         return result;
     }
 
     /**
      * Nombre de titres vus en commun avec moi, par membre (absent = 0). Seulement pour les comptes
-     * dont je peux voir les listes : public ou privé que je suis, sans blocage dans un sens ou dans
-     * l'autre. Sinon, ce nombre révélerait une partie de leur liste.
+     * dont je peux voir les listes (ceux que je suis). Sinon, ce nombre révélerait une partie de leur liste.
      */
     public Map<UUID, Integer> commonCounts(UUID me, Collection<UUID> others) {
         if (others.isEmpty()) return Map.of();

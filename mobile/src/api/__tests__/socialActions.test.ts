@@ -6,15 +6,8 @@ import { useUiStore } from '@/store/ui';
 import { api, ApiError } from '../http';
 import { profileKey } from '../profile';
 import { queryClient } from '../queryClient';
-import { followRequestsKey, friendsKey, userKey, type UserProfile } from '../social';
-import {
-  acceptRequest,
-  declineRequest,
-  followMember,
-  patchMemberEverywhere,
-  pressFollow,
-  removeFriend,
-} from '../socialActions';
+import { friendsKey, userKey, type UserProfile } from '../social';
+import { followMember, patchMemberEverywhere, pressFollow, unfollowMember } from '../socialActions';
 
 jest.mock('../http', () => {
   class MockApiError extends Error {
@@ -43,7 +36,6 @@ const lea: UserProfile = {
   username: 'lea.m',
   displayName: 'Léa Martin',
   followState: 'none',
-  followsMe: false,
   commonCount: 4,
   friendsCount: 5,
   canSeeLists: false,
@@ -55,10 +47,8 @@ type Pages = { pages: { items: Member[] }[]; pageParams: unknown[] };
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 const toast = () => useUiStore.getState().toast;
 const cachedLea = () => queryClient.getQueryData<UserProfile>(userKey('lea.m'));
-const myProfile = () =>
-  queryClient.getQueryData<{ friendsCount: number; followRequestsCount: number }>(profileKey);
+const myProfile = () => queryClient.getQueryData<{ friendsCount: number }>(profileKey);
 const myFriends = () => queryClient.getQueryData<Pages>(friendsKey('dim.k', ''));
-const myRequests = () => queryClient.getQueryData<Pages>(followRequestsKey);
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -74,7 +64,6 @@ beforeEach(() => {
   queryClient.setQueryData(profileKey, {
     username: 'dim.k',
     friendsCount: 2,
-    followRequestsCount: 1,
   });
   queryClient.setQueryData(userKey('lea.m'), lea);
   mockApi.mockResolvedValue(undefined);
@@ -96,50 +85,35 @@ describe('patchMemberEverywhere', () => {
   });
 });
 
-describe('ajouter en ami', () => {
-  it('envoie une demande : « Demande envoyée », compteurs inchangés', async () => {
-    mockApi.mockResolvedValue({ status: 'pending' });
+describe('suivre', () => {
+  it('effectif tout de suite : « Tu suis @lea.m », mon compteur monte, le sien non', async () => {
+    mockApi.mockResolvedValue({ status: 'accepted' });
     followMember(lea);
-    expect(cachedLea()).toMatchObject({ followState: 'pending', friendsCount: 5 });
-    expect(toast()?.message).toBe('Demande envoyée à @lea.m');
+    expect(cachedLea()).toMatchObject({ followState: 'following', friendsCount: 5 });
+    expect(myProfile()?.friendsCount).toBe(3);
     await flush();
     expect(mockApi).toHaveBeenCalledWith('/users/lea.m/follow', { method: 'POST' });
-    expect(myProfile()?.friendsCount).toBe(2);
+    expect(toast()?.message).toBe('Tu suis @lea.m');
   });
 
-  it('sa demande était reçue : amis tout de suite, et ma liste d’amis est rechargée', async () => {
-    const requested = { ...lea, followState: 'requested' as const };
-    queryClient.setQueryData(userKey('lea.m'), requested);
-    queryClient.setQueryData(followRequestsKey, {
-      pages: [{ items: [requested] }],
-      pageParams: [undefined],
-    });
-    // Ma liste d'amis déjà ouverte, sans Léa : c'est le bug « 2 amis mais liste vide ».
+  it('ma liste d’abonnements déjà ouverte est rechargée', async () => {
     queryClient.setQueryData(friendsKey('dim.k', ''), {
       pages: [{ items: [] }],
       pageParams: [undefined],
     });
-    mockApi.mockResolvedValue({ status: 'accepted' });
-
-    followMember(requested);
-    expect(cachedLea()).toMatchObject({
-      followState: 'following',
-      followsMe: true,
-      friendsCount: 6,
-    });
-    expect(myProfile()).toMatchObject({ friendsCount: 3, followRequestsCount: 0 });
-    expect(myRequests()?.pages[0]?.items).toEqual([]);
+    followMember(lea);
     await flush();
-    expect(toast()?.message).toBe('Léa et toi êtes maintenant amis');
     expect(queryClient.getQueryState(friendsKey('dim.k', ''))?.isInvalidated).toBe(true);
   });
 
-  it('le serveur répond « amis » alors qu’on attendait une demande : amis', async () => {
-    mockApi.mockResolvedValue({ status: 'accepted' });
+  it('« Annuler » : retour à l’état d’avant, à l’écran et sur le serveur', async () => {
     followMember(lea);
     await flush();
-    expect(cachedLea()).toMatchObject({ followState: 'following', friendsCount: 6 });
-    expect(myProfile()?.friendsCount).toBe(3);
+    useUiStore.getState().undoToast();
+    expect(cachedLea()).toEqual(lea);
+    expect(myProfile()?.friendsCount).toBe(2);
+    await flush();
+    expect(mockApi).toHaveBeenLastCalledWith('/users/lea.m/follow', { method: 'DELETE' });
   });
 
   it('échec : retour à l’état d’avant et message de limite', async () => {
@@ -147,7 +121,8 @@ describe('ajouter en ami', () => {
     followMember(lea);
     await flush();
     expect(cachedLea()).toEqual(lea);
-    expect(toast()?.message).toBe("Tu as atteint la limite de 200 demandes d'ami par jour");
+    expect(myProfile()?.friendsCount).toBe(2);
+    expect(toast()?.message).toBe('Tu as atteint la limite de 200 suivis par jour');
   });
 
   it('hors ligne : rien ne change, « Connexion requise »', () => {
@@ -159,54 +134,45 @@ describe('ajouter en ami', () => {
   });
 });
 
-describe('retirer de mes amis', () => {
-  const friend: UserProfile = {
-    ...lea,
-    followState: 'following',
-    followsMe: true,
-    friendsCount: 6,
-  };
+describe('ne plus suivre', () => {
+  const followed: UserProfile = { ...lea, followState: 'following', friendsCount: 6 };
 
-  it('« Amis » ouvre « Retirer de mes amis »', () => {
-    pressFollow(friend);
+  it('« Suivi » ouvre « Ne plus suivre »', () => {
+    pressFollow(followed);
     const sheet = useUiStore.getState().actionSheet;
     expect(sheet?.title).toBe('@lea.m');
-    expect(sheet?.options.map((option) => option.label)).toEqual(['Retirer de mes amis']);
+    expect(sheet?.options.map((option) => option.label)).toEqual(['Ne plus suivre']);
   });
 
-  it('toast avec « Annuler », qui rétablit l’amitié à l’écran et sur le serveur', async () => {
-    queryClient.setQueryData(userKey('lea.m'), friend);
+  it('toast avec « Annuler », qui rétablit le suivi à l’écran et sur le serveur', async () => {
+    queryClient.setQueryData(userKey('lea.m'), followed);
     queryClient.setQueryData(friendsKey('dim.k', ''), {
-      pages: [{ items: [friend] }],
+      pages: [{ items: [followed] }],
       pageParams: [undefined],
     });
-    removeFriend(friend);
-    expect(cachedLea()).toMatchObject({ followState: 'none', followsMe: false, friendsCount: 5 });
+    unfollowMember(followed);
+    expect(cachedLea()).toMatchObject({ followState: 'none', friendsCount: 6 });
     expect(myProfile()?.friendsCount).toBe(1);
     expect(myFriends()?.pages[0]?.items).toEqual([]);
     await flush();
     expect(mockApi).toHaveBeenCalledWith('/users/lea.m/follow', { method: 'DELETE' });
-    expect(toast()?.message).toBe('@lea.m ne fait plus partie de tes amis');
+    expect(toast()?.message).toBe('Tu ne suis plus @lea.m');
 
     useUiStore.getState().undoToast();
-    expect(cachedLea()).toMatchObject({
-      followState: 'following',
-      followsMe: true,
-      friendsCount: 6,
-    });
+    expect(cachedLea()).toMatchObject({ followState: 'following', friendsCount: 6 });
     expect(myProfile()?.friendsCount).toBe(2);
-    expect(myFriends()?.pages[0]?.items).toEqual([friend]);
+    expect(myFriends()?.pages[0]?.items).toEqual([followed]);
     await flush();
     expect(mockApi).toHaveBeenLastCalledWith('/users/lea.m/follow', { method: 'POST' });
   });
 
-  it('« Annuler » ne recharge ma liste qu’une fois l’amitié rétablie sur le serveur', async () => {
-    queryClient.setQueryData(userKey('lea.m'), friend);
+  it('« Annuler » ne recharge ma liste qu’une fois le suivi rétabli sur le serveur', async () => {
+    queryClient.setQueryData(userKey('lea.m'), followed);
     queryClient.setQueryData(friendsKey('dim.k', ''), {
-      pages: [{ items: [friend] }],
+      pages: [{ items: [followed] }],
       pageParams: [undefined],
     });
-    removeFriend(friend);
+    unfollowMember(followed);
     await flush();
     let restore: (value: unknown) => void = () => undefined;
     mockApi.mockImplementationOnce(() => new Promise((resolve) => (restore = resolve)));
@@ -220,38 +186,6 @@ describe('retirer de mes amis', () => {
   });
 });
 
-describe('demandes reçues', () => {
-  const requested: Member = { ...lea, followState: 'requested' };
-
-  beforeEach(() => {
-    queryClient.setQueryData(followRequestsKey, {
-      pages: [{ items: [requested] }],
-      pageParams: [undefined],
-    });
-  });
-
-  it('accepter : la ligne disparaît, nous sommes amis', async () => {
-    acceptRequest(requested);
-    expect(myRequests()?.pages[0]?.items).toEqual([]);
-    expect(myProfile()).toMatchObject({ friendsCount: 3, followRequestsCount: 0 });
-    expect(cachedLea()).toMatchObject({ followState: 'following', followsMe: true });
-    await flush();
-    expect(mockApi).toHaveBeenCalledWith('/me/follow-requests/lea.m/accept', { method: 'POST' });
-    expect(toast()?.message).toBe('Léa et toi êtes maintenant amis');
-  });
-
-  it('refuser : la ligne disparaît, sans toast ; échec : elle revient', async () => {
-    mockApi.mockRejectedValue(new ApiError(500, 'POST'));
-    declineRequest(requested);
-    expect(myRequests()?.pages[0]?.items).toEqual([]);
-    expect(cachedLea()?.followState).toBe('none');
-    await flush();
-    expect(myRequests()?.pages[0]?.items).toEqual([requested]);
-    expect(cachedLea()?.followState).toBe('requested');
-    expect(myProfile()?.followRequestsCount).toBe(1);
-  });
-});
-
 describe('actions simultanées', () => {
   const max: UserProfile = { ...lea, username: 'max.dubois', displayName: 'Max Dubois' };
   const cachedMax = () => queryClient.getQueryData<UserProfile>(userKey('max.dubois'));
@@ -259,16 +193,16 @@ describe('actions simultanées', () => {
   it('« Annuler » ne défait que sa propre action', async () => {
     queryClient.setQueryData(userKey('lea.m'), { ...lea, followState: 'following' });
     queryClient.setQueryData(userKey('max.dubois'), max);
-    removeFriend({ ...lea, followState: 'following' });
+    unfollowMember({ ...lea, followState: 'following' });
     await flush();
     const undo = toast()?.undo;
-    mockApi.mockResolvedValue({ status: 'pending' });
+    mockApi.mockResolvedValue({ status: 'accepted' });
     followMember(max);
     await flush();
 
     undo?.();
     expect(cachedLea()?.followState).toBe('following');
-    expect(cachedMax()?.followState).toBe('pending');
+    expect(cachedMax()?.followState).toBe('following');
   });
 
   it('un échec ne défait que sa propre action', async () => {
@@ -276,13 +210,13 @@ describe('actions simultanées', () => {
     let reject: (error: unknown) => void = () => undefined;
     mockApi.mockImplementationOnce(() => new Promise((_, no) => (reject = no)));
     followMember(lea);
-    mockApi.mockResolvedValueOnce({ status: 'pending' });
+    mockApi.mockResolvedValueOnce({ status: 'accepted' });
     followMember(max);
     await flush();
     reject(new ApiError(500, 'POST'));
     await flush();
 
     expect(cachedLea()?.followState).toBe('none');
-    expect(cachedMax()?.followState).toBe('pending');
+    expect(cachedMax()?.followState).toBe('following');
   });
 });

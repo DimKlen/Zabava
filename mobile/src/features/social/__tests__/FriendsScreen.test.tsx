@@ -50,7 +50,6 @@ const member = (username: string, displayName: string, extra: object = {}) => ({
   username,
   displayName,
   followState: 'following',
-  followsMe: true,
   commonCount: 0,
   ...extra,
 });
@@ -90,13 +89,13 @@ async function show(username: string) {
 }
 
 describe('FriendsScreen', () => {
-  it('« Mes amis » : filtre local sans accents ni casse ; titres en commun à partir de 3', async () => {
+  it('« Mes abonnements » : filtre local sans accents ni casse ; titres en commun à partir de 3', async () => {
     await show('dim.k');
-    expect(screen.getByText('Mes amis')).toBeTruthy();
+    expect(screen.getByText('Mes abonnements')).toBeTruthy();
     expect(await screen.findByText('Léa Martin')).toBeTruthy();
     expect(screen.getByText('@lea.m · 4 titres en commun')).toBeTruthy();
     expect(screen.getByText('@max.dubois')).toBeTruthy();
-    expect(screen.getAllByText('Amis')).toHaveLength(2);
+    expect(screen.getAllByText('Suivi')).toHaveLength(2);
 
     await fireEvent.changeText(screen.getByLabelText('Filtrer'), 'LEA');
     expect(screen.queryByText('Max Dubois')).toBeNull();
@@ -104,32 +103,34 @@ describe('FriendsScreen', () => {
     expect(screen.getByText('Aucun membre ne correspond')).toBeTruthy();
   });
 
-  it('mes amis : pas de « … » ; « Amis » → « Retirer de mes amis »', async () => {
+  it('mes abonnements : pas de « … » ; « Suivi » → « Ne plus suivre »', async () => {
     await show('dim.k');
-    await fireEvent.press(await screen.findByLabelText('Ami avec @lea.m, toucher pour le retirer'));
+    await fireEvent.press(
+      await screen.findByLabelText('Tu suis @lea.m, toucher pour ne plus suivre'),
+    );
     expect(screen.queryByLabelText('Options pour @lea.m')).toBeNull();
     const sheet = useUiStore.getState().actionSheet;
-    expect(sheet?.options.map((option) => option.label)).toEqual(['Retirer de mes amis']);
+    expect(sheet?.options.map((option) => option.label)).toEqual(['Ne plus suivre']);
     sheet?.options[0]?.onPress();
     await waitFor(() => expect(screen.queryByText('Léa Martin')).toBeNull());
     expect(mockApi).toHaveBeenCalledWith('/users/lea.m/follow', { method: 'DELETE' });
-    expect(useUiStore.getState().toast?.message).toBe('@lea.m ne fait plus partie de tes amis');
+    expect(useUiStore.getState().toast?.message).toBe('Tu ne suis plus @lea.m');
   });
 
-  it('aucun ami : « Tu n’as pas encore d’amis » + « Ajouter un ami »', async () => {
+  it('aucun abonnement : « Tu ne suis personne pour l’instant » + « Suivre quelqu’un »', async () => {
     friends = [];
     await show('dim.k');
-    expect(await screen.findByText("Tu n'as pas encore d'amis")).toBeTruthy();
-    await fireEvent.press(screen.getByText('Ajouter un ami'));
+    expect(await screen.findByText("Tu ne suis personne pour l'instant")).toBeTruthy();
+    await fireEvent.press(screen.getByText("Suivre quelqu'un"));
     expect(router.push).toHaveBeenCalledWith({ pathname: '/search', params: { tab: 'members' } });
   });
 
-  it('amis d’un ami : « Amis de Léa », sans menu', async () => {
-    friends = [member('max.dubois', 'Max Dubois', { followState: 'none', followsMe: false })];
+  it('abonnements d’un membre : « Abonnements de Léa », sans menu', async () => {
+    friends = [member('max.dubois', 'Max Dubois', { followState: 'none' })];
     await show('lea.m');
-    expect(await screen.findByText('Amis de Léa')).toBeTruthy();
+    expect(await screen.findByText('Abonnements de Léa')).toBeTruthy();
     expect(await screen.findByText('Max Dubois')).toBeTruthy();
     expect(screen.queryByLabelText('Options pour @max.dubois')).toBeNull();
-    expect(screen.getByLabelText('Ajouter @max.dubois en ami')).toBeTruthy();
+    expect(screen.getByLabelText('Suivre @max.dubois')).toBeTruthy();
   });
 });
