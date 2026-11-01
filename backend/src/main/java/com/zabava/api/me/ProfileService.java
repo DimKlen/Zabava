@@ -76,8 +76,7 @@ public class ProfileService {
         return db.sql("""
                 select id, display_name, avatar_url, email, auth_provider, region, language,
                        spoiler_protection, notification_prefs::text as prefs, timezone, onboarded_at,
-                       username, following_count,
-                       (select count(*) from follows f where f.followee_id = profiles.id and f.status = 'pending') as requests
+                       username, following_count
                 from profiles where id = :id
                 """)
                 .param("id", userId)
@@ -95,8 +94,7 @@ public class ProfileService {
                         instant(rs.getTimestamp("onboarded_at")),
                         providerIds(userId),
                         rs.getString("username"),
-                        rs.getInt("following_count"),
-                        rs.getInt("requests")))
+                        rs.getInt("following_count")))
                 .optional()
                 .orElseThrow(() -> ApiException.notFound("Profil introuvable"));
     }
@@ -200,8 +198,7 @@ public class ProfileService {
                 node.path("cinema").asBoolean(true),
                 node.path("streaming").asBoolean(true),
                 node.path("seasons").asBoolean(true),
-                node.path("digest_hour").asInt(9),
-                node.path("follow_requests").asBoolean(true));
+                node.path("digest_hour").asInt(9));
     }
 
     /** Format stocké dans profiles.notification_prefs (specs/docs/09 §9.2) : clé {@code digest_hour}. */
@@ -212,7 +209,6 @@ public class ProfileService {
         stored.put("streaming", prefs.streaming());
         stored.put("seasons", prefs.seasons());
         stored.put("digest_hour", prefs.digestHour());
-        stored.put("follow_requests", prefs.followRequests());
         return stored;
     }
 
@@ -226,8 +222,7 @@ public class ProfileService {
                 update.cinema() != null ? update.cinema() : current.cinema(),
                 update.streaming() != null ? update.streaming() : current.streaming(),
                 update.seasons() != null ? update.seasons() : current.seasons(),
-                update.digestHour() != null ? update.digestHour() : current.digestHour(),
-                update.followRequests() != null ? update.followRequests() : current.followRequests());
+                update.digestHour() != null ? update.digestHour() : current.digestHour());
     }
 
     private static ZoneId zone(String id) {

@@ -36,8 +36,8 @@ setupOnlineManager();
 const persistOptions = {
   persister: queryPersister,
   maxAge: persistMaxAge,
-  // À changer quand la forme d'une réponse en cache évolue (v3 : amis réciproques, friendsCount).
-  buster: 'v3',
+  // À changer quand la forme d'une réponse en cache évolue (v4 : suivi à sens unique, plus de followsMe).
+  buster: 'v4',
   dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
 };
 
@@ -85,7 +85,6 @@ export default function RootLayout() {
             <Stack.Screen name="u/[username]/index" options={pushOptions} />
             <Stack.Screen name="u/[username]/friends" options={pushOptions} />
             <Stack.Screen name="feed" options={pushOptions} />
-            <Stack.Screen name="follow-requests" options={pushOptions} />
             <Stack.Screen
               name="scan"
               options={{ presentation: 'fullScreenModal', animation: 'fade' }}

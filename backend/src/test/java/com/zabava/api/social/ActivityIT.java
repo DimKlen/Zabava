@@ -150,16 +150,12 @@ class ActivityIT extends SocialTest {
                 .andExpect(jsonPath("$.items[0].title.id").value("movie-603"))
                 .andExpect(jsonPath("$.items[0].inMyList").value(true));
 
-        // Une demande envoyée à Max ne suffit pas ; une fois amis, son activité apparaît. Devenir
-        // amis n'est pas une activité.
+        // Dès que je suis Max, son activité apparaît. Suivre n'est pas une activité.
         follow(dim, "max.dubois");
-        mvc.perform(as(dim, get("/api/v1/me/feed"))).andExpect(jsonPath("$.items", hasSize(1)));
-        befriend(max, "max.dubois", lea, "lea.m");
-        mvc.perform(as(max, post("/api/v1/me/follow-requests/dim.k/accept")));
         mvc.perform(as(dim, get("/api/v1/me/feed")))
                 .andExpect(jsonPath("$.items[*].type", contains("watched_movie", "added")));
 
-        // Retirer Léa de mes amis la retire du fil.
+        // Ne plus suivre Léa la retire du fil.
         mvc.perform(as(dim, delete("/api/v1/users/lea.m/follow")));
         mvc.perform(as(dim, get("/api/v1/me/feed")))
                 .andExpect(jsonPath("$.items[*].type", contains("watched_movie")));
@@ -189,11 +185,11 @@ class ActivityIT extends SocialTest {
     }
 
     @Test
-    void lesActivitesNeSontLuesQueParLesAmis() throws Exception {
+    void lesActivitesNeSontLuesQueParCeuxQuiSuivent() throws Exception {
         addTitle(lea, 603, "movie", "towatch");
-        follow(dim, "lea.m");
         mvc.perform(as(dim, get("/api/v1/me/feed"))).andExpect(jsonPath("$.items", hasSize(0)));
-        mvc.perform(as(lea, post("/api/v1/me/follow-requests/dim.k/accept")));
+        // Dès le suivi, sans confirmation de Léa.
+        follow(dim, "lea.m");
         mvc.perform(as(dim, get("/api/v1/me/feed"))).andExpect(jsonPath("$.items", hasSize(1)));
     }
 

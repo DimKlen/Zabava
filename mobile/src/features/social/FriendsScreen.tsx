@@ -34,7 +34,11 @@ export function FriendsScreen({ username }: { username: string }) {
   const me = useProfile().data?.username;
   const owner = useUserProfile(username).data;
   const isMine = username === me;
-  const title = isMine ? 'Mes amis' : owner ? `Amis de ${firstName(owner.displayName)}` : '';
+  const title = isMine
+    ? 'Mes abonnements'
+    : owner
+      ? `Abonnements de ${firstName(owner.displayName)}`
+      : '';
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -131,9 +135,9 @@ function Empty({ isMine, filtered }: { isMine: boolean; filtered: boolean }) {
   return (
     <EmptyState
       icon={UsersThreeIcon}
-      title="Tu n'as pas encore d'amis"
+      title="Tu ne suis personne pour l'instant"
       action={{
-        label: 'Ajouter un ami',
+        label: "Suivre quelqu'un",
         onPress: () => router.push({ pathname: '/search', params: { tab: 'members' } }),
       }}
     />

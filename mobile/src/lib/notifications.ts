@@ -180,7 +180,7 @@ export async function unregisterPushToken(): Promise<void> {
 
 /**
  * Ouvre le lien profond d'une notification (`zabava://title/…`, `zabava://upcoming`, et pour le
- * social `zabava://u/…`, `zabava://follow-requests`). La pile est reconstruite : l'onglet d'abord
+ * social `zabava://u/…`). La pile est reconstruite : l'onglet d'abord
  * (Ma liste, ou Profil pour le social), puis l'écran, pour que « retour » y ramène.
  */
 export function openNotificationUrl(url: string): void {
@@ -189,7 +189,7 @@ export function openNotificationUrl(url: string): void {
     router.navigate('/(tabs)/upcoming');
     return;
   }
-  if (path.startsWith('/u/') || path.startsWith('/follow-requests')) {
+  if (path.startsWith('/u/')) {
     router.navigate('/(tabs)/profile');
     router.push(path as Parameters<typeof router.push>[0]);
     return;

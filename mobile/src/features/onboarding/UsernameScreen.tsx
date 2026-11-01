@@ -105,7 +105,7 @@ function UsernameForm({ profile, variant }: { profile: Profile } & Props) {
         </View>
         <StepIntro
           title="Choisis ton pseudo"
-          text="C'est ton identifiant sur Zabava. Tes amis te trouveront avec. Tu ne pourras plus le changer."
+          text="C'est ton identifiant sur Zabava. Les autres membres te trouveront avec. Tu ne pourras plus le changer."
           textMarginBottom={20}
         />
         <View onLayout={(event) => (fieldY.current = event.nativeEvent.layout.y)}>

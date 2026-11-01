@@ -17,16 +17,14 @@ public final class SocialDtos {
     public record Page<T>(List<T> items, String nextCursor) {}
 
     /**
-     * Membre vu par l'utilisateur connecté. {@code followState} : {@code following} (amis),
-     * {@code pending} (ma demande d'ami envoyée), {@code requested} (sa demande reçue) ou
-     * {@code none}.
+     * Membre vu par l'utilisateur connecté. {@code followState} : {@code following} (je le
+     * suis) ou {@code none}.
      */
     public record MemberLite(
             String username,
             String displayName,
             String avatarUrl,
             String followState,
-            boolean followsMe,
             int commonCount) {}
 
     public record UserProfile(
@@ -34,7 +32,6 @@ public final class SocialDtos {
             String displayName,
             String avatarUrl,
             String followState,
-            boolean followsMe,
             int commonCount,
             int friendsCount,
             boolean canSeeLists,
@@ -78,7 +75,6 @@ public final class SocialDtos {
 
     public record FollowResult(String status) {}
 
-    public record AcceptAllResult(int accepted) {}
 
     public record ReportRequest(@NotNull @Pattern(regexp = "inappropriate|impersonation|spam") String reason) {}
 }

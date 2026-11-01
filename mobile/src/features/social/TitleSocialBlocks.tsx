@@ -7,7 +7,7 @@ import { FollowingCard } from './FollowingCard';
 type Props = { type: MediaType; tmdbId: number; title: string };
 
 /**
- * « Tes amis » sous « Où regarder » (specs/social/docs/04 §4.9). Rien pendant le chargement, pour
+ * « Tes abonnements » sous « Où regarder » (specs/social/docs/04 §4.9). Rien pendant le chargement, pour
  * ne pas faire sauter la page, ni en cas d'erreur.
  */
 export function TitleSocialBlocks({ type, tmdbId, title }: Props) {

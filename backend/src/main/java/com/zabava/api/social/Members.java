@@ -36,14 +36,13 @@ public class Members {
         Map<UUID, MemberLite> result = new HashMap<>();
         rows.forEach((id, row) -> {
             if (row.profile().username() == null) return;
-            result.put(id, lite(row.profile(), followState(me, row), row.followsMe(), common.getOrDefault(id, 0)));
+            result.put(id, lite(row.profile(), followState(me, row), common.getOrDefault(id, 0)));
         });
         return result;
     }
 
-    static MemberLite lite(ProfileRow p, String followState, boolean followsMe, int commonCount) {
-        return new MemberLite(
-                p.username(), displayName(p), p.avatarUrl(), followState, followsMe, commonCount);
+    static MemberLite lite(ProfileRow p, String followState, int commonCount) {
+        return new MemberLite(p.username(), displayName(p), p.avatarUrl(), followState, commonCount);
     }
 
     /** Nom affiché, ou le pseudo s'il est vide. */
@@ -51,12 +50,9 @@ public class Members {
         return p.displayName() == null || p.displayName().isBlank() ? p.username() : p.displayName();
     }
 
-    /** following (amis) › pending (ma demande envoyée) › requested (sa demande reçue) › none (moi : none). */
+    /** following (je le suis) › none (sinon, et pour moi). */
     static String followState(UUID me, MemberRow row) {
         if (row.profile().id().equals(me)) return "none";
-        if ("accepted".equals(row.myStatus())) return "following";
-        if ("pending".equals(row.myStatus())) return "pending";
-        if (row.requestedMe()) return "requested";
-        return "none";
+        return "accepted".equals(row.myStatus()) ? "following" : "none";
     }
 }

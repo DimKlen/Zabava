@@ -58,10 +58,10 @@ export function FeedScreen() {
         ListEmptyComponent={
           <EmptyState
             icon={UsersThreeIcon}
-            title="Ajoute des amis pour voir ce qu'ils regardent"
+            title="Suis des membres pour voir ce qu'ils regardent"
             paddingTop={48}
             action={{
-              label: 'Ajouter un ami',
+              label: "Suivre quelqu'un",
               onPress: () => router.push({ pathname: '/search', params: { tab: 'members' } }),
             }}
           />
@@ -98,7 +98,7 @@ export function FeedScreen() {
           onPress={goBack}
         />
         <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
-          Activité de tes amis
+          Activité de tes abonnements
         </Text>
       </View>
       {body}

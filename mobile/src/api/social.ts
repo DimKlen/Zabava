@@ -33,7 +33,7 @@ export type UserProfile = Member & {
 export type Page<T> = { items: T[]; nextCursor?: string };
 
 const MINUTE = 60 * 1000;
-const FOLLOW_STATES: ReadonlySet<string> = new Set(['none', 'pending', 'requested', 'following']);
+const FOLLOW_STATES: ReadonlySet<string> = new Set(['none', 'following']);
 const ACTIVITY_TYPES: ReadonlySet<string> = new Set([
   'added',
   'watched_movie',
@@ -69,7 +69,6 @@ export function toMember(item: ApiMember): Member | null {
     followState: FOLLOW_STATES.has(item.followState ?? '')
       ? (item.followState as FollowState)
       : 'none',
-    followsMe: item.followsMe ?? false,
     commonCount: item.commonCount ?? 0,
   };
 }
@@ -317,23 +316,5 @@ export function useTitleSocial(type: MediaType, tmdbId: number) {
     queryFn: ({ signal }) =>
       api<ApiTitleSocial>(`/titles/${type}/${tmdbId}/social`, { signal }).then(toTitleSocial),
     staleTime: 10 * MINUTE,
-  });
-}
-
-// ─── Demandes d'ami reçues ──────────────────────────────────────────────────
-
-export const followRequestsKey = ['followRequests'] as const;
-
-/** Mes demandes d'ami reçues, plus récentes d'abord, par 50. */
-export function useFollowRequests() {
-  return useInfiniteQuery({
-    queryKey: followRequestsKey,
-    queryFn: ({ pageParam, signal }) =>
-      api<ApiMemberPage>('/me/follow-requests', { query: { cursor: pageParam }, signal }).then(
-        toMemberPage,
-      ),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (page) => page.nextCursor,
-    staleTime: MINUTE,
   });
 }

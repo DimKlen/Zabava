@@ -1,4 +1,4 @@
-import { CheckIcon, ClockIcon, UserPlusIcon } from 'phosphor-react-native';
+import { CheckIcon, UserPlusIcon } from 'phosphor-react-native';
 import { StyleSheet } from 'react-native';
 
 import { pressFollow } from '@/api/socialActions';
@@ -13,7 +13,6 @@ import { Button } from './Button';
 
 const ICONS = {
   userPlus: UserPlusIcon,
-  clock: ClockIcon,
   check: CheckIcon,
 } satisfies Record<FollowButtonState['icon'], unknown>;
 
@@ -25,7 +24,7 @@ type Props = {
   size: 'normal' | 'compact';
 };
 
-/** Bouton d'ami : 4 états (specs/social/docs/03 › FollowButton, revu pour les amis). */
+/** Bouton « Suivre » / « Suivi » (specs/social/docs/03 › FollowButton, revu pour le suivi). */
 export function FollowButton({ member, size }: Props) {
   const state = followButtonState(member);
   const compact = size === 'compact';

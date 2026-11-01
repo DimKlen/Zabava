@@ -3,7 +3,6 @@ import {
   CaretRightIcon,
   MagnifyingGlassIcon,
   ShareNetworkIcon,
-  UserCirclePlusIcon,
   UserPlusIcon,
   UsersThreeIcon,
 } from 'phosphor-react-native';
@@ -71,7 +70,7 @@ export function MyProfileScreen() {
               icon={UserPlusIcon}
               iconSize={22}
               color={colors.text}
-              accessibilityLabel="Ajouter un ami"
+              accessibilityLabel="Suivre quelqu'un"
               onPress={openAddFriend}
             />
           }
@@ -94,7 +93,7 @@ export function MyProfileScreen() {
 /** « + » : chercher un membre à ajouter, ou l'inviter s'il n'est pas encore sur Zabava. */
 function openAddFriend() {
   openActionSheet({
-    title: 'Ajouter un ami',
+    title: "Suivre quelqu'un",
     options: [
       {
         label: 'Chercher un membre',
@@ -106,12 +105,11 @@ function openAddFriend() {
   });
 }
 
-/** Moi, puis « Mes amis · n » et mes demandes reçues. */
+/** Moi, puis « Mes abonnements · n ». */
 function Me({ profile }: { profile: Profile }) {
   const username = profile.username ?? '';
   const name = profile.displayName || username;
   const friends = profile.friendsCount ?? 0;
-  const requests = profile.followRequestsCount ?? 0;
   return (
     <>
       <View style={styles.identity}>
@@ -125,29 +123,16 @@ function Me({ profile }: { profile: Profile }) {
           </Text>
         </View>
       </View>
-      <SettingsGroup label="Amis">
+      <SettingsGroup label="Suivi">
         <SettingsRow
-          label="Mes amis"
+          label="Mes abonnements"
           icon={UsersThreeIcon}
-          accessibilityLabel={`Mes amis, ${friends}`}
+          accessibilityLabel={`Mes abonnements, ${friends}`}
           onPress={() => openFriends(username)}
         >
           <Text style={styles.count}>{friends}</Text>
           <CaretRightIcon size={16} color={colors.neutral600} />
         </SettingsRow>
-        {requests > 0 ? (
-          <SettingsRow
-            label="Demandes d'amis"
-            icon={UserCirclePlusIcon}
-            accessibilityLabel={`Demandes d'amis, ${requests}`}
-            onPress={() => router.push('/follow-requests')}
-          >
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{requests}</Text>
-            </View>
-            <CaretRightIcon size={16} color={colors.neutral600} />
-          </SettingsRow>
-        ) : null}
       </SettingsGroup>
     </>
   );

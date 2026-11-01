@@ -22,14 +22,12 @@ public final class MeDtos {
 
     private MeDtos() {}
 
-    /** {@code followRequests} : demandes d'ami reçues et acceptées (notifications sociales). */
     public record NotificationPrefs(
             boolean episodes,
             boolean cinema,
             boolean streaming,
             boolean seasons,
-            int digestHour,
-            boolean followRequests) {}
+            int digestHour) {}
 
     public record Profile(
             String id,
@@ -45,8 +43,7 @@ public final class MeDtos {
             Instant onboardedAt,
             List<Integer> providerIds,
             String username,
-            int friendsCount,
-            int followRequestsCount) {}
+            int friendsCount) {}
 
     /**
      * Champs absents = inchangés. Valeurs permises : specs/docs/05 et 09. Le nom et la photo sont
@@ -65,8 +62,7 @@ public final class MeDtos {
             Boolean cinema,
             Boolean streaming,
             Boolean seasons,
-            @Min(0) @Max(23) Integer digestHour,
-            Boolean followRequests) {}
+            @Min(0) @Max(23) Integer digestHour) {}
 
     public record ProvidersUpdate(@NotNull @Size(max = 50) List<Integer> providerIds) {}
 

@@ -62,7 +62,7 @@ public class UserService {
     /** Ce que je vois d'un profil ; {@code 404} s'il n'existe pas. */
     record Viewed(ProfileRow profile, Relation relation, boolean isMe) {
 
-        /** Listes, amis et activité visibles : moi, ou un ami. */
+        /** Listes et activité visibles : moi, ou quelqu'un que je suis. */
         boolean canSeeLists() {
             return isMe || relation.following();
         }
@@ -71,7 +71,7 @@ public class UserService {
     Viewed view(UUID me, String username) {
         ProfileRow profile = store.findByUsername(username)
                 .orElseThrow(() -> ApiException.notFound("Profil introuvable"));
-        if (profile.id().equals(me)) return new Viewed(profile, new Relation(null, false), true);
+        if (profile.id().equals(me)) return new Viewed(profile, new Relation(null), true);
         return new Viewed(profile, store.relation(me, profile.id()), false);
     }
 
@@ -83,7 +83,6 @@ public class UserService {
                 m.displayName(),
                 m.avatarUrl(),
                 m.followState(),
-                m.followsMe(),
                 m.commonCount(),
                 v.profile().friendsCount(),
                 v.canSeeLists(),
@@ -251,11 +250,11 @@ public class UserService {
 
     // ─── Détail ───────────────────────────────────────────────────────────────
 
-    /** Profil dont je peux voir les listes ; {@code 403} si ce n'est pas un ami. */
+    /** Profil dont je peux voir les listes ; {@code 403} si je ne la suis pas. */
     private Viewed readable(UUID me, String username) {
         Viewed v = view(me, username);
         if (!v.canSeeLists()) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "private_profile", "Réservé à ses amis");
+            throw new ApiException(HttpStatus.FORBIDDEN, "private_profile", "Suis cette personne pour voir sa liste");
         }
         return v;
     }

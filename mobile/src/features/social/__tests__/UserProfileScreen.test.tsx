@@ -46,23 +46,21 @@ const METRICS = {
   insets: { top: 47, left: 0, right: 0, bottom: 34 },
 };
 
-/** Amie : listes visibles. */
+/** Suivie : listes visibles. */
 const LEA = {
   username: 'lea.m',
   displayName: 'Léa Martin',
   followState: 'following',
-  followsMe: true,
   commonCount: 8,
   friendsCount: 5,
   canSeeLists: true,
   isMe: false,
 };
 
-/** Pas encore amis : en-tête seulement. */
+/** Pas suivie : en-tête seulement. */
 const STRANGER = {
   ...LEA,
   followState: 'none',
-  followsMe: false,
   commonCount: 0,
   canSeeLists: false,
 };
@@ -88,7 +86,12 @@ beforeEach(() => {
     if (path === '/users/lea.m/titles') return { items: [{ title: DUNE }, { title: ODYSSEY }] };
     if (path === '/me/recent-profiles/lea.m') return [];
     if (path === '/users/lea.m/follow' && options?.method === 'POST') {
-      return { status: profile.followState === 'none' ? 'pending' : 'accepted' };
+      profile = { ...LEA };
+      return { status: 'accepted' };
+    }
+    if (path === '/users/lea.m/follow' && options?.method === 'DELETE') {
+      profile = { ...STRANGER };
+      return undefined;
     }
     return undefined;
   });
@@ -108,43 +111,33 @@ async function renderScreen() {
 }
 
 describe('UserProfileScreen', () => {
-  it('ami : en-tête, « 5 amis », titres en commun, bouton « Amis »', async () => {
+  it('suivie : en-tête, « 5 abonnements », titres en commun, bouton « Suivi »', async () => {
     await renderScreen();
     expect(screen.getByText('@lea.m')).toBeTruthy();
-    expect(screen.getByLabelText('5 amis')).toBeTruthy();
+    expect(screen.getByLabelText('5 abonnements')).toBeTruthy();
     expect(screen.getByText('8 titres en commun')).toBeTruthy();
-    expect(screen.getByText('Amis')).toBeTruthy();
+    expect(screen.getByText('Suivi')).toBeTruthy();
     expect(screen.queryByText('Te suit')).toBeNull();
     expect(mockApi).toHaveBeenCalledWith('/me/recent-profiles/lea.m', { method: 'POST' });
   });
 
-  it('pas encore amis : « Réservé à ses amis », « Ajouter en ami » envoie une demande', async () => {
+  it('pas suivie : « Listes masquées » ; « Suivre » suit tout de suite, sans demande', async () => {
     profile = { ...STRANGER };
     await renderScreen();
-    expect(screen.getByText('Réservé à ses amis')).toBeTruthy();
-    expect(screen.getByText('Ajoute @lea.m en ami pour voir ses listes')).toBeTruthy();
-    await fireEvent.press(screen.getByText('Ajouter en ami'));
-    expect(await screen.findByText('Demande envoyée')).toBeTruthy();
-    expect(useUiStore.getState().toast?.message).toBe('Demande envoyée à @lea.m');
-    expect(screen.getByText('Réservé à ses amis')).toBeTruthy();
+    expect(screen.getByText('Listes masquées')).toBeTruthy();
+    expect(screen.getByText('Suis @lea.m pour voir ses listes')).toBeTruthy();
+    await fireEvent.press(screen.getByText('Suivre'));
+    expect(await screen.findByText('Suivi')).toBeTruthy();
+    expect(screen.queryByText('Listes masquées')).toBeNull();
+    expect(useUiStore.getState().toast?.message).toBe('Tu suis @lea.m');
+    expect(mockApi).toHaveBeenCalledWith('/users/lea.m/follow', { method: 'POST' });
   });
 
-  it('sa demande reçue : « Accepter » rend amis tout de suite, compteur à jour', async () => {
-    profile = { ...STRANGER, followState: 'requested' };
-    await renderScreen();
-    await fireEvent.press(screen.getByText('Accepter'));
-    expect(await screen.findByText('Amis')).toBeTruthy();
-    expect(await screen.findByLabelText('6 amis')).toBeTruthy();
-    await waitFor(() =>
-      expect(useUiStore.getState().toast?.message).toBe('Léa et toi êtes maintenant amis'),
-    );
-  });
-
-  it('pas encore amis : le compteur d’amis affiche un toast', async () => {
+  it('pas suivie : le compteur d’abonnements affiche un toast', async () => {
     profile = { ...STRANGER };
     await renderScreen();
-    await fireEvent.press(screen.getByLabelText('5 amis'));
-    expect(useUiStore.getState().toast?.message).toBe('Réservé à ses amis');
+    await fireEvent.press(screen.getByLabelText('5 abonnements'));
+    expect(useUiStore.getState().toast?.message).toBe('Suis ce membre pour voir ses listes');
   });
 
   it('les affiches portent ma coche si le titre est dans ma liste ; le « + » l’ajoute', async () => {
@@ -158,24 +151,24 @@ describe('UserProfileScreen', () => {
     profile = { ...STRANGER };
     await renderScreen();
     onlineManager.setOnline(false);
-    await fireEvent.press(screen.getByText('Ajouter en ami'));
-    expect(screen.getByText('Ajouter en ami')).toBeTruthy();
+    await fireEvent.press(screen.getByText('Suivre'));
+    expect(screen.getByText('Suivre')).toBeTruthy();
     expect(useUiStore.getState().toast?.message).toBe('Connexion requise');
   });
 
-  it('« Amis » → « Retirer de mes amis » → toast avec « Annuler » qui rétablit l’amitié', async () => {
+  it('« Suivi » → « Ne plus suivre » → toast avec « Annuler » qui rétablit le suivi', async () => {
     await renderScreen();
-    await fireEvent.press(screen.getByText('Amis'));
+    await fireEvent.press(screen.getByText('Suivi'));
     useUiStore.getState().actionSheet?.options[0]?.onPress();
-    expect(await screen.findByText('Ajouter en ami')).toBeTruthy();
+    expect(await screen.findByText('Suivre')).toBeTruthy();
     await waitFor(() =>
-      expect(useUiStore.getState().toast?.message).toBe('@lea.m ne fait plus partie de tes amis'),
+      expect(useUiStore.getState().toast?.message).toBe('Tu ne suis plus @lea.m'),
     );
 
     useUiStore.getState().undoToast();
-    expect(await screen.findByText('Amis')).toBeTruthy();
+    expect(await screen.findByText('Suivi')).toBeTruthy();
     await waitFor(() =>
-      expect(mockApi).toHaveBeenLastCalledWith('/users/lea.m/follow', { method: 'POST' }),
+      expect(mockApi).toHaveBeenCalledWith('/users/lea.m/follow', { method: 'POST' }),
     );
   });
 

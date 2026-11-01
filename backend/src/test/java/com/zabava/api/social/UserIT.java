@@ -2,6 +2,7 @@ package com.zabava.api.social;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -208,19 +209,19 @@ class UserIT extends SocialTest {
         addTitle(sarah, 603, "movie", "watched");
         db.sql("update user_titles set added_at = '2026-10-01T00:00:00Z' where user_id = :m").param("m", max).update();
         befriend(dim, "dim.k", max, "max.dubois");
-        // Une demande envoyée ne suffit pas : Sarah n'est pas encore mon amie.
-        follow(dim, "sarah.l");
 
         mvc.perform(as(dim, get("/api/v1/titles/movie/603/social")))
                 .andExpect(jsonPath("$.following[*].user.username", contains("max.dubois")))
                 .andExpect(jsonPath("$.following[0].status").value("towatch"))
                 .andExpect(jsonPath("$.saw").doesNotExist());
 
-        befriend(dim, "dim.k", lea, "lea.m");
+        // Sarah ne me suit pas et je ne la suis pas encore : absente. Dès que je la suis, elle apparaît.
+        follow(dim, "sarah.l");
+        follow(dim, "lea.m");
         mvc.perform(as(dim, get("/api/v1/titles/movie/603/social")))
-                .andExpect(jsonPath("$.following[*].user.username", contains("lea.m", "max.dubois")))
-                .andExpect(jsonPath("$.following[0].status").value("watched"))
-                .andExpect(jsonPath("$.following[0].date").value("2026-10-11T12:00:00Z"));
+                .andExpect(jsonPath("$.following[*].user.username", containsInAnyOrder("lea.m", "sarah.l", "max.dubois")))
+                .andExpect(jsonPath("$.following[?(@.user.username == 'lea.m')].status", contains("watched")))
+                .andExpect(jsonPath("$.following[?(@.user.username == 'lea.m')].date", contains("2026-10-11T12:00:00Z")));
         mvc.perform(as(dim, get("/api/v1/titles/movie/999/social")))
                 .andExpect(jsonPath("$.following", hasSize(0)));
     }
