@@ -9,6 +9,7 @@ import { config } from '@/api/config';
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
 import { usernameFromLink } from '@/domain/social/links';
+import { useT } from '@/i18n';
 import { hapticSuccess } from '@/lib/haptics';
 import { goBack } from '@/lib/navigation';
 import { showToast } from '@/store/ui';
@@ -21,6 +22,7 @@ const FRAME = 240;
 
 /** Scanner un code Zabava (specs/social/docs/04 §4.8) : modal plein écran. */
 export function ScanScreen() {
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const [permission, requestPermission, getPermission] = useCameraPermissions();
   // Un code non reconnu n'affiche son toast qu'une fois ; un code reconnu n'ouvre qu'un profil.
@@ -46,7 +48,7 @@ export function ScanScreen() {
     const username = usernameFromLink(data, config.inviteDomain, config.deeplinkScheme);
     if (!username) {
       seen.current.add(data);
-      showToast("Ce code n'est pas un code Zabava");
+      showToast(t('social.scan.invalid'));
       return;
     }
     done.current = true;
@@ -61,11 +63,11 @@ export function ScanScreen() {
   } else if (!permission.granted) {
     body = (
       <View style={styles.center}>
-        <Text style={styles.text}>Autorise l&apos;accès à la caméra pour scanner un code.</Text>
+        <Text style={styles.text}>{t('social.scan.permission')}</Text>
         <Button
           variant="primary"
           height={44}
-          label="Ouvrir les réglages"
+          label={t('social.scan.openSettings')}
           onPress={() => void Linking.openSettings().catch(() => undefined)}
         />
       </View>
@@ -84,9 +86,7 @@ export function ScanScreen() {
             <View style={styles.scanLine} />
           </View>
         </View>
-        <Text style={styles.text}>
-          Vise le code Zabava d&apos;un membre pour ouvrir son profil.
-        </Text>
+        <Text style={styles.text}>{t('social.scan.aim')}</Text>
       </>
     );
   }
@@ -97,7 +97,7 @@ export function ScanScreen() {
     >
       <View style={styles.bar}>
         <Text accessibilityRole="header" style={styles.title}>
-          Scanner un code
+          {t('social.scan.title')}
         </Text>
         <Button
           variant="icon"
@@ -105,7 +105,7 @@ export function ScanScreen() {
           icon={XIcon}
           iconSize={20}
           color={colors.text}
-          accessibilityLabel="Fermer"
+          accessibilityLabel={t('social.close')}
           onPress={goBack}
         />
       </View>

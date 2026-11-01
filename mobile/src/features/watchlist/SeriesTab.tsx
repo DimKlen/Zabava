@@ -20,6 +20,7 @@ import {
   type SeriesGroup,
 } from '@/domain/seriesList';
 import { filterByName } from '@/domain/watchlist';
+import { useT } from '@/i18n';
 import { openDiscover } from '@/lib/discover';
 import { useUiStore } from '@/store/ui';
 import { colors } from '@/theme/tokens';
@@ -34,8 +35,8 @@ const MIN_SKELETON_MS = 700;
 const SKELETONS = [0, 1, 2];
 
 const EMPTY = {
-  tv: { title: 'Aucune série suivie', cta: 'Découvrir des séries' },
-  anime: { title: 'Aucun animé suivi', cta: 'Découvrir des animés' },
+  tv: { title: 'watchlist.series.empty.tv.title', cta: 'watchlist.series.empty.tv.cta' },
+  anime: { title: 'watchlist.series.empty.anime.title', cta: 'watchlist.series.empty.anime.cta' },
 } as const;
 
 /** Une section de la liste : ses cartes ou lignes, ou le carrousel entier (un seul élément). */
@@ -46,6 +47,7 @@ type Section = { group: SeriesGroup; data: SeriesEntry[] | [SeriesGroup] };
  * longue liste de séries ne monte que les cartes proches de l'écran, avec leur geste de swipe).
  */
 export function SeriesTab({ type }: { type: 'tv' | 'anime' }) {
+  const { t } = useT();
   const scrollRef = useRef<SectionList<SeriesEntry | SeriesGroup, Section>>(null);
   useScrollToTop(scrollRef);
   const watchlist = useSeriesWatchlist(type);
@@ -119,11 +121,7 @@ export function SeriesTab({ type }: { type: 'tv' | 'anime' }) {
               />
             ))}
           </ScrollView>
-          {hasCards ? (
-            <Text style={styles.hint}>
-              Coche pour avancer · glisse une carte vers la gauche pour plus d&apos;actions
-            </Text>
-          ) : null}
+          {hasCards ? <Text style={styles.hint}>{t('watchlist.series.hint')}</Text> : null}
         </>
       }
       renderSectionHeader={({ section: { group } }) => (
@@ -145,12 +143,12 @@ export function SeriesTab({ type }: { type: 'tv' | 'anime' }) {
       )}
       ListEmptyComponent={
         query.trim() ? (
-          <EmptyState icon={TelevisionSimpleIcon} title="Aucun titre ne correspond" />
+          <EmptyState icon={TelevisionSimpleIcon} title={t('watchlist.empty.noMatch')} />
         ) : (
           <EmptyState
             icon={TelevisionSimpleIcon}
-            title={EMPTY[type].title}
-            action={{ label: EMPTY[type].cta, onPress: () => openDiscover(type) }}
+            title={t(EMPTY[type].title)}
+            action={{ label: t(EMPTY[type].cta), onPress: () => openDiscover(type) }}
           />
         )
       }

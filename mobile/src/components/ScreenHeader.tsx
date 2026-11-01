@@ -2,6 +2,7 @@ import { MagnifyingGlassIcon } from 'phosphor-react-native';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { useT } from '@/i18n';
 import { colors } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
@@ -18,6 +19,7 @@ type Props = {
 
 /** Titre d'écran 28/500, avec la loupe (ou d'autres boutons) à droite si besoin. */
 export function ScreenHeader({ title, onSearch, actions }: Props) {
+  const { t } = useT();
   return (
     <View style={onSearch || actions ? styles.withSearch : styles.plain}>
       <Text accessibilityRole="header" style={styles.title}>
@@ -31,7 +33,7 @@ export function ScreenHeader({ title, onSearch, actions }: Props) {
           icon={MagnifyingGlassIcon}
           iconSize={22}
           color={colors.text}
-          accessibilityLabel="Rechercher"
+          accessibilityLabel={t('common.search')}
           onPress={onSearch}
         />
       ) : null}

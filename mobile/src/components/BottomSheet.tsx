@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { useT } from '@/i18n';
 import { easeTiming } from '@/lib/animation';
 import { colors, durations, radii, shadows } from '@/theme/tokens';
 
@@ -125,12 +126,13 @@ export function BottomSheet({
 }
 
 function Scrim({ progress, onPress }: { progress: SharedValue<number>; onPress: () => void }) {
+  const { t } = useT();
   const style = useAnimatedStyle(() => ({ opacity: progress.get() }));
   return (
     <Animated.View style={[StyleSheet.absoluteFill, styles.scrim, style]}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Fermer"
+        accessibilityLabel={t('common.close')}
         onPress={onPress}
         style={StyleSheet.absoluteFill}
       />

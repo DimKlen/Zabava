@@ -58,7 +58,7 @@ describe('resultsCountLabel', () => {
     [0, '0 résultat'],
     [1, '1 résultat'],
     [2, '2 résultats'],
-    [1240, `${(1240).toLocaleString('fr-CA')} résultats`],
+    [1240, `${(1240).toLocaleString('fr')} résultats`],
   ])('%p → %p', (count, label) => {
     expect(resultsCountLabel(count)).toBe(label);
   });

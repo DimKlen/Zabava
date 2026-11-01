@@ -9,13 +9,14 @@ import { SkeletonPoster } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import { UnderlineTabs } from '@/components/UnderlineTabs';
 import {
-  MOVIE_SEGMENTS,
-  PROFILE_TABS,
-  SERIES_SEGMENTS,
+  movieSegments,
+  profileTabs,
+  seriesSegments,
   type ProfileGridItem,
   type ProfileSegment,
 } from '@/domain/social/profileLists';
 import type { MediaType } from '@/domain/types';
+import { useT } from '@/i18n';
 import { colors, spacing } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
@@ -55,9 +56,10 @@ export function ProfileContent({
   refreshing = false,
   onRefresh,
 }: Props) {
+  useT();
   const isInList = useLibraryMembership();
   const showLists = !notice;
-  const segments = tab === 'movie' ? MOVIE_SEGMENTS : SERIES_SEGMENTS;
+  const segments = tab === 'movie' ? movieSegments() : seriesSegments();
 
   let empty: ReactNode = null;
   if (showLists) {
@@ -85,7 +87,12 @@ export function ProfileContent({
           {header}
           {showLists ? (
             <>
-              <UnderlineTabs tabs={PROFILE_TABS} value={tab} onChange={onTab} style={styles.tabs} />
+              <UnderlineTabs
+                tabs={profileTabs()}
+                value={tab}
+                onChange={onTab}
+                style={styles.tabs}
+              />
               <View style={styles.segment}>
                 <Segmented options={segments} value={segment} onChange={onSegment} />
               </View>
@@ -133,10 +140,11 @@ function ProfileGridSkeleton() {
 }
 
 function NothingHere() {
+  const { t } = useT();
   return (
     <View style={styles.empty}>
       <FilmStripIcon size={36} color={colors.neutral600} />
-      <Text style={styles.emptyText}>Rien ici pour l&apos;instant</Text>
+      <Text style={styles.emptyText}>{t('social.empty')}</Text>
     </View>
   );
 }

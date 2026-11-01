@@ -14,6 +14,7 @@ import { useProfile, updateProfile } from '@/api/profile';
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
 import { NOTIFICATIONS_OFF } from '@/domain/onboarding';
+import { useT, type MessageKey } from '@/i18n';
 import {
   markNotificationPermissionAsked,
   registerPushToken,
@@ -22,26 +23,27 @@ import {
 import { colors } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
-const ITEMS: readonly { icon: Icon; title: string; text: string }[] = [
+const ITEMS: readonly { icon: Icon; title: MessageKey; text: MessageKey }[] = [
   {
     icon: TelevisionSimpleIcon,
-    title: 'Nouveaux épisodes',
-    text: "Le jour de diffusion, à l'heure locale.",
+    title: 'notif.episodes',
+    text: 'onboarding.notifications.episodes',
   },
   {
     icon: FilmSlateIcon,
-    title: 'Sorties en salle',
-    text: 'Quand un film de ta liste sort au cinéma.',
+    title: 'notif.cinema',
+    text: 'onboarding.notifications.cinema',
   },
   {
     icon: PlayCircleIcon,
-    title: 'Disponibilité en streaming',
-    text: 'Quand un film arrive sur tes plateformes.',
+    title: 'notif.streaming',
+    text: 'onboarding.notifications.streaming',
   },
 ];
 
 /** Explication des notifications, puis vraie demande système (specs/docs/05 §5.3). */
 export function NotificationsScreen() {
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const profile = useProfile();
   const [busy, setBusy] = useState(false);
@@ -81,18 +83,16 @@ export function NotificationsScreen() {
         <BellRingingIcon size={32} color={colors.accent} />
       </View>
       <Text accessibilityRole="header" style={styles.title}>
-        Ne rate aucune sortie
+        {t('onboarding.notifications.title')}
       </Text>
-      <Text style={styles.text}>
-        {"On t'envoie au plus une alerte par titre et par jour, seulement pour ce que tu suis."}
-      </Text>
+      <Text style={styles.text}>{t('onboarding.notifications.text')}</Text>
       <View style={styles.list}>
         {ITEMS.map(({ icon: ItemIcon, title, text }) => (
           <View key={title} style={styles.item}>
             <ItemIcon size={22} color={colors.accent} />
             <View style={styles.itemText}>
-              <Text style={styles.itemTitle}>{title}</Text>
-              <Text style={styles.itemDescription}>{text}</Text>
+              <Text style={styles.itemTitle}>{t(title)}</Text>
+              <Text style={styles.itemDescription}>{t(text)}</Text>
             </View>
           </View>
         ))}
@@ -102,14 +102,14 @@ export function NotificationsScreen() {
           variant="primary"
           height={50}
           fontSize={15}
-          label="Activer les notifications"
+          label={t('onboarding.notifications.enable')}
           disabled={busy}
           onPress={() => void enable()}
         />
         <Button
           variant="ghost"
           height={44}
-          label="Plus tard"
+          label={t('onboarding.notifications.later')}
           color={colors.neutral400}
           disabled={busy}
           onPress={() => void later()}

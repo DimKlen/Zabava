@@ -9,6 +9,7 @@ import { GradientFill } from '@/components/GradientFill';
 import { Poster } from '@/components/Poster';
 import { RoundIconButton } from '@/components/RoundIconButton';
 import { Text } from '@/components/Text';
+import { useT } from '@/i18n';
 import { tmdbImage } from '@/lib/tmdb';
 import { goBack } from '@/lib/navigation';
 import { colors, durations } from '@/theme/tokens';
@@ -48,6 +49,7 @@ export function TitleHeader({
   extraActions,
   loading = false,
 }: Props) {
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const backdrop = tmdbImage(backdropPath, 'w780');
   // Affiche déjà chargée par la liste d'où vient l'utilisateur (recherche, À venir : w92).
@@ -68,12 +70,16 @@ export function TitleHeader({
         ) : null}
         <LinearGradient colors={[colors.bgA25, colors.bg]} style={StyleSheet.absoluteFill} />
         <View style={[styles.buttons, { top: insets.top + 3 }]}>
-          <RoundIconButton icon={CaretLeftIcon} accessibilityLabel="Retour" onPress={goBack} />
+          <RoundIconButton
+            icon={CaretLeftIcon}
+            accessibilityLabel={t('title.back')}
+            onPress={goBack}
+          />
           <View style={styles.right}>
             {onToggleAlerts ? (
               <RoundIconButton
                 icon={alertsOn ? BellRingingIcon : BellSlashIcon}
-                accessibilityLabel={alertsOn ? 'Couper les alertes' : 'Activer les alertes'}
+                accessibilityLabel={alertsOn ? t('title.alerts.off') : t('title.alerts.on')}
                 onPress={onToggleAlerts}
               />
             ) : null}

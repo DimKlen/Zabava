@@ -1,30 +1,22 @@
 import type { Messages } from './fr';
+import { core as core } from './core/ja';
+import { common as common } from './common/ja';
+import { watchlist as watchlist } from './watchlist/ja';
+import { discover as discover } from './discover/ja';
+import { search as search } from './search/ja';
+import { title as title } from './title/ja';
+import { social as social } from './social/ja';
+import { onboarding as onboarding } from './onboarding/ja';
+import { misc as misc } from './misc/ja';
 
 export const ja: Messages = {
-  'tabs.list': 'マイリスト',
-  'tabs.discover': '見つける',
-  'tabs.upcoming': '公開予定',
-  'tabs.profile': 'プロフィール',
-  'language.label': '言語',
-  'language.auto': '端末の言語',
-  'settings.preferences': '設定',
-  'settings.region': '地域',
-  'settings.platforms': '利用中の配信サービス',
-  'settings.notifications': '通知',
-  'notif.episodes': '新エピソード',
-  'notif.cinema': '劇場公開',
-  'notif.streaming': '配信開始',
-  'notif.seasons': '新シーズン',
-  'settings.digest': '毎日のまとめ',
-  'settings.spoilerGroup': 'ネタバレ防止',
-  'settings.spoiler': 'ネタバレ防止機能',
-  'settings.about': 'このアプリについて',
-  'settings.aboutText':
-    '本製品はTMDB APIを使用していますが、TMDBによる承認や認定を受けたものではありません。配信サービス情報はJustWatch提供。評価はOMDb経由です。',
-  'settings.version': 'バージョン {version}',
-  'settings.signOut': 'ログアウト',
-  'settings.deleteAccount': 'アカウントを削除',
-  'onboarding.language.title': 'どの言語にしますか？',
-  'onboarding.language.text': 'アプリ、作品名、あらすじの言語を選んでください。',
-  'onboarding.continue': '続ける',
+  ...core,
+  ...common,
+  ...watchlist,
+  ...discover,
+  ...search,
+  ...title,
+  ...social,
+  ...onboarding,
+  ...misc,
 };

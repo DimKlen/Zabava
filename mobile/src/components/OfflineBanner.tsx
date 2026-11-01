@@ -2,6 +2,7 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import { CloudSlashIcon } from 'phosphor-react-native';
 import { StyleSheet, View } from 'react-native';
 
+import { useT } from '@/i18n';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
@@ -16,10 +17,11 @@ export function OfflineBanner() {
 
 /** Visuel seul (aussi utilisé par le kitchen-sink). */
 export function OfflineBannerView() {
+  const { t } = useT();
   return (
     <View accessibilityRole="alert" style={styles.banner}>
       <CloudSlashIcon size={14} color={colors.neutral300} />
-      <Text style={styles.text}>Hors ligne · affichage depuis le cache</Text>
+      <Text style={styles.text}>{t('common.offlineBanner')}</Text>
     </View>
   );
 }

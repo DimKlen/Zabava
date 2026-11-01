@@ -1,0 +1,30 @@
+import type { Messages } from '../types';
+
+export const core: Messages<typeof import('./fr').core> = {
+  'tabs.list': 'La mia lista',
+  'tabs.discover': 'Scopri',
+  'tabs.upcoming': 'In arrivo',
+  'tabs.profile': 'Profilo',
+  'language.label': 'Lingua',
+  'language.auto': 'Lingua del telefono',
+  'settings.preferences': 'Preferenze',
+  'settings.region': 'Regione',
+  'settings.platforms': 'Le mie piattaforme',
+  'settings.notifications': 'Notifiche',
+  'notif.episodes': 'Nuovi episodi',
+  'notif.cinema': 'Uscite al cinema',
+  'notif.streaming': 'Disponibilità in streaming',
+  'notif.seasons': 'Nuove stagioni',
+  'settings.digest': 'Riepilogo giornaliero',
+  'settings.spoilerGroup': 'Anti-spoiler',
+  'settings.spoiler': 'Protezione anti-spoiler',
+  'settings.about': 'Informazioni',
+  'settings.aboutText':
+    "Questo prodotto usa l'API di TMDB ma non è approvato né certificato da TMDB. Piattaforme di streaming fornite da JustWatch. Voti tramite OMDb.",
+  'settings.version': 'Versione {version}',
+  'settings.signOut': 'Esci',
+  'settings.deleteAccount': 'Elimina il mio account',
+  'onboarding.language.title': 'In che lingua?',
+  'onboarding.language.text': "Scegli la lingua dell'app, dei titoli e delle descrizioni.",
+  'onboarding.continue': 'Continua',
+};

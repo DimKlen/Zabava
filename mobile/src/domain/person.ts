@@ -1,26 +1,13 @@
 /** Fiche personne — specs/docs/07 §7.3. */
+import { currentLanguage, t } from '@/i18n';
+
 import type { MediaType } from './types';
 
 /** Genre TMDB : 1 = femme, 2 = homme, 0 ou 3 = inconnu / non binaire. */
 export type TmdbGender = number | undefined;
 
-const MONTHS = [
-  'janvier',
-  'février',
-  'mars',
-  'avril',
-  'mai',
-  'juin',
-  'juillet',
-  'août',
-  'septembre',
-  'octobre',
-  'novembre',
-  'décembre',
-];
-
 /** Pays de naissance TMDB (en anglais) → français. Inconnu : laissé tel quel. */
-const COUNTRIES: Record<string, string> = {
+const COUNTRIES_FR: Record<string, string> = {
   USA: 'États-Unis',
   'U.S.A.': 'États-Unis',
   US: 'États-Unis',
@@ -82,7 +69,77 @@ const COUNTRIES: Record<string, string> = {
   'Puerto Rico': 'Porto Rico',
 };
 
-const CITIES: Record<string, string> = {
+/** Pays de naissance TMDB (en anglais) → code ISO, pour les langues autres que le français. */
+const COUNTRY_CODES: Record<string, string> = {
+  USA: 'US',
+  'U.S.A.': 'US',
+  US: 'US',
+  'United States': 'US',
+  'United States of America': 'US',
+  UK: 'GB',
+  'United Kingdom': 'GB',
+  Ireland: 'IE',
+  Canada: 'CA',
+  France: 'FR',
+  Belgium: 'BE',
+  Switzerland: 'CH',
+  Germany: 'DE',
+  Austria: 'AT',
+  Italy: 'IT',
+  Spain: 'ES',
+  Portugal: 'PT',
+  Netherlands: 'NL',
+  Sweden: 'SE',
+  Norway: 'NO',
+  Denmark: 'DK',
+  Finland: 'FI',
+  Iceland: 'IS',
+  Poland: 'PL',
+  Greece: 'GR',
+  Russia: 'RU',
+  Ukraine: 'UA',
+  Israel: 'IL',
+  Turkey: 'TR',
+  Egypt: 'EG',
+  Morocco: 'MA',
+  Algeria: 'DZ',
+  Tunisia: 'TN',
+  'South Africa': 'ZA',
+  Nigeria: 'NG',
+  India: 'IN',
+  China: 'CN',
+  'Hong Kong': 'HK',
+  Taiwan: 'TW',
+  Japan: 'JP',
+  'South Korea': 'KR',
+  Korea: 'KR',
+  Philippines: 'PH',
+  Thailand: 'TH',
+  Australia: 'AU',
+  'New Zealand': 'NZ',
+  Mexico: 'MX',
+  Brazil: 'BR',
+  Argentina: 'AR',
+  Chile: 'CL',
+  Colombia: 'CO',
+  Cuba: 'CU',
+  'Puerto Rico': 'PR',
+};
+
+/** Nom d'un pays de naissance dans la langue courante ; inconnu ou non géré : le nom TMDB tel quel. */
+function countryName(name: string): string {
+  const language = currentLanguage();
+  if (language === 'fr') return COUNTRIES_FR[name] ?? name;
+  const code = COUNTRY_CODES[name];
+  if (!code) return name;
+  try {
+    return new Intl.DisplayNames([language], { type: 'region' }).of(code) ?? name;
+  } catch {
+    return name;
+  }
+}
+
+const CITIES_FR: Record<string, string> = {
   'New York City': 'New York',
   London: 'Londres',
 };
@@ -96,25 +153,33 @@ export function birthPlace(place: string | undefined): string | undefined {
   const first = parts[0];
   const last = parts[parts.length - 1];
   if (first === undefined || last === undefined) return undefined;
-  const city = CITIES[first] ?? first;
-  if (parts.length === 1) return COUNTRIES[city] ?? city;
-  return `${city}, ${COUNTRIES[last] ?? last}`;
+  const city = currentLanguage() === 'fr' ? (CITIES_FR[first] ?? first) : first;
+  if (parts.length === 1) return countryName(city);
+  return `${city}, ${countryName(last)}`;
 }
 
 /** « 27 décembre 1995 », « 1er septembre 1996 » (date ISO sans heure : pas de décalage de fuseau). */
 export function longIsoDate(iso: string): string | undefined {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
   if (!match) return undefined;
-  const month = MONTHS[Number(match[2]) - 1];
-  if (!month) return undefined;
-  const day = Number(match[3]);
-  return `${day === 1 ? '1er' : day} ${month} ${match[1]}`;
+  const [year, month, day] = [Number(match[1]), Number(match[2]), Number(match[3])];
+  if (month < 1 || month > 12) return undefined;
+  const language = currentLanguage();
+  const text = new Date(Date.UTC(year, month - 1, day)).toLocaleDateString(language, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+  return language === 'fr' && day === 1 ? text.replace(/^1/, '1er') : text;
 }
 
-function bornWord(gender: TmdbGender): string {
-  if (gender === 1) return 'Née';
-  if (gender === 2) return 'Né';
-  return 'Né·e';
+type GenderSuffix = 'F' | 'M' | 'X';
+
+function genderSuffix(gender: TmdbGender): GenderSuffix {
+  if (gender === 1) return 'F';
+  if (gender === 2) return 'M';
+  return 'X';
 }
 
 /** « Né le 27 décembre 1995 à New York, États-Unis » ; sans données : texte de repli. */
@@ -125,11 +190,11 @@ export function birthLine(
 ): string {
   const date = birthday ? longIsoDate(birthday) : undefined;
   const where = birthPlace(place);
-  if (!date && !where) return 'Date et lieu de naissance non renseignés';
-  const parts = [bornWord(gender)];
-  if (date) parts.push(`le ${date}`);
-  if (where) parts.push(`à ${where}`);
-  return parts.join(' ');
+  const suffix = genderSuffix(gender);
+  if (date && where) return t(`common.person.born${suffix}`, { date, place: where });
+  if (date) return t(`common.person.bornDate${suffix}`, { date });
+  if (where) return t(`common.person.bornPlace${suffix}`, { place: where });
+  return t('common.person.bornUnknown');
 }
 
 export type PersonRole = { title: string; character?: string };
@@ -141,11 +206,10 @@ export function generatedBiography(
   roles: readonly PersonRole[],
 ): string | undefined {
   if (roles.length === 0) return undefined;
-  const known = gender === 1 ? 'connue' : gender === 2 ? 'connu' : 'connu·e';
   const works = roles
     .map((role) => (role.character ? `${role.title} (${role.character})` : role.title))
     .join(', ');
-  return `${name} est ${known} pour ${works}…`;
+  return t(`common.person.bio${genderSuffix(gender)}`, { name, works });
 }
 
 export type FilmographyTab = 'movie' | 'tv';

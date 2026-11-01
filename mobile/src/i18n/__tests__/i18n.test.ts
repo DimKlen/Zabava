@@ -70,3 +70,14 @@ describe('traductions', () => {
     expect(translate('fr', 'tabs.upcoming')).toBe('À venir');
   });
 });
+
+describe('variables des traductions', () => {
+  it('chaque langue garde les variables {nom} du français', () => {
+    const vars = (text: string) => (text.match(/\{\w+\}/g) ?? []).sort().join(',');
+    for (const messages of [en, es, pt, de, itLocale, ja]) {
+      for (const key of Object.keys(fr) as (keyof typeof fr)[]) {
+        expect({ key, vars: vars(messages[key]) }).toEqual({ key, vars: vars(fr[key]) });
+      }
+    }
+  });
+});

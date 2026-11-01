@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { SkeletonBox } from '@/components/Skeleton';
+import { useT } from '@/i18n';
 import { radii } from '@/theme/tokens';
 
 import { InfoSection } from './InfoSection';
@@ -13,6 +14,7 @@ const SYNOPSIS_LINES = ['100%', '100%', '62%'] as const;
  * actions, bandeau ou onglets, Où regarder, synopsis), sous l'en-tête déjà affiché.
  */
 export function TitleBodySkeleton({ series = false }: { series?: boolean }) {
+  const { t } = useT();
   return (
     <View testID="title-skeleton">
       <View style={styles.ratings}>
@@ -31,14 +33,14 @@ export function TitleBodySkeleton({ series = false }: { series?: boolean }) {
       ) : (
         <SkeletonBox height={48} radius={radii.rLg} style={styles.banner} />
       )}
-      <InfoSection title="Où regarder">
+      <InfoSection title={t('title.whereToWatch')}>
         <View style={styles.logos}>
           {Array.from({ length: LOGO_COUNT }, (_, index) => (
             <SkeletonBox key={index} width={48} height={48} radius={24} />
           ))}
         </View>
       </InfoSection>
-      <InfoSection title="Synopsis">
+      <InfoSection title={t('title.synopsis')}>
         <View style={styles.lines}>
           {SYNOPSIS_LINES.map((width, index) => (
             <SkeletonBox key={index} width={width} height={13} radius={radii.rXs} />

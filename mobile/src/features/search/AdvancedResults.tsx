@@ -9,6 +9,7 @@ import { Text } from '@/components/Text';
 import type { AdvancedFilters } from '@/domain/advancedSearch';
 import { sortResults, type ResultOrder } from '@/domain/resultSort';
 import { resultsCountLabel } from '@/domain/search';
+import { useT } from '@/i18n';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
@@ -27,6 +28,7 @@ type Props = {
 
 /** Mode « recherche avancée appliquée » : en-tête, grille d'affiches, chargement infini. */
 export function AdvancedResults({ filters, order, onOrderChange, onEdit, onExit }: Props) {
+  const { t } = useT();
   const results = useAdvancedResults(filters, true);
   const isInList = useLibraryMembership();
   const myProviderIds = useMyProviderIds();
@@ -62,9 +64,7 @@ export function AdvancedResults({ filters, order, onOrderChange, onEdit, onExit 
         }}
         onEndReachedThreshold={0.5}
         ListFooterComponent={results.isFetchingNextPage ? <GridFooter /> : null}
-        ListEmptyComponent={
-          <Text style={styles.empty}>Aucun titre ne correspond à ces filtres.</Text>
-        }
+        ListEmptyComponent={<Text style={styles.empty}>{t('search.advanced.empty')}</Text>}
       />
     );
   }
@@ -73,17 +73,17 @@ export function AdvancedResults({ filters, order, onOrderChange, onEdit, onExit 
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Recherche avancée</Text>
+          <Text style={styles.title}>{t('search.advanced.title')}</Text>
           {total !== undefined ? (
             <Text style={styles.count}>{resultsCountLabel(total)}</Text>
           ) : null}
         </View>
         <View style={styles.actions}>
-          <Button variant="ghost" height={36} label="Modifier" onPress={onEdit} />
+          <Button variant="ghost" height={36} label={t('search.advanced.edit')} onPress={onEdit} />
           <Button
             variant="ghost"
             height={36}
-            label="Effacer"
+            label={t('search.advanced.clear')}
             color={colors.neutral400}
             onPress={onExit}
           />

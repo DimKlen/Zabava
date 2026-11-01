@@ -2,6 +2,7 @@ import { StarIcon } from 'phosphor-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View, type AccessibilityActionEvent } from 'react-native';
 
+import { useT } from '@/i18n';
 import { colors } from '@/theme/tokens';
 
 export const MAX_RATING = 10;
@@ -20,6 +21,7 @@ type Props = {
  * en cours l'efface. Lecteur d'écran : réglable par « augmenter » / « diminuer ».
  */
 export function StarRating({ value, onChange, size }: Props) {
+  const { t } = useT();
   const [width, setWidth] = useState(0);
   // Les étoiles ne reçoivent pas le toucher : `locationX` est alors mesuré dans la rangée.
   const stars = (
@@ -36,7 +38,10 @@ export function StarRating({ value, onChange, size }: Props) {
   );
   if (!onChange) {
     return (
-      <View accessible accessibilityLabel={value ? `${value} sur 10` : 'Pas de note'}>
+      <View
+        accessible
+        accessibilityLabel={value ? t('common.rating.outOf', { value }) : t('common.rating.none')}
+      >
         {stars}
       </View>
     );
@@ -56,11 +61,11 @@ export function StarRating({ value, onChange, size }: Props) {
   return (
     <Pressable
       accessibilityRole="adjustable"
-      accessibilityLabel="Note"
+      accessibilityLabel={t('common.rating.label')}
       accessibilityValue={
         value
-          ? { min: 1, max: MAX_RATING, now: value, text: `${value} sur 10` }
-          : { text: 'Pas de note' }
+          ? { min: 1, max: MAX_RATING, now: value, text: t('common.rating.outOf', { value }) }
+          : { text: t('common.rating.none') }
       }
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={adjust}

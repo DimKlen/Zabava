@@ -1,30 +1,22 @@
 import type { Messages } from './fr';
+import { core as core } from './core/pt';
+import { common as common } from './common/pt';
+import { watchlist as watchlist } from './watchlist/pt';
+import { discover as discover } from './discover/pt';
+import { search as search } from './search/pt';
+import { title as title } from './title/pt';
+import { social as social } from './social/pt';
+import { onboarding as onboarding } from './onboarding/pt';
+import { misc as misc } from './misc/pt';
 
 export const pt: Messages = {
-  'tabs.list': 'Minha lista',
-  'tabs.discover': 'Descobrir',
-  'tabs.upcoming': 'Em breve',
-  'tabs.profile': 'Perfil',
-  'language.label': 'Idioma',
-  'language.auto': 'Idioma do telemóvel',
-  'settings.preferences': 'Preferências',
-  'settings.region': 'Região',
-  'settings.platforms': 'As minhas plataformas',
-  'settings.notifications': 'Notificações',
-  'notif.episodes': 'Novos episódios',
-  'notif.cinema': 'Estreias no cinema',
-  'notif.streaming': 'Disponibilidade em streaming',
-  'notif.seasons': 'Novas temporadas',
-  'settings.digest': 'Resumo diário',
-  'settings.spoilerGroup': 'Anti-spoiler',
-  'settings.spoiler': 'Proteção anti-spoiler',
-  'settings.about': 'Acerca de',
-  'settings.aboutText':
-    'Este produto usa a API do TMDB, mas não é apoiado nem certificado pelo TMDB. Plataformas de streaming fornecidas pelo JustWatch. Classificações via OMDb.',
-  'settings.version': 'Versão {version}',
-  'settings.signOut': 'Terminar sessão',
-  'settings.deleteAccount': 'Eliminar a minha conta',
-  'onboarding.language.title': 'Em que idioma?',
-  'onboarding.language.text': 'Escolhe o idioma da app, dos títulos e das descrições.',
-  'onboarding.continue': 'Continuar',
+  ...core,
+  ...common,
+  ...watchlist,
+  ...discover,
+  ...search,
+  ...title,
+  ...social,
+  ...onboarding,
+  ...misc,
 };

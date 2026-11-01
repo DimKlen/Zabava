@@ -2,6 +2,8 @@
  * Bloc social d'une fiche : « Tes amis » — specs/social/docs/03 (FollowingCard, FollowingSheet),
  * docs/04 §4.9, sans « Ils l'ont vu » depuis les amis réciproques (seuls mes amis sont visibles).
  */
+import { t } from '@/i18n';
+
 import { formatShortDate } from '../format';
 import type { MediaType } from '../types';
 
@@ -33,11 +35,11 @@ export function followingText(firstNames: readonly string[]): string {
     case 1:
       return a;
     case 2:
-      return `${a} et ${b}`;
+      return t('social.following.two', { a, b });
     case 3:
-      return `${a}, ${b} et ${c}`;
+      return t('social.following.three', { a, b, c });
     default:
-      return `${a}, ${b} et ${firstNames.length - 2} autres`;
+      return t('social.following.many', { a, b, count: firstNames.length - 2 });
   }
 }
 
@@ -45,18 +47,20 @@ export function followingText(firstNames: readonly string[]): string {
 export function followingStatus(holder: TitleHolder, type: MediaType): string {
   if (type === 'movie') {
     return holder.status === 'watched'
-      ? `Vu le ${formatShortDate(new Date(holder.date))}`
-      : 'Dans sa liste';
+      ? t('social.status.watchedOn', { date: formatShortDate(new Date(holder.date)) })
+      : t('social.status.inList');
   }
   switch (holder.status) {
     case 'in_progress':
-      return holder.detail ? `En cours · ${holder.detail}` : 'En cours';
+      return holder.detail
+        ? t('social.status.inProgressWith', { detail: holder.detail })
+        : t('social.status.inProgress');
     case 'finished':
-      return 'Terminée';
+      return t('social.status.finished');
     case 'abandoned':
-      return 'Abandonnée';
+      return t('social.status.abandoned');
     default:
-      return 'Dans sa liste';
+      return t('social.status.inList');
   }
 }
 

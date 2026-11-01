@@ -15,6 +15,7 @@ import {
   type ResultOrder,
   type ResultSort,
 } from '@/domain/resultSort';
+import { useT } from '@/i18n';
 import { openActionSheet } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
@@ -26,6 +27,7 @@ type Props = {
 
 /** Tri des résultats, même geste que la liste de films : critère (feuille) · sens (un toucher l'inverse). */
 export function ResultSortBar({ order, onChange }: Props) {
+  const { t } = useT();
   const { sort, reversed } = order;
   const sortLabel = RESULT_SORTS.find((option) => option.value === sort)?.label ?? '';
   const directionLabel = resultDirectionLabel(sort, reversed);
@@ -36,7 +38,7 @@ export function ResultSortBar({ order, onChange }: Props) {
 
   const openSort = () =>
     openActionSheet({
-      title: 'Trier par',
+      title: t('search.sort.title'),
       options: RESULT_SORTS.map((option) => ({
         label: option.value === sort ? `${option.label} · ${directionLabel}` : option.label,
         icon: option.value === sort ? (reversed ? ArrowUpIcon : ArrowDownIcon) : CircleIcon,
@@ -54,7 +56,7 @@ export function ResultSortBar({ order, onChange }: Props) {
         iconSize={16}
         color={colors.neutral300}
         label={sortLabel}
-        accessibilityLabel={`Trier par : ${sortLabel}`}
+        accessibilityLabel={t('search.sort.by', { sort: sortLabel })}
         onPress={openSort}
         style={styles.button}
       />
@@ -65,7 +67,7 @@ export function ResultSortBar({ order, onChange }: Props) {
         fontSize={13}
         color={colors.neutral300}
         label={directionLabel}
-        accessibilityLabel={`${directionLabel}, toucher pour inverser`}
+        accessibilityLabel={t('search.sort.reverse', { direction: directionLabel })}
         onPress={() => onChange({ sort, reversed: !reversed })}
         style={styles.button}
       />

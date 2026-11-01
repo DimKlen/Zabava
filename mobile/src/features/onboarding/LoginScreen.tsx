@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { AppleLogoIcon, GoogleLogoIcon, PopcornIcon } from 'phosphor-react-native';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { signInWithApple, signInWithGoogle, type SignInResult } from '@/api/auth';
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
+import { useT, type MessageKey } from '@/i18n';
 import { openWebPage, PRIVACY_URL, TERMS_URL } from '@/lib/links';
 import { colors, radii } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
@@ -15,14 +16,34 @@ import { LoginMosaic } from './LoginMosaic';
 
 type LoginState = 'idle' | 'busy' | 'cancelled' | 'error';
 
-const STATUS_TEXT: Record<Exclude<LoginState, 'idle'>, string> = {
-  busy: 'Connexion en cours…',
-  cancelled: 'Connexion annulée',
-  error: 'Impossible de se connecter, réessaie',
-};
+const STATUS_KEY = {
+  busy: 'onboarding.login.busy',
+  cancelled: 'onboarding.login.cancelled',
+  error: 'onboarding.login.error',
+} as const satisfies Record<Exclude<LoginState, 'idle'>, MessageKey>;
+
+/** Un morceau de la phrase légale : `{terms}` et `{privacy}` deviennent des liens. */
+function legalPart(part: string, t: ReturnType<typeof useT>['t']) {
+  if (part === '{terms}') {
+    return (
+      <Text accessibilityRole="link" style={styles.link} onPress={() => openWebPage(TERMS_URL)}>
+        {t('onboarding.login.terms')}
+      </Text>
+    );
+  }
+  if (part === '{privacy}') {
+    return (
+      <Text accessibilityRole="link" style={styles.link} onPress={() => openWebPage(PRIVACY_URL)}>
+        {t('onboarding.login.privacy')}
+      </Text>
+    );
+  }
+  return part;
+}
 
 /** Connexion Apple / Google (specs/docs/05 §5.1). */
 export function LoginScreen() {
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const [state, setState] = useState<LoginState>('idle');
   const busy = state === 'busy';
@@ -51,10 +72,8 @@ export function LoginScreen() {
           </View>
           <Text style={styles.brandName}>Zabava</Text>
         </View>
-        <Text style={styles.title}>Tout ce que tu regardes, au même endroit</Text>
-        <Text style={styles.text}>
-          Films, séries et animés : ta liste, tes épisodes et les sorties à venir.
-        </Text>
+        <Text style={styles.title}>{t('onboarding.login.title')}</Text>
+        <Text style={styles.text}>{t('onboarding.login.text')}</Text>
         <Button
           variant="primary"
           height={50}
@@ -62,7 +81,7 @@ export function LoginScreen() {
           icon={AppleLogoIcon}
           iconWeight="fill"
           iconSize={20}
-          label="Continuer avec Apple"
+          label={t('onboarding.login.apple')}
           disabled={busy}
           onPress={() => void run(signInWithApple)}
         />
@@ -72,7 +91,7 @@ export function LoginScreen() {
           fontSize={15}
           icon={GoogleLogoIcon}
           iconSize={20}
-          label="Continuer avec Google"
+          label={t('onboarding.login.google')}
           disabled={busy}
           onPress={() => void run(signInWithGoogle)}
         />
@@ -81,23 +100,15 @@ export function LoginScreen() {
             accessibilityLiveRegion="polite"
             style={[styles.status, { color: busy ? colors.accent300 : colors.neutral300 }]}
           >
-            {STATUS_TEXT[state]}
+            {t(STATUS_KEY[state])}
           </Text>
         ) : null}
         <Text style={styles.legal}>
-          En continuant, tu acceptes les{' '}
-          <Text accessibilityRole="link" style={styles.link} onPress={() => openWebPage(TERMS_URL)}>
-            {"conditions d'utilisation"}
-          </Text>{' '}
-          et la{' '}
-          <Text
-            accessibilityRole="link"
-            style={styles.link}
-            onPress={() => openWebPage(PRIVACY_URL)}
-          >
-            politique de confidentialité
-          </Text>
-          .
+          {t('onboarding.login.legal')
+            .split(/(\{terms\}|\{privacy\})/)
+            .map((part, index) => (
+              <Fragment key={index}>{legalPart(part, t)}</Fragment>
+            ))}
         </Text>
       </View>
     </View>

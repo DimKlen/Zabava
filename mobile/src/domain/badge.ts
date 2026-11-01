@@ -1,4 +1,6 @@
 /** Badge d'affiche — specs/docs/01 §5 (`A.badge`). */
+import { t } from '@/i18n';
+
 import { movieState, type MovieAvailability } from './availability';
 import { formatShortDate } from './format';
 import type { MediaType } from './types';
@@ -37,7 +39,7 @@ export function posterBadge(
     case 'upcoming':
       return title.releaseTheatrical ? { text: formatShortDate(title.releaseTheatrical) } : null;
     case 'cinema':
-      return { text: 'Au cinéma', highlight: true };
+      return { text: t('common.badge.cinema'), highlight: true };
     case 'avail':
     case 'unknown':
       return null;

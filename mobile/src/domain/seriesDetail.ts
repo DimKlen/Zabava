@@ -1,4 +1,7 @@
 /** Fiche série : méta, Créateurs, Infos, libellés d'épisodes — specs/docs/07 §7.1 et §7.2. */
+import { t } from '@/i18n';
+import { tPlural } from '@/lib/plural';
+
 import {
   episodeCode,
   formatLongDate,
@@ -28,15 +31,15 @@ export function seriesCrew(
   studios: { id: number; name: string }[] = [],
 ): InfoRow[] {
   return [
-    ...personRow('Création', creators, creatorIds),
+    ...personRow(t('common.crew.creation'), creators, creatorIds),
     ...studioRow(studios.slice(0, MAX_STUDIOS)),
-    ...rows([['Diffusion', networks.join(', ')]]),
+    ...rows([[t('common.crew.broadcast'), networks.join(', ')]]),
   ];
 }
 
 function studioRow(studios: { id: number; name: string }[]): InfoRow[] {
   if (studios.length === 0) return [];
-  return [{ key: 'Studio', value: studios.map((s) => s.name).join(', '), studios }];
+  return [{ key: t('common.info.studio'), value: studios.map((s) => s.name).join(', '), studios }];
 }
 
 /** « 4 saisons · 38 épisodes » (Spéciaux exclus). */
@@ -46,8 +49,8 @@ export function seasonsSummary(
   const regular = seasons.filter((season) => season.number > 0);
   if (regular.length === 0) return undefined;
   const episodes = regular.reduce((sum, season) => sum + (season.episodeCount ?? 0), 0);
-  const seasonsLabel = `${regular.length} ${regular.length > 1 ? 'saisons' : 'saison'}`;
-  return `${seasonsLabel} · ${episodes} ${episodes > 1 ? 'épisodes' : 'épisode'}`;
+  const seasonsLabel = tPlural('common.series.seasons', regular.length);
+  return `${seasonsLabel} · ${tPlural('common.series.episodes', episodes)}`;
 }
 
 export type SeriesInfoInput = {
@@ -60,11 +63,11 @@ export type SeriesInfoInput = {
 
 export function seriesInfos(series: SeriesInfoInput): InfoRow[] {
   return rows([
-    ['Titre original', series.originalTitle],
-    ['Genres', series.genres.join(', ')],
-    ['Saisons', seasonsSummary(series.seasons)],
-    ['Langue originale', series.originalLanguage],
-    ['Pays', series.country],
+    [t('common.info.originalTitle'), series.originalTitle],
+    [t('common.info.genres'), series.genres.join(', ')],
+    [t('common.info.seasons'), seasonsSummary(series.seasons)],
+    [t('common.info.originalLanguage'), series.originalLanguage],
+    [t('common.info.country'), series.country],
   ]);
 }
 
@@ -73,7 +76,10 @@ export function nextEpisodeLine(info: SeriesInfo): string | undefined {
   const upcoming = info.upcoming;
   const date = upcoming ? episodeAirDate(upcoming) : undefined;
   if (!upcoming || !date) return undefined;
-  return `Prochain épisode : ${episodeCode(upcoming.season, upcoming.number)} le ${formatShortDate(date)}`;
+  return t('common.series.nextEpisodeLine', {
+    code: episodeCode(upcoming.season, upcoming.number),
+    date: formatShortDate(date),
+  });
 }
 
 /** Jour (et heure si connue) d'un épisode à venir : « Demain · 21 h 00 ». */
@@ -106,4 +112,6 @@ export function episodeSheetMeta(episode: SeriesEpisode, now: Date): string {
   return [...upcomingParts(episode, now), formatRuntime(episode.runtime)].join(' · ');
 }
 
-export const SPOILER_SYNOPSIS = "Synopsis masqué tant que l'épisode n'est pas vu (anti-spoiler).";
+export function spoilerSynopsis(): string {
+  return t('common.series.spoilerSynopsis');
+}

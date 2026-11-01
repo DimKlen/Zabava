@@ -4,6 +4,8 @@
  * sait pas qui nous suit.
  */
 
+import { currentLanguage, t } from '@/i18n';
+
 /** `following` : je le suis. */
 export type FollowState = 'none' | 'following';
 
@@ -27,34 +29,38 @@ export type FollowButtonState = {
 /** Bouton selon que je suis ou non le membre (specs/social/docs/03 › FollowButton). */
 export function followButtonState({ followState }: Pick<Member, 'followState'>): FollowButtonState {
   return followState === 'following'
-    ? { kind: 'following', label: 'Suivi', icon: 'check', variant: 'secondary' }
-    : { kind: 'follow', label: 'Suivre', icon: 'userPlus', variant: 'primary' };
+    ? {
+        kind: 'following',
+        label: t('social.follow.following'),
+        icon: 'check',
+        variant: 'secondary',
+      }
+    : { kind: 'follow', label: t('social.follow.follow'), icon: 'userPlus', variant: 'primary' };
 }
 
 /** Libellé d'accessibilité du bouton (specs/social/etapes/07 §2). */
 export function followButtonA11y(kind: FollowButtonKind, username: string): string {
   return kind === 'following'
-    ? `Tu suis @${username}, toucher pour ne plus suivre`
-    : `Suivre @${username}`;
+    ? t('social.follow.a11yFollowing', { username })
+    : t('social.follow.a11yFollow', { username });
 }
 
 /** Nombre abrégé à partir de 10 000 : « 12,4 k ». */
 export function formatCount(n: number): string {
   if (n < 10_000) return String(n);
   const thousands = Math.floor(n / 100) / 10;
-  return `${thousands.toLocaleString('fr-CA', { maximumFractionDigits: 1 })} k`;
+  return `${thousands.toLocaleString(currentLanguage(), { maximumFractionDigits: 1 })} k`;
 }
 
 /** Libellé du compteur de personnes suivies : singulier pour 0 et 1. */
 export function friendsLabel(n: number): string {
-  return n > 1 ? 'abonnements' : 'abonnement';
+  return t(n > 1 ? 'social.count.following.other' : 'social.count.following.one');
 }
 
 /** « 12 titres en commun » (« Aucun titre en commun » pour 0, « 1 titre en commun »). */
 export function commonLabel(n: number): string {
-  if (n === 0) return 'Aucun titre en commun';
-  if (n === 1) return '1 titre en commun';
-  return `${n} titres en commun`;
+  if (n === 0) return t('social.common.none');
+  return t(n === 1 ? 'social.common.one' : 'social.common.other', { count: n });
 }
 
 /** Chip, lignes de membres et recherche : affiché à partir de 3. */

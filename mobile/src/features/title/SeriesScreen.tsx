@@ -14,6 +14,7 @@ import { Text } from '@/components/Text';
 import { seriesPlatform } from '@/domain/badge';
 import { defaultSeason, seriesInfo, type SeriesEpisode } from '@/domain/series';
 import { nextEpisodeLine, seriesCrew, seriesInfos, seriesMeta } from '@/domain/seriesDetail';
+import { useT } from '@/i18n';
 import { useAfterFirstFrame } from '@/lib/useAfterFirstFrame';
 import { useUiStore } from '@/store/ui';
 import { colors, radii } from '@/theme/tokens';
@@ -68,6 +69,7 @@ export function SeriesScreen({
   initialSeason,
   initialEpisode,
 }: Props) {
+  const { t } = useT();
   const profile = useProfile().data;
   const myProviderIds = profile?.providerIds ?? [];
   const spoilerProtection = profile?.spoilerProtection ?? false;
@@ -127,7 +129,7 @@ export function SeriesScreen({
             <RoundIconButton
               icon={DotsThreeIcon}
               iconSize={22}
-              accessibilityLabel="Plus"
+              accessibilityLabel={t('title.more')}
               onPress={openMenu}
             />
           ) : undefined
@@ -199,7 +201,7 @@ export function SeriesScreen({
         ListFooterComponent={
           series && belowFold ? (
             <PosterCarousel
-              title="Titres similaires"
+              title={t('title.similar')}
               titles={series.similar}
               libraryIds={libraryIds}
             />
@@ -233,6 +235,7 @@ function SeriesInfos({
   region: string | undefined;
   belowFold: boolean;
 }) {
+  const { t } = useT();
   const crew = seriesCrew(
     series.creators,
     series.networks,
@@ -261,12 +264,12 @@ function SeriesInfos({
           ) : null}
           <CastCarousel cast={series.cast} />
           {crew.length > 0 ? (
-            <InfoSection title="Créateurs" titleGap={8}>
+            <InfoSection title={t('title.crew.creators')} titleGap={8}>
               <InfoRows rows={crew} />
             </InfoSection>
           ) : null}
           {infos.length > 0 ? (
-            <InfoSection title="Infos" titleGap={8} paddingTop={16}>
+            <InfoSection title={t('title.infos')} titleGap={8} paddingTop={16}>
               <InfoRows rows={infos} />
             </InfoSection>
           ) : null}

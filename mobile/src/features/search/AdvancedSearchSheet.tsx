@@ -22,21 +22,22 @@ import {
   type AdvancedFilters,
 } from '@/domain/advancedSearch';
 import type { MediaType } from '@/domain/types';
+import { useT, type MessageKey } from '@/i18n';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { colors, durations } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
 import { ActorPicker } from './ActorPicker';
 
-const TYPES: readonly { key: MediaType; label: string }[] = [
-  { key: 'movie', label: 'Films' },
-  { key: 'tv', label: 'Séries' },
-  { key: 'anime', label: 'Animés' },
+const TYPES: readonly { key: MediaType; label: MessageKey }[] = [
+  { key: 'movie', label: 'search.type.movie' },
+  { key: 'tv', label: 'search.type.tv' },
+  { key: 'anime', label: 'search.type.anime' },
 ];
 
 const AVAILABILITY = [
-  { key: 'all', label: 'Toutes les plateformes' },
-  { key: 'mine', label: 'Mes plateformes' },
+  { key: 'all', label: 'search.availability.all' },
+  { key: 'mine', label: 'search.availability.mine' },
 ] as const;
 
 /** Espace laissé au-dessus de la sheet. */
@@ -52,6 +53,7 @@ type Props = {
 
 /** Recherche avancée (specs/docs/08 §8.2) : filtres et compteur en direct. */
 export function AdvancedSearchSheet({ visible, filters, onChange, onClose, onApply }: Props) {
+  const { t } = useT();
   const { height } = useWindowDimensions();
   const currentYear = new Date().getFullYear();
   const counted = useDebouncedValue(filters, COUNT_DEBOUNCE_MS);
@@ -67,13 +69,13 @@ export function AdvancedSearchSheet({ visible, filters, onChange, onClose, onApp
     >
       <View style={styles.header}>
         <Text accessibilityRole="header" style={styles.title}>
-          Recherche avancée
+          {t('search.advanced.title')}
         </Text>
         <View style={styles.headerActions}>
           <Button
             variant="ghost"
             height={40}
-            label="Réinitialiser"
+            label={t('search.advanced.reset')}
             color={colors.neutral400}
             onPress={() => onChange(defaultFilters(new Date()))}
           />
@@ -83,7 +85,7 @@ export function AdvancedSearchSheet({ visible, filters, onChange, onClose, onApp
             icon={XIcon}
             iconSize={20}
             color={colors.text}
-            accessibilityLabel="Fermer"
+            accessibilityLabel={t('search.advanced.close')}
             onPress={onClose}
           />
         </View>
@@ -94,12 +96,12 @@ export function AdvancedSearchSheet({ visible, filters, onChange, onClose, onApp
         contentContainerStyle={styles.bodyContent}
         keyboardShouldPersistTaps="handled"
       >
-        <Section label="Type">
+        <Section label={t('search.advanced.type')}>
           <View style={styles.chips}>
             {TYPES.map((type) => (
               <Chip
                 key={type.key}
-                label={type.label}
+                label={t(type.label)}
                 height={34}
                 paddingHorizontal={14}
                 active={filters.types.includes(type.key)}
@@ -111,7 +113,7 @@ export function AdvancedSearchSheet({ visible, filters, onChange, onClose, onApp
           </View>
         </Section>
 
-        <Section label="Acteurs">
+        <Section label={t('search.advanced.actors')}>
           <ActorPicker
             actors={filters.actors}
             onAdd={(actor) => onChange(addActor(filters, actor))}
@@ -119,7 +121,7 @@ export function AdvancedSearchSheet({ visible, filters, onChange, onClose, onApp
           />
         </Section>
 
-        <Section label="Genres">
+        <Section label={t('search.advanced.genres')}>
           <View style={styles.chips}>
             {GENRES.map((genre) => (
               <Chip
@@ -134,9 +136,9 @@ export function AdvancedSearchSheet({ visible, filters, onChange, onClose, onApp
           </View>
         </Section>
 
-        <Section label="Années" value={yearsLabel(filters)}>
+        <Section label={t('search.advanced.years')} value={yearsLabel(filters)}>
           <RangeSlider
-            accessibilityLabel="Années"
+            accessibilityLabel={t('search.advanced.years')}
             min={FIRST_YEAR}
             max={currentYear}
             value={[filters.yearFrom, filters.yearTo]}
@@ -144,12 +146,12 @@ export function AdvancedSearchSheet({ visible, filters, onChange, onClose, onApp
           />
         </Section>
 
-        <Section label="Disponible sur">
+        <Section label={t('search.advanced.availability')}>
           <View style={styles.chips}>
             {AVAILABILITY.map((option) => (
               <Chip
                 key={option.key}
-                label={option.label}
+                label={t(option.label)}
                 active={filters.availability === option.key}
                 onPress={() => onChange({ ...filters, availability: option.key })}
               />
@@ -163,7 +165,7 @@ export function AdvancedSearchSheet({ visible, filters, onChange, onClose, onApp
           variant="primary"
           height={50}
           fontSize={15}
-          label={count === undefined ? 'Voir les résultats' : countButtonLabel(count)}
+          label={count === undefined ? t('search.advanced.apply') : countButtonLabel(count)}
           disabled={count === undefined || empty}
           onPress={onApply}
           testID="advanced-apply"

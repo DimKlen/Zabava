@@ -4,12 +4,14 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { setEpisodesWatched, type ListTitle } from '@/api/libraryActions';
 import { Chip } from '@/components/Chip';
 import { seasonNumbers, seasonProgress, seasonToggle, type SeriesEpisode } from '@/domain/series';
+import { t } from '@/i18n';
 import { hapticLight } from '@/lib/haptics';
 
 import { checkEpisode } from './checkEpisode';
 import { SeasonHeader } from './SeasonHeader';
 
-export const seasonLabel = (season: number) => (season === 0 ? 'Spéciaux' : `Saison ${season}`);
+export const seasonLabel = (season: number) =>
+  season === 0 ? t('title.season.specials') : t('title.season.number', { number: season });
 
 /** Épisodes d'une saison, dans l'ordre. */
 export function seasonEpisodesOf(episodes: SeriesEpisode[], season: number): SeriesEpisode[] {

@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { GradientFill } from '@/components/GradientFill';
 import type { ActivityVisual as Visual, FeedActivity } from '@/domain/social/feed';
+import { useT } from '@/i18n';
 import { tmdbImage } from '@/lib/tmdb';
 import { colors, durations } from '@/theme/tokens';
 
@@ -24,6 +25,7 @@ type Props = {
 
 /** À droite d'une activité : affiche ou vignette d'épisode (specs/social/docs/03 › ActivityItem). */
 export function ActivityVisual({ activity, visual, background }: Props) {
+  const { t } = useT();
   const { title, episode } = activity;
   const open = () => openTitle(previewOf(title), visual === 'still' ? episode?.season : undefined);
   if (visual === 'still') {
@@ -61,7 +63,7 @@ export function ActivityVisual({ activity, visual, background }: Props) {
       </View>
       {activity.inMyList ? (
         <View
-          accessibilityLabel="Dans ma liste"
+          accessibilityLabel={t('social.activity.inMyList')}
           style={[styles.check, { borderColor: background }]}
         >
           <CheckIcon size={10} weight="bold" color={colors.bg} />

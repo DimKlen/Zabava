@@ -2,28 +2,36 @@
  * Listes du profil d'un ami (onglets Films / Séries / Animés) — specs/social/docs/03 ›
  * ProfileLists et docs/04 §4.2 (`A.profVM` du prototype).
  */
+import { t } from '@/i18n';
+
 import type { MediaType } from '../types';
 
 export type MovieSegment = 'towatch' | 'watched';
 export type SeriesSegment = 'in_progress' | 'finished' | 'towatch';
 export type ProfileSegment = MovieSegment | SeriesSegment;
 
-export const PROFILE_TABS: readonly { key: MediaType; label: string }[] = [
-  { key: 'movie', label: 'Films' },
-  { key: 'tv', label: 'Séries' },
-  { key: 'anime', label: 'Animés' },
-];
+export function profileTabs(): { key: MediaType; label: string }[] {
+  return [
+    { key: 'movie', label: t('social.tab.movie') },
+    { key: 'tv', label: t('social.tab.tv') },
+    { key: 'anime', label: t('social.tab.anime') },
+  ];
+}
 
-export const MOVIE_SEGMENTS: readonly { key: MovieSegment; label: string }[] = [
-  { key: 'towatch', label: 'À voir' },
-  { key: 'watched', label: 'Vus' },
-];
+export function movieSegments(): { key: MovieSegment; label: string }[] {
+  return [
+    { key: 'towatch', label: t('social.segment.towatch') },
+    { key: 'watched', label: t('social.segment.watched') },
+  ];
+}
 
-export const SERIES_SEGMENTS: readonly { key: SeriesSegment; label: string }[] = [
-  { key: 'in_progress', label: 'En cours' },
-  { key: 'finished', label: 'Terminées' },
-  { key: 'towatch', label: 'À voir' },
-];
+export function seriesSegments(): { key: SeriesSegment; label: string }[] {
+  return [
+    { key: 'in_progress', label: t('social.segment.inProgress') },
+    { key: 'finished', label: t('social.segment.finished') },
+    { key: 'towatch', label: t('social.segment.towatch') },
+  ];
+}
 
 /** Segment par défaut : Vus pour les films, En cours pour les séries. */
 export function defaultSegment(tab: MediaType): ProfileSegment {
@@ -32,7 +40,7 @@ export function defaultSegment(tab: MediaType): ProfileSegment {
 
 /** Le segment existe-t-il pour cet onglet (changement d'onglet) ? */
 export function segmentFor(tab: MediaType, segment: ProfileSegment): ProfileSegment {
-  const options = tab === 'movie' ? MOVIE_SEGMENTS : SERIES_SEGMENTS;
+  const options = tab === 'movie' ? movieSegments() : seriesSegments();
   return options.some((option) => option.key === segment) ? segment : defaultSegment(tab);
 }
 

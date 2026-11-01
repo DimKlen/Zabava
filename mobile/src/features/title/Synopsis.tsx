@@ -8,6 +8,7 @@ import {
 
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
+import { useT } from '@/i18n';
 import { colors } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
@@ -17,6 +18,7 @@ const COLLAPSED_LINES = 3;
 
 /** Synopsis sur 3 lignes, avec « Voir plus » / « Voir moins » s'il dépasse. */
 export function Synopsis({ text }: { text: string }) {
+  const { t } = useT();
   const [expanded, setExpanded] = useState(false);
   const [lineCount, setLineCount] = useState(0);
 
@@ -25,7 +27,7 @@ export function Synopsis({ text }: { text: string }) {
     setLineCount(event.nativeEvent.lines.length);
 
   return (
-    <InfoSection title="Synopsis" titleGap={8}>
+    <InfoSection title={t('title.synopsis')} titleGap={8}>
       <View>
         <Text
           onTextLayout={measure}
@@ -43,7 +45,7 @@ export function Synopsis({ text }: { text: string }) {
         <Button
           variant="ghost"
           height={32}
-          label={expanded ? 'Voir moins' : 'Voir plus'}
+          label={expanded ? t('title.synopsis.less') : t('title.synopsis.more')}
           onPress={() => setExpanded((value) => !value)}
           style={styles.more}
         />

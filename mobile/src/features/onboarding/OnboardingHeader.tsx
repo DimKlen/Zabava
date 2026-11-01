@@ -18,6 +18,7 @@ import {
   previousStep,
   type OnboardingStep,
 } from '@/domain/onboarding';
+import { useT } from '@/i18n';
 import { easeTiming } from '@/lib/animation';
 import { colors, durations } from '@/theme/tokens';
 
@@ -25,6 +26,7 @@ type Props = { step: OnboardingStep };
 
 /** Barre du haut : retour (sauf au pseudo), progression en 4 segments, « Passer » (sauf au pseudo). */
 export function OnboardingHeader({ step }: Props) {
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const current = ONBOARDING_STEPS.indexOf(step);
   const canGoBack = previousStep(step) !== null;
@@ -47,7 +49,7 @@ export function OnboardingHeader({ step }: Props) {
             icon={CaretLeftIcon}
             iconSize={22}
             color={colors.text}
-            accessibilityLabel="Retour"
+            accessibilityLabel={t('onboarding.back')}
             onPress={back}
           />
         ) : null}
@@ -67,7 +69,7 @@ export function OnboardingHeader({ step }: Props) {
         <Button
           variant="ghost"
           height={44}
-          label="Passer"
+          label={t('onboarding.skip')}
           color={colors.neutral400}
           onPress={skip}
           style={styles.skip}

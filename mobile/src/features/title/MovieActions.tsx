@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { setMovieWatched, toggleInList, type ListTitle } from '@/api/libraryActions';
 import { Button } from '@/components/Button';
 import type { UserTitle } from '@/domain/types';
+import { useT } from '@/i18n';
 import { openRatingSheet } from '@/store/ui';
 
 type Props = { movie: ListTitle; userTitle?: UserTitle };
@@ -13,6 +14,7 @@ type Props = { movie: ListTitle; userTitle?: UserTitle };
  * « Ta note » (note et commentaire facultatifs) ; « Vu » le remet dans À voir.
  */
 export function MovieActions({ movie, userTitle }: Props) {
+  const { t } = useT();
   const inList = userTitle !== undefined;
   const watched = userTitle?.status === 'watched';
 
@@ -22,7 +24,7 @@ export function MovieActions({ movie, userTitle }: Props) {
         variant="primary"
         height={46}
         icon={inList ? CheckIcon : PlusIcon}
-        label={inList ? 'Dans ma liste' : 'Ajouter à ma liste'}
+        label={inList ? t('title.movie.inList') : t('title.movie.addToList')}
         onPress={() => toggleInList(movie)}
         style={styles.button}
       />
@@ -31,7 +33,7 @@ export function MovieActions({ movie, userTitle }: Props) {
         height={46}
         icon={EyeIcon}
         iconWeight={watched ? 'fill' : 'regular'}
-        label={watched ? 'Vu' : 'Marquer comme vu'}
+        label={watched ? t('title.watched') : t('title.markWatched')}
         onPress={() =>
           watched
             ? setMovieWatched(movie, false)

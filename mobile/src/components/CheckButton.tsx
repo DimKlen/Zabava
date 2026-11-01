@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { useT } from '@/i18n';
 import { easeTiming } from '@/lib/animation';
 import { hapticLight } from '@/lib/haptics';
 import { colors, durations, motion } from '@/theme/tokens';
@@ -24,17 +25,18 @@ type Props = {
  * Ne pas l'afficher pour un épisode pas encore diffusé.
  */
 export function CheckButton({ watched, onPress, zone = 44 }: Props) {
+  const { t } = useT();
   const scale = useSharedValue(1);
   const wasWatched = useRef(watched);
 
   // Passage à vu : pop 350 ms. Le haptique part au tap (pas au décochage).
   useEffect(() => {
     if (watched && !wasWatched.current) {
-      const t = durations.popEpisode;
+      const total = durations.popEpisode;
       scale.set(
         withSequence(
-          withTiming(motion.popScale, easeTiming(t * 0.4)),
-          withTiming(1, easeTiming(t * 0.6)),
+          withTiming(motion.popScale, easeTiming(total * 0.4)),
+          withTiming(1, easeTiming(total * 0.6)),
         ),
       );
     }
@@ -46,7 +48,7 @@ export function CheckButton({ watched, onPress, zone = 44 }: Props) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={watched ? 'Marquer comme non vu' : 'Marquer comme vu'}
+      accessibilityLabel={watched ? t('common.check.markUnwatched') : t('common.check.markWatched')}
       accessibilityState={{ checked: watched }}
       onPress={() => {
         if (!watched) hapticLight();

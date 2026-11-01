@@ -11,8 +11,9 @@ import { Text } from '@/components/Text';
 import { ToastHost } from '@/components/Toast';
 import { episodeCode, formatRating } from '@/domain/format';
 import { isAired, type SeriesEpisode } from '@/domain/series';
-import { episodeSheetMeta, SPOILER_SYNOPSIS } from '@/domain/seriesDetail';
+import { episodeSheetMeta, spoilerSynopsis } from '@/domain/seriesDetail';
 import { episodeTitle } from '@/domain/seriesList';
+import { useT } from '@/i18n';
 import { hapticLight } from '@/lib/haptics';
 import { tmdbImage } from '@/lib/tmdb';
 import { colors, durations, radii } from '@/theme/tokens';
@@ -60,12 +61,13 @@ function EpisodeContent({
   spoilerProtection,
   onClose,
 }: Required<Omit<Props, 'episode'>> & { episode: SeriesEpisode }) {
+  const { t } = useT();
   const now = new Date();
   const aired = isAired(episode, now);
   const watched = episode.watchedAt !== undefined;
   const hidden = spoilerProtection && !watched;
   const uri = tmdbImage(episode.stillPath, 'w780');
-  const synopsis = hidden ? SPOILER_SYNOPSIS : episode.overview;
+  const synopsis = hidden ? spoilerSynopsis() : episode.overview;
 
   return (
     <View testID="episode-sheet">
@@ -85,7 +87,7 @@ function EpisodeContent({
       </View>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Fermer"
+        accessibilityLabel={t('title.close')}
         onPress={onClose}
         hitSlop={4}
         style={styles.close}
@@ -114,14 +116,14 @@ function EpisodeContent({
             height={48}
             fontSize={15}
             icon={watched ? CheckIcon : EyeIcon}
-            label={watched ? 'Vu' : 'Marquer comme vu'}
+            label={watched ? t('title.watched') : t('title.markWatched')}
             onPress={() => {
               if (!watched) hapticLight();
               checkEpisode(series, allEpisodes, episode);
             }}
           />
         ) : (
-          <Text style={styles.notAired}>Pas encore diffusé.</Text>
+          <Text style={styles.notAired}>{t('title.episode.notAired')}</Text>
         )}
       </View>
     </View>

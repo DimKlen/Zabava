@@ -11,6 +11,7 @@ import { TextField } from '@/components/TextField';
 import { defaultFilters, type AdvancedFilters } from '@/domain/advancedSearch';
 import { DEFAULT_RESULT_ORDER, type ResultOrder } from '@/domain/resultSort';
 import { SEARCH_DEBOUNCE_MS, tabForInput, type SearchTab } from '@/domain/search';
+import { useT } from '@/i18n';
 import { useRecentSearches } from '@/store/recentSearches';
 import { colors } from '@/theme/tokens';
 
@@ -29,6 +30,7 @@ import { openPerson } from '../person/openPerson';
  * directement sur les membres (« Trouver des membres »).
  */
 export function SearchScreen() {
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ tab?: string }>();
   const startOnMembers = params.tab === 'members';
@@ -136,12 +138,12 @@ export function SearchScreen() {
             searchNow(text);
             remember();
           }}
-          placeholder="Titre, acteur, actrice…"
+          placeholder={t('search.placeholder')}
           autoFocus
           autoCorrect={false}
           returnKeyType="search"
           clearButtonMode="while-editing"
-          accessibilityLabel="Rechercher"
+          accessibilityLabel={t('search.label')}
           style={styles.field}
         />
         <Button
@@ -151,13 +153,13 @@ export function SearchScreen() {
           icon={SlidersHorizontalIcon}
           iconSize={18}
           color={colors.text}
-          accessibilityLabel="Filtres"
+          accessibilityLabel={t('search.filters')}
           onPress={openSheet}
         />
         <Button
           variant="ghost"
           height={42}
-          label="Annuler"
+          label={t('search.cancel')}
           onPress={() => router.back()}
           style={styles.cancel}
         />

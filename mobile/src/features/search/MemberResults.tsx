@@ -9,6 +9,7 @@ import { MemberRow } from '@/components/MemberRow';
 import { SkeletonMemberRow } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
 import type { Member } from '@/domain/social/members';
+import { useT } from '@/i18n';
 import { openInviteSheet } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
@@ -33,6 +34,7 @@ export function MemberResults({ query, typing }: Props) {
 }
 
 function Results({ query, typing }: Props) {
+  const { t } = useT();
   const search = useMemberSearch(query);
   const me = useProfile().data?.username;
   const members = flatItems(search.data?.pages);
@@ -43,12 +45,12 @@ function Results({ query, typing }: Props) {
     return (
       <View style={styles.none}>
         <UsersThreeIcon size={36} color={colors.neutral600} />
-        <Text style={styles.noneText}>Aucun membre trouvé</Text>
+        <Text style={styles.noneText}>{t('search.members.none')}</Text>
         <Button
           variant="primary"
           height={44}
           icon={UserPlusIcon}
-          label="Inviter quelqu'un"
+          label={t('search.members.invite')}
           onPress={openInviteSheet}
           style={styles.noneButton}
         />
@@ -68,20 +70,21 @@ function Results({ query, typing }: Props) {
 
 /** Moins de 2 caractères : les 5 derniers profils visités, ou une aide. */
 function RecentProfiles() {
+  const { t } = useT();
   const recent = useRecentProfiles();
   const me = useProfile().data?.username;
   const members = recent.data ?? [];
 
   if (!recent.data && !showsLoadError(recent)) return <Skeletons />;
   if (members.length === 0) {
-    return <Text style={styles.hint}>Tape au moins 2 caractères du pseudo ou du nom.</Text>;
+    return <Text style={styles.hint}>{t('search.members.hint')}</Text>;
   }
   return (
     <MemberList
       members={members}
       me={me}
       header={
-        <Text style={[typography.overline, styles.recentTitle]}>Profils consultés récemment</Text>
+        <Text style={[typography.overline, styles.recentTitle]}>{t('search.members.recent')}</Text>
       }
     />
   );

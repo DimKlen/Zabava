@@ -97,7 +97,7 @@ public class InviteController {
     private static String page(String title, String body) {
         return """
                 <!doctype html>
-                <html lang="fr-CA">
+                <html lang="fr">
                 <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">

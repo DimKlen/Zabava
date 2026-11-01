@@ -15,6 +15,7 @@ import {
   type ListTitle,
 } from '@/api/libraryActions';
 import type { UserTitle } from '@/domain/types';
+import { t } from '@/i18n';
 import { openActionSheet, type ActionSheetOption } from '@/store/ui';
 
 /** ActionSheet série (« … » ou bouton Suivie / Abandonnée) — specs/docs/07 §7.1. */
@@ -28,21 +29,25 @@ export function openSeriesMenu(
     const abandoned = userTitle.status === 'abandoned';
     options.push(
       {
-        label: abandoned ? 'Reprendre le suivi' : 'Abandonner',
+        label: abandoned ? t('title.menu.resume') : t('title.menu.abandon'),
         icon: abandoned ? PlayCircleIcon : PauseCircleIcon,
         onPress: () => setSeriesAbandoned(series, !abandoned),
       },
       {
-        label: 'Ne plus suivre',
+        label: t('title.menu.unfollow'),
         icon: TrashIcon,
-        onPress: () => removeFromList(series, 'Série retirée'),
+        onPress: () => removeFromList(series, t('title.menu.removed')),
       },
     );
   } else {
-    options.push({ label: 'Suivre', icon: PlusIcon, onPress: () => toggleInList(series) });
+    options.push({
+      label: t('title.menu.follow'),
+      icon: PlusIcon,
+      onPress: () => toggleInList(series),
+    });
   }
   options.push({
-    label: alertsOn ? 'Couper les alertes' : 'Activer les alertes',
+    label: alertsOn ? t('title.alerts.off') : t('title.alerts.on'),
     icon: alertsOn ? BellSlashIcon : BellRingingIcon,
     onPress: () => setTitleAlerts(series, !alertsOn),
   });

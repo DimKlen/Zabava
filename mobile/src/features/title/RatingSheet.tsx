@@ -7,6 +7,7 @@ import { Button } from '@/components/Button';
 import { StarRating } from '@/components/StarRating';
 import { Text } from '@/components/Text';
 import { TextField } from '@/components/TextField';
+import { useT } from '@/i18n';
 import { useKeyboardHeight } from '@/lib/useKeyboardHeight';
 import { closeRatingSheet, useUiStore, type RatingSheetState } from '@/store/ui';
 import { colors, durations } from '@/theme/tokens';
@@ -24,6 +25,7 @@ export function RatingSheetHost() {
 }
 
 function RatingSheet({ sheet, open }: { sheet: RatingSheetState; open: boolean }) {
+  const { t } = useT();
   const [rating, setRating] = useState(sheet.rating);
   const [comment, setComment] = useState(sheet.comment ?? '');
   const [done, setDone] = useState(false);
@@ -50,14 +52,14 @@ function RatingSheet({ sheet, open }: { sheet: RatingSheetState; open: boolean }
         <SheetHandle />
         <View style={styles.content}>
           <Text accessibilityRole="header" style={styles.title}>
-            Ta note
+            {t('title.rating.title')}
           </Text>
           <Text numberOfLines={1} style={styles.subtitle}>
             {sheet.title.title}
           </Text>
           <View style={styles.stars}>
             <StarRating value={rating} onChange={setRating} size={26} />
-            <Text style={styles.value}>{rating ? `${rating}/10` : 'Pas de note'}</Text>
+            <Text style={styles.value}>{rating ? `${rating}/10` : t('title.rating.none')}</Text>
           </View>
           <TextField
             height={96}
@@ -66,22 +68,22 @@ function RatingSheet({ sheet, open }: { sheet: RatingSheetState; open: boolean }
             maxLength={COMMENT_MAX}
             value={comment}
             onChangeText={setComment}
-            placeholder="Un commentaire ? (facultatif)"
-            accessibilityLabel="Commentaire"
+            placeholder={t('title.rating.placeholder')}
+            accessibilityLabel={t('title.rating.comment')}
           />
-          <Text style={styles.hint}>Visible seulement par toi.</Text>
+          <Text style={styles.hint}>{t('title.rating.hint')}</Text>
           <View style={styles.buttons}>
             <Button
               variant="secondary"
               height={44}
-              label={watch ? 'Passer' : 'Annuler'}
+              label={watch ? t('title.rating.skip') : t('title.rating.cancel')}
               onPress={() => finish()}
               style={styles.button}
             />
             <Button
               variant="primary"
               height={44}
-              label="Enregistrer"
+              label={t('title.rating.save')}
               onPress={() => finish({ rating, comment })}
               style={styles.button}
             />

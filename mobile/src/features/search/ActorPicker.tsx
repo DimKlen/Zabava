@@ -7,6 +7,7 @@ import { Text } from '@/components/Text';
 import { TextField } from '@/components/TextField';
 import { ACTOR_QUERY_MIN, MAX_ACTOR_SUGGESTIONS, type Actor } from '@/domain/advancedSearch';
 import { SEARCH_DEBOUNCE_MS } from '@/domain/search';
+import { useT } from '@/i18n';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { colors, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
@@ -19,6 +20,7 @@ type Props = {
 
 /** Acteurs choisis (tap = retirer) et champ d'autocomplétion (2 caractères, 300 ms). */
 export function ActorPicker({ actors, onAdd, onRemove }: Props) {
+  const { t } = useT();
   const [text, setText] = useState('');
   const query = useDebouncedValue(text.trim(), SEARCH_DEBOUNCE_MS);
   const active = query.length >= ACTOR_QUERY_MIN && text.trim().length >= ACTOR_QUERY_MIN;
@@ -38,7 +40,7 @@ export function ActorPicker({ actors, onAdd, onRemove }: Props) {
             <Pressable
               key={actor.id}
               accessibilityRole="button"
-              accessibilityLabel={`Retirer ${actor.name}`}
+              accessibilityLabel={t('search.actors.remove', { name: actor.name })}
               onPress={() => onRemove(actor.id)}
               hitSlop={8}
               style={styles.tag}
@@ -53,7 +55,7 @@ export function ActorPicker({ actors, onAdd, onRemove }: Props) {
         height={42}
         value={text}
         onChangeText={setText}
-        placeholder="Ajouter un acteur ou une actrice"
+        placeholder={t('search.actors.placeholder')}
         autoCorrect={false}
         autoCapitalize="words"
         returnKeyType="done"

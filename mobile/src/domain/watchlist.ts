@@ -1,4 +1,6 @@
 /** Ma liste › Films : segments, filtres et tris — specs/docs/06 (`vals()` › watchlist). */
+import { currentLanguage, t, type MessageKey } from '@/i18n';
+
 import { isOnMyPlatforms, movieState, type MovieAvailability } from './availability';
 import { parseLocalDate } from './dates';
 import type { UserTitle } from './types';
@@ -20,17 +22,57 @@ export type FilmFilter = 'all' | 'mine' | 'cinema' | 'upcoming';
 export type FilmSort = 'added' | 'release' | 'title' | 'imdb';
 
 export const FILM_SORTS: readonly { value: FilmSort; label: string }[] = [
-  { value: 'added', label: "Date d'ajout" },
-  { value: 'release', label: 'Date de sortie' },
-  { value: 'title', label: 'Titre' },
-  { value: 'imdb', label: 'Note IMDb' },
+  {
+    value: 'added',
+    get label() {
+      return t('common.sort.addedDate');
+    },
+  },
+  {
+    value: 'release',
+    get label() {
+      return t('common.sort.releaseDate');
+    },
+  },
+  {
+    value: 'title',
+    get label() {
+      return t('common.sort.title');
+    },
+  },
+  {
+    value: 'imdb',
+    get label() {
+      return t('common.sort.imdb');
+    },
+  },
 ];
 
 export const FILM_FILTERS: readonly { value: FilmFilter; label: string }[] = [
-  { value: 'all', label: 'Tout' },
-  { value: 'mine', label: 'Sur mes plateformes' },
-  { value: 'cinema', label: 'Au cinéma' },
-  { value: 'upcoming', label: 'Pas encore sorti' },
+  {
+    value: 'all',
+    get label() {
+      return t('common.filter.all');
+    },
+  },
+  {
+    value: 'mine',
+    get label() {
+      return t('common.filter.mine');
+    },
+  },
+  {
+    value: 'cinema',
+    get label() {
+      return t('common.filter.cinema');
+    },
+  },
+  {
+    value: 'upcoming',
+    get label() {
+      return t('common.filter.notReleased');
+    },
+  },
 ];
 
 export function filmsInSegment<T extends LibraryMovie>(films: readonly T[], segment: FilmSegment) {
@@ -79,15 +121,15 @@ function compareRelease(a: number, b: number): number {
 }
 
 /** Libellés du sens de chaque tri : [sens par défaut, sens inversé]. */
-const SORT_DIRECTION_LABELS: Record<FilmSort, readonly [string, string]> = {
-  added: ['Plus récents', 'Plus anciens'],
-  release: ['Plus proches', 'Plus lointains'],
-  title: ['A → Z', 'Z → A'],
-  imdb: ['Mieux notés', 'Moins bien notés'],
+const SORT_DIRECTION_LABELS: Record<FilmSort, readonly [MessageKey, MessageKey]> = {
+  added: ['common.sort.newest', 'common.sort.oldest'],
+  release: ['common.sort.closest', 'common.sort.farthest'],
+  title: ['common.sort.az', 'common.sort.za'],
+  imdb: ['common.sort.topRated', 'common.sort.lowestRated'],
 };
 
 export function sortDirectionLabel(sort: FilmSort, reversed: boolean): string {
-  return SORT_DIRECTION_LABELS[sort][reversed ? 1 : 0];
+  return t(SORT_DIRECTION_LABELS[sort][reversed ? 1 : 0]);
 }
 
 /**
@@ -113,7 +155,7 @@ export function sortFilms<T extends LibraryMovie>(
         return (undated ? 1 : sign) * compareRelease(keyA, keyB);
       });
     case 'title':
-      return sorted.sort((a, b) => sign * a.title.localeCompare(b.title, 'fr'));
+      return sorted.sort((a, b) => sign * a.title.localeCompare(b.title, currentLanguage()));
     case 'imdb':
       return sorted.sort((a, b) => sign * ((b.imdbRating ?? 0) - (a.imdbRating ?? 0)));
   }

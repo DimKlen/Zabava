@@ -57,7 +57,7 @@ public class ProviderService {
         for (String region : REGIONS) {
             for (String type : List.of("movie", "tv")) {
                 JsonNode body = tmdb.get("/watch/providers/" + type,
-                        TmdbClient.params("watch_region", region, "language", "fr-CA"));
+                        TmdbClient.params("watch_region", region, "language", "fr"));
                 for (JsonNode p : Json.array(body, "results")) {
                     int id = p.path("provider_id").asInt();
                     String name = Json.text(p, "provider_name");

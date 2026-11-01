@@ -2,6 +2,8 @@
  * Suivi des séries et animés — specs/docs/01 §3–4 (`A.sInfo`, `A.sec`, `A.checkEp`).
  * Les épisodes spéciaux (saison 0) sont ignorés dans tous les calculs.
  */
+import { tPlural } from '@/lib/plural';
+
 import { parseLocalDate } from './dates';
 import type { UserTitle } from './types';
 
@@ -121,9 +123,7 @@ export function previousUnwatched(
 
 /** Titre du dialogue des épisodes précédents. */
 export function previousDialogTitle(count: number): string {
-  return count === 1
-    ? "Marquer aussi l'épisode précédent ?"
-    : `Marquer aussi les ${count} épisodes précédents ?`;
+  return tPlural('common.series.previousDialog', count);
 }
 
 export type SeasonProgress = {

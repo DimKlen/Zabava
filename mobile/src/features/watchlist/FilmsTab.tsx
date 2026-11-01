@@ -21,6 +21,7 @@ import {
   sortWatched,
   type LibraryMovie,
 } from '@/domain/watchlist';
+import { t, useT } from '@/i18n';
 import { openDiscover } from '@/lib/discover';
 import { useUiStore } from '@/store/ui';
 import { colors, spacing } from '@/theme/tokens';
@@ -37,6 +38,7 @@ const SKELETONS = Array.from({ length: 9 }, (_, index) => index);
 
 /** Ma liste › Films (specs/docs/06). */
 export function FilmsTab() {
+  useT();
   const listRef = useRef<FlatList<LibraryMovie>>(null);
   useScrollToTop(listRef);
   const watchlist = useMovieWatchlist();
@@ -161,25 +163,25 @@ function emptyState(
   query: string,
   actions: EmptyActions,
 ) {
-  if (query) return { title: 'Aucun titre ne correspond' };
+  if (query) return { title: t('watchlist.empty.noMatch') };
   if (watchedSegment) {
     return {
-      title: "Aucun film vu pour l'instant",
-      text: 'Les films que tu marques comme vus apparaîtront ici.',
-      action: { label: 'Voir ma liste', onPress: actions.showToWatch },
+      title: t('watchlist.films.empty.watched.title'),
+      text: t('watchlist.films.empty.watched.text'),
+      action: { label: t('watchlist.films.empty.watched.cta'), onPress: actions.showToWatch },
     };
   }
   if (segmentEmpty) {
     return {
-      title: 'Ta liste est vide',
-      text: 'Ajoute des films pour les retrouver ici.',
-      action: { label: 'Découvrir des films', onPress: actions.discover },
+      title: t('watchlist.films.empty.list.title'),
+      text: t('watchlist.films.empty.list.text'),
+      action: { label: t('watchlist.films.empty.list.cta'), onPress: actions.discover },
     };
   }
   return {
-    title: 'Aucun film pour ce filtre',
-    text: 'Essaie un autre filtre.',
-    action: { label: 'Tout afficher', onPress: actions.showAll },
+    title: t('watchlist.films.empty.filter.title'),
+    text: t('watchlist.films.empty.filter.text'),
+    action: { label: t('watchlist.films.empty.filter.cta'), onPress: actions.showAll },
   };
 }
 

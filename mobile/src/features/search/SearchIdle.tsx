@@ -5,6 +5,7 @@ import { useTrendingToday, type TitleResult } from '@/api/search';
 import { Button } from '@/components/Button';
 import { SkeletonSearchRow } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
+import { useT } from '@/i18n';
 import { useRecentSearches } from '@/store/recentSearches';
 import { colors } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
@@ -24,6 +25,7 @@ const TRENDING_SKELETONS = 5;
 
 /** Recherche sans saisie : recherches récentes, puis « Tendances du moment ». */
 export function SearchIdle({ onPickRecent, onOpenTitle, onToggleTitle, isInList }: Props) {
+  const { t } = useT();
   const recents = useRecentSearches((s) => s.recents);
   const removeRecent = useRecentSearches((s) => s.remove);
   const clearRecents = useRecentSearches((s) => s.clear);
@@ -38,12 +40,12 @@ export function SearchIdle({ onPickRecent, onOpenTitle, onToggleTitle, isInList 
       {recents.length > 0 ? (
         <>
           <View style={styles.recentsHeader}>
-            <Text style={typography.overline}>Recherches récentes</Text>
+            <Text style={typography.overline}>{t('search.recent.title')}</Text>
             <Button
               variant="ghost"
               height={32}
               fontSize={13}
-              label="Effacer"
+              label={t('search.recent.clear')}
               onPress={clearRecents}
             />
           </View>
@@ -60,7 +62,7 @@ export function SearchIdle({ onPickRecent, onOpenTitle, onToggleTitle, isInList 
               </Text>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Retirer"
+                accessibilityLabel={t('search.recent.remove')}
                 onPress={() => removeRecent(recent)}
                 style={styles.remove}
               >
@@ -70,7 +72,7 @@ export function SearchIdle({ onPickRecent, onOpenTitle, onToggleTitle, isInList 
           ))}
         </>
       ) : null}
-      <Text style={[typography.overline, styles.trendingTitle]}>Tendances du moment</Text>
+      <Text style={[typography.overline, styles.trendingTitle]}>{t('search.trending.title')}</Text>
       {trending.isPending
         ? Array.from({ length: TRENDING_SKELETONS }, (_, i) => (
             <View key={i} style={styles.skeleton}>

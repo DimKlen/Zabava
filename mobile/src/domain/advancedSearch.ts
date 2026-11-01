@@ -1,4 +1,7 @@
 /** Recherche avancée — specs/docs/08 §8.2 (prototype : `advDefault`, `A.advFilter`). */
+import { currentLanguage, t } from '@/i18n';
+import { tPlural } from '@/lib/plural';
+
 import type { MediaType } from './types';
 
 export type GenreKey =
@@ -14,18 +17,25 @@ export type GenreKey =
   | 'documentaire';
 
 /** Les 10 genres, dans l'ordre de la spec ; les clés sont celles de l'API (Genres.java). */
-export const GENRES: readonly { key: GenreKey; label: string }[] = [
-  { key: 'action', label: 'Action' },
-  { key: 'aventure', label: 'Aventure' },
-  { key: 'comedie', label: 'Comédie' },
-  { key: 'drame', label: 'Drame' },
-  { key: 'fantastique', label: 'Fantastique' },
-  { key: 'horreur', label: 'Horreur' },
-  { key: 'science-fiction', label: 'Science-fiction' },
-  { key: 'thriller', label: 'Thriller' },
-  { key: 'animation', label: 'Animation' },
-  { key: 'documentaire', label: 'Documentaire' },
-];
+export const GENRES: readonly { key: GenreKey; label: string }[] = (
+  [
+    'action',
+    'aventure',
+    'comedie',
+    'drame',
+    'fantastique',
+    'horreur',
+    'science-fiction',
+    'thriller',
+    'animation',
+    'documentaire',
+  ] as const
+).map((key) => ({
+  key,
+  get label() {
+    return t(`common.genre.${key}`);
+  },
+}));
 
 export function genreLabel(key: string): string | undefined {
   return GENRES.find((genre) => genre.key === key)?.label;
@@ -96,9 +106,11 @@ export function yearsLabel(filters: AdvancedFilters): string {
 
 /** Texte du bouton du pied de la sheet. */
 export function countButtonLabel(count: number): string {
-  if (count > 1) return `Voir les ${count.toLocaleString('fr-CA')} résultats`;
-  if (count === 1) return 'Voir le résultat';
-  return 'Aucun résultat';
+  if (count > 1) {
+    return t('common.results.seeMany', { count: count.toLocaleString(currentLanguage()) });
+  }
+  if (count === 1) return t('common.results.seeOne');
+  return t('common.results.none');
 }
 
 export type DiscoverQueryParams = {
@@ -124,16 +136,9 @@ export function advancedQuery(filters: AdvancedFilters): DiscoverQueryParams {
   };
 }
 
-const TYPE_NOUNS: Record<MediaType, [singular: string, plural: string]> = {
-  movie: ['film', 'films'],
-  tv: ['série', 'séries'],
-  anime: ['animé', 'animés'],
-};
-
 /** Sous-titre de la liste par genre : « 1 240 films », « 1 série ». */
 export function genreCountLabel(count: number, type: MediaType): string {
-  const [singular, plural] = TYPE_NOUNS[type];
-  return `${count.toLocaleString('fr-CA')} ${count > 1 ? plural : singular}`;
+  return tPlural(`common.genreCount.${type}`, count);
 }
 
 /** Liste par genre : tri et filtres rapides, le plus récent d'abord par défaut. */
@@ -142,9 +147,24 @@ export type GenreFilters = { sort: AdvancedSort; mine: boolean; minRating: numbe
 export const DEFAULT_GENRE_FILTERS: GenreFilters = { sort: 'recent', mine: false, minRating: 0 };
 
 export const GENRE_SORTS: readonly { key: AdvancedSort; label: string }[] = [
-  { key: 'recent', label: 'Plus récents' },
-  { key: 'rating', label: 'Mieux notés' },
-  { key: 'pop', label: 'Populaires' },
+  {
+    key: 'recent',
+    get label() {
+      return t('common.sort.newest');
+    },
+  },
+  {
+    key: 'rating',
+    get label() {
+      return t('common.sort.topRated');
+    },
+  },
+  {
+    key: 'pop',
+    get label() {
+      return t('common.sort.popular');
+    },
+  },
 ];
 
 /** Chip « Note 7+ ». */

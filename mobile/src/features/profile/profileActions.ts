@@ -7,12 +7,10 @@ import { api } from '@/api/http';
 import { profileKey, type Profile, type ProfileUpdate } from '@/api/profile';
 import { queryClient } from '@/api/queryClient';
 import { signOut } from '@/api/session';
-import { currentLanguage, useLanguageStore, type LanguagePreference } from '@/i18n';
+import { currentLanguage, t, useLanguageStore, type LanguagePreference } from '@/i18n';
 import { toggleGroup, type ProviderGroup } from '@/domain/providers';
 import { unregisterPushToken } from '@/lib/notifications';
 import { openDialog, showToast } from '@/store/ui';
-
-const SAVE_FAILED = "Impossible d'enregistrer, réessaie";
 
 /** Envois du profil dans l'ordre des taps : un changement rapide ne passe pas devant l'autre. */
 let queue: Promise<unknown> = Promise.resolve();
@@ -38,7 +36,7 @@ function optimistic(apply: (profile: Profile) => Profile, send: () => Promise<un
       queryClient.setQueryData<Profile>(profileKey, (profile) =>
         profile ? restore(profile, before, apply) : profile,
       );
-      showToast(SAVE_FAILED);
+      showToast(t('misc.saveFailed'));
       return false;
     },
   );
@@ -105,7 +103,7 @@ export async function changeCatalogSetting(
       current ? { ...current, ...update, ...(profile as Profile) } : (profile as Profile),
     );
   } catch {
-    showToast(SAVE_FAILED);
+    showToast(t('misc.saveFailed'));
     return false;
   }
   invalidateCatalog();
@@ -148,11 +146,11 @@ async function logOut(): Promise<void> {
 
 export function confirmSignOut(): void {
   openDialog({
-    title: 'Se déconnecter ?',
-    body: 'Ta liste reste sauvegardée sur ton compte.',
+    title: t('misc.signOut.title'),
+    body: t('misc.signOut.body'),
     actions: [
-      { label: 'Annuler', variant: 'secondary' },
-      { label: 'Se déconnecter', variant: 'primary', onPress: () => void logOut() },
+      { label: t('misc.cancel'), variant: 'secondary' },
+      { label: t('settings.signOut'), variant: 'primary', onPress: () => void logOut() },
     ],
   });
 }
@@ -161,7 +159,7 @@ async function deleteAccount(): Promise<void> {
   try {
     await api<void>('/me', { method: 'DELETE' });
   } catch {
-    showToast(SAVE_FAILED);
+    showToast(t('misc.saveFailed'));
     return;
   }
   // Le compte n'existe plus : seule la session locale reste à effacer.
@@ -170,11 +168,15 @@ async function deleteAccount(): Promise<void> {
 
 export function confirmDeleteAccount(): void {
   openDialog({
-    title: 'Supprimer ton compte ?',
-    body: "Ta liste, ton suivi d'épisodes et tes réglages seront effacés définitivement.",
+    title: t('misc.deleteAccount.title'),
+    body: t('misc.deleteAccount.body'),
     actions: [
-      { label: 'Annuler', variant: 'secondary' },
-      { label: 'Supprimer', variant: 'primary', onPress: () => void deleteAccount() },
+      { label: t('misc.cancel'), variant: 'secondary' },
+      {
+        label: t('misc.deleteAccount.confirm'),
+        variant: 'primary',
+        onPress: () => void deleteAccount(),
+      },
     ],
   });
 }

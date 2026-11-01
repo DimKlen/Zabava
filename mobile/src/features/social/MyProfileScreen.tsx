@@ -18,6 +18,7 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SkeletonBox } from '@/components/Skeleton';
 import { Text } from '@/components/Text';
+import { t, useT } from '@/i18n';
 import { openActionSheet, openInviteSheet } from '@/store/ui';
 import { colors, radii, spacing } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
@@ -31,6 +32,7 @@ import { openFriends } from './navigation';
  * demandes, puis les réglages. Photo et nom sont ceux du compte, le pseudo est définitif.
  */
 export function MyProfileScreen() {
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const query = useProfile();
   const profile = query.data;
@@ -62,7 +64,7 @@ export function MyProfileScreen() {
         }
       >
         <ScreenHeader
-          title="Profil"
+          title={t('social.profile.title')}
           actions={
             <Button
               variant="icon"
@@ -70,7 +72,7 @@ export function MyProfileScreen() {
               icon={UserPlusIcon}
               iconSize={22}
               color={colors.text}
-              accessibilityLabel="Suivre quelqu'un"
+              accessibilityLabel={t('social.followSomeone')}
               onPress={openAddFriend}
             />
           }
@@ -93,20 +95,21 @@ export function MyProfileScreen() {
 /** « + » : chercher un membre à ajouter, ou l'inviter s'il n'est pas encore sur Zabava. */
 function openAddFriend() {
   openActionSheet({
-    title: "Suivre quelqu'un",
+    title: t('social.followSomeone'),
     options: [
       {
-        label: 'Chercher un membre',
+        label: t('social.profile.search'),
         icon: MagnifyingGlassIcon,
         onPress: () => router.push({ pathname: '/search', params: { tab: 'members' } }),
       },
-      { label: 'Inviter', icon: ShareNetworkIcon, onPress: openInviteSheet },
+      { label: t('social.invite.title'), icon: ShareNetworkIcon, onPress: openInviteSheet },
     ],
   });
 }
 
 /** Moi, puis « Mes abonnements · n ». */
 function Me({ profile }: { profile: Profile }) {
+  const { t } = useT();
   const username = profile.username ?? '';
   const name = profile.displayName || username;
   const friends = profile.friendsCount ?? 0;
@@ -123,11 +126,11 @@ function Me({ profile }: { profile: Profile }) {
           </Text>
         </View>
       </View>
-      <SettingsGroup label="Suivi">
+      <SettingsGroup label={t('social.profile.group')}>
         <SettingsRow
-          label="Mes abonnements"
+          label={t('social.profile.myFollowing')}
           icon={UsersThreeIcon}
-          accessibilityLabel={`Mes abonnements, ${friends}`}
+          accessibilityLabel={t('social.profile.myFollowingCount', { count: friends })}
           onPress={() => openFriends(username)}
         >
           <Text style={styles.count}>{friends}</Text>

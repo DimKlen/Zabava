@@ -16,6 +16,7 @@ import { Text } from '@/components/Text';
 import { TextField } from '@/components/TextField';
 import { firstName } from '@/domain/social/members';
 import { stripAccents } from '@/domain/social/username';
+import { useT } from '@/i18n';
 import { goBack } from '@/lib/navigation';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { colors } from '@/theme/tokens';
@@ -29,15 +30,16 @@ const FILTER_DELAY_MS = 300;
 
 /** Amis d'un profil (specs/social/docs/04 §4.5, une seule liste depuis les amis réciproques). */
 export function FriendsScreen({ username }: { username: string }) {
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState('');
   const me = useProfile().data?.username;
   const owner = useUserProfile(username).data;
   const isMine = username === me;
   const title = isMine
-    ? 'Mes abonnements'
+    ? t('social.profile.myFollowing')
     : owner
-      ? `Abonnements de ${firstName(owner.displayName)}`
+      ? t('social.friends.titleOf', { name: firstName(owner.displayName) })
       : '';
 
   return (
@@ -50,7 +52,7 @@ export function FriendsScreen({ username }: { username: string }) {
           icon={CaretLeftIcon}
           iconSize={22}
           color={colors.text}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('social.back')}
           onPress={goBack}
         />
         <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
@@ -63,11 +65,11 @@ export function FriendsScreen({ username }: { username: string }) {
           icon={MagnifyingGlassIcon}
           value={filter}
           onChangeText={setFilter}
-          placeholder="Filtrer"
+          placeholder={t('social.friends.filter')}
           autoCorrect={false}
           autoCapitalize="none"
           returnKeyType="search"
-          accessibilityLabel="Filtrer"
+          accessibilityLabel={t('social.friends.filter')}
         />
       </View>
       <FriendsList username={username} filter={filter} me={me} isMine={isMine} />
@@ -130,14 +132,15 @@ function FriendsList({
 }
 
 function Empty({ isMine, filtered }: { isMine: boolean; filtered: boolean }) {
-  if (filtered) return <EmptyState icon={UsersThreeIcon} title="Aucun membre ne correspond" />;
-  if (!isMine) return <EmptyState icon={UsersThreeIcon} title="Rien ici pour l'instant" />;
+  const { t } = useT();
+  if (filtered) return <EmptyState icon={UsersThreeIcon} title={t('social.friends.noMatch')} />;
+  if (!isMine) return <EmptyState icon={UsersThreeIcon} title={t('social.empty')} />;
   return (
     <EmptyState
       icon={UsersThreeIcon}
-      title="Tu ne suis personne pour l'instant"
+      title={t('social.friends.none')}
       action={{
-        label: "Suivre quelqu'un",
+        label: t('social.followSomeone'),
         onPress: () => router.push({ pathname: '/search', params: { tab: 'members' } }),
       }}
     />

@@ -9,6 +9,7 @@ import { Avatar } from '@/components/Avatar';
 import { Text } from '@/components/Text';
 import { UsernameField } from '@/components/UsernameField';
 import { canSubmitUsername, proposeUsername } from '@/domain/social/username';
+import { useT } from '@/i18n';
 import { showToast } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
@@ -17,7 +18,6 @@ import { useUsernameCheck } from '../social/useUsernameCheck';
 import { OnboardingFooter } from './OnboardingFooter';
 import { StepIntro } from './StepIntro';
 
-const SAVE_FAILED = "Impossible d'enregistrer, réessaie";
 /** Le défilement attend que le clavier ait réduit l'écran. */
 const KEYBOARD_DELAY_MS = 300;
 
@@ -42,6 +42,7 @@ export function UsernameScreen({ variant }: Props) {
 }
 
 function UsernameForm({ profile, variant }: { profile: Profile } & Props) {
+  const { t } = useT();
   const name = profile.displayName || profile.email || '';
   const [value, setValue] = useState(() => profile.username ?? proposeUsername(name));
   const [touched, setTouched] = useState(false);
@@ -83,7 +84,7 @@ function UsernameForm({ profile, variant }: { profile: Profile } & Props) {
           if (error instanceof ApiError && (error.status === 409 || error.status === 422)) {
             check.recheck();
           } else {
-            showToast(SAVE_FAILED);
+            showToast(t('misc.saveFailed'));
           }
         },
       },
@@ -104,8 +105,8 @@ function UsernameForm({ profile, variant }: { profile: Profile } & Props) {
           </Text>
         </View>
         <StepIntro
-          title="Choisis ton pseudo"
-          text="C'est ton identifiant sur Zabava. Les autres membres te trouveront avec. Tu ne pourras plus le changer."
+          title={t('onboarding.username.title')}
+          text={t('onboarding.username.text')}
           textMarginBottom={20}
         />
         <View onLayout={(event) => (fieldY.current = event.nativeEvent.layout.y)}>
@@ -119,7 +120,7 @@ function UsernameForm({ profile, variant }: { profile: Profile } & Props) {
         </View>
       </ScrollView>
       <OnboardingFooter
-        label="Continuer"
+        label={t('onboarding.continue')}
         onPress={submit}
         disabled={!canSubmitUsername(check.status) || updateProfile.isPending}
       />

@@ -2,18 +2,20 @@ import { LockSimpleIcon } from 'phosphor-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Text';
+import { useT } from '@/i18n';
 import { colors, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
 /** À la place des listes d'un membre qui que je ne suis pas encore (docs/03 › LockedState). */
 export function ProfileNotice({ username }: { username: string }) {
+  const { t } = useT();
   return (
     <View style={styles.card}>
       <View style={styles.circle}>
         <LockSimpleIcon size={26} color={colors.text} />
       </View>
-      <Text style={styles.title}>Listes masquées</Text>
-      <Text style={styles.text}>{`Suis @${username} pour voir ses listes`}</Text>
+      <Text style={styles.title}>{t('social.locked.title')}</Text>
+      <Text style={styles.text}>{t('social.locked.text', { username })}</Text>
     </View>
   );
 }

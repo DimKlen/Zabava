@@ -7,23 +7,24 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { TextField } from '@/components/TextField';
 import { UnderlineTabs } from '@/components/UnderlineTabs';
+import { useT } from '@/i18n';
 import { useUiStore } from '@/store/ui';
 import { colors } from '@/theme/tokens';
 
 import { FilmsTab } from './FilmsTab';
 import { SeriesTab } from './SeriesTab';
 
-const TABS = [
-  { key: 'movie', label: 'Films' },
-  { key: 'tv', label: 'Séries' },
-  { key: 'anime', label: 'Animés' },
-] as const;
-
 /**
  * Ma liste (specs/docs/06) : Films, Séries, Animés. La loupe filtre la liste par nom (pas de
  * recherche dans tout le catalogue : c'est le rôle de Découvrir).
  */
 export function WatchlistScreen() {
+  const { t } = useT();
+  const tabs = [
+    { key: 'movie', label: t('watchlist.tabs.movie') },
+    { key: 'tv', label: t('watchlist.tabs.tv') },
+    { key: 'anime', label: t('watchlist.tabs.anime') },
+  ] as const;
   const insets = useSafeAreaInsets();
   const tab = useUiStore((s) => s.watchlistTab);
   const setTab = useUiStore((s) => s.setWatchlistTab);
@@ -34,7 +35,7 @@ export function WatchlistScreen() {
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <OfflineBanner />
       {query === null ? (
-        <ScreenHeader title="Ma liste" onSearch={() => setQuery('')} />
+        <ScreenHeader title={t('watchlist.title')} onSearch={() => setQuery('')} />
       ) : (
         <View style={styles.search}>
           <TextField
@@ -42,17 +43,22 @@ export function WatchlistScreen() {
             icon={MagnifyingGlassIcon}
             value={query}
             onChangeText={setQuery}
-            placeholder="Filtrer ma liste"
-            accessibilityLabel="Filtrer ma liste"
+            placeholder={t('watchlist.filter.placeholder')}
+            accessibilityLabel={t('watchlist.filter.placeholder')}
             autoFocus
             autoCorrect={false}
             returnKeyType="search"
             style={styles.searchField}
           />
-          <Button variant="ghost" height={40} label="Annuler" onPress={() => setQuery(null)} />
+          <Button
+            variant="ghost"
+            height={40}
+            label={t('watchlist.filter.cancel')}
+            onPress={() => setQuery(null)}
+          />
         </View>
       )}
-      <UnderlineTabs tabs={TABS} value={tab} onChange={setTab} />
+      <UnderlineTabs tabs={tabs} value={tab} onChange={setTab} />
       <View style={styles.content}>
         {tab === 'movie' ? <FilmsTab /> : <SeriesTab key={tab} type={tab} />}
       </View>

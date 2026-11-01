@@ -7,6 +7,7 @@ import { WebView, type WebViewMessageEvent, type WebViewNavigation } from 'react
 
 import { GradientFill } from '@/components/GradientFill';
 import { Text } from '@/components/Text';
+import { useT } from '@/i18n';
 import { tmdbImage } from '@/lib/tmdb';
 import { useAfterFirstFrame } from '@/lib/useAfterFirstFrame';
 import { colors, radii } from '@/theme/tokens';
@@ -70,6 +71,7 @@ function stayInPlayer(request: WebViewNavigation): boolean {
  * fiche arrête la lecture et libère le lecteur.
  */
 export function TrailerButton({ titleId, trailerKey, backdropPath }: Props) {
+  const { t } = useT();
   const backdrop = tmdbImage(backdropPath, 'w780');
   const [phase, setPhase] = useState<Phase>('idle');
   const [focused, setFocused] = useState(true);
@@ -132,7 +134,7 @@ export function TrailerButton({ titleId, trailerKey, backdropPath }: Props) {
           // Même vignette avant et pendant le chargement : rien ne clignote au tap.
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Lire la bande-annonce"
+            accessibilityLabel={t('title.trailer.play')}
             accessibilityState={{ busy: phase === 'loading' }}
             disabled={phase === 'loading'}
             onPress={() => setPhase('loading')}
@@ -152,7 +154,7 @@ export function TrailerButton({ titleId, trailerKey, backdropPath }: Props) {
                 <View style={styles.play}>
                   <PlayIcon size={22} weight="fill" color={colors.accent} />
                 </View>
-                <Text style={styles.label}>Bande-annonce · YouTube</Text>
+                <Text style={styles.label}>{t('title.trailer.label')}</Text>
               </>
             ) : (
               <>
@@ -160,7 +162,7 @@ export function TrailerButton({ titleId, trailerKey, backdropPath }: Props) {
                 <ActivityIndicator
                   size="large"
                   color={colors.text}
-                  accessibilityLabel="Chargement de la bande-annonce"
+                  accessibilityLabel={t('title.trailer.loading')}
                 />
               </>
             )}

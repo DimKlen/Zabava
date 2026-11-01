@@ -4,6 +4,7 @@ import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useT } from '@/i18n';
 import { easeTiming } from '@/lib/animation';
 import { useUiStore } from '@/store/ui';
 import { colors, durations, motion, radii, shadows } from '@/theme/tokens';
@@ -51,6 +52,7 @@ function ToastView({
   message: string;
   onUndo?: () => void;
 }) {
+  const { t } = useT();
   const progress = useSharedValue(0);
 
   // Animation `up` : translateY 12 → 0 et opacité 0 → 1 en 250 ms.
@@ -75,7 +77,7 @@ function ToastView({
         <Button
           variant="ghost"
           height={40}
-          label="Annuler"
+          label={t('common.undo')}
           color={colors.accent300}
           onPress={onUndo}
           style={styles.undo}
