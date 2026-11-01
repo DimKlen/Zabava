@@ -8,6 +8,12 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
+// Téléphone en français : les tests lisent l'interface de référence.
+jest.mock('expo-localization', () => ({
+  ...jest.requireActual<typeof import('expo-localization')>('expo-localization'),
+  getLocales: () => [{ languageCode: 'fr', languageTag: 'fr-CA' }],
+}));
+
 jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(() => Promise.resolve()),
   notificationAsync: jest.fn(() => Promise.resolve()),

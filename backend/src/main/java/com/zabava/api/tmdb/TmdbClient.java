@@ -84,11 +84,22 @@ public class TmdbClient {
     }
 
     /**
-     * Langue envoyée à TMDB : toujours le français de France pour le français. TMDB n'a
-     * presque pas de traductions fr-CA et renvoie alors le titre original (« 葬送のフリーレン »
-     * au lieu de « Frieren »). La région (plateformes, dates de sortie) ne change pas.
+     * Langue envoyée à TMDB. Le français part toujours en fr-FR : TMDB n'a presque pas de
+     * traductions fr-CA et renvoie alors le titre original (« 葬送のフリーレン » au lieu de
+     * « Frieren »). Les codes simples de l'app (fr, en, es, pt, de, it, ja) deviennent une langue
+     * avec région, comme l'exige TMDB. La région (plateformes, dates de sortie) ne change pas.
      */
     public static String tmdbLanguage(String language) {
-        return language != null && language.startsWith("fr") ? "fr-FR" : language;
+        if (language == null) return null;
+        return switch (language.split("-")[0]) {
+            case "fr" -> "fr-FR";
+            case "en" -> "en-US";
+            case "es" -> "es-ES";
+            case "pt" -> "pt-PT";
+            case "de" -> "de-DE";
+            case "it" -> "it-IT";
+            case "ja" -> "ja-JP";
+            default -> language;
+        };
     }
 }

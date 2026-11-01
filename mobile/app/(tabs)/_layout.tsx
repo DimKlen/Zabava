@@ -10,6 +10,7 @@ import {
   refreshPushToken,
   showNotificationsInForeground,
 } from '@/lib/notifications';
+import { useSyncCatalogLanguage } from '@/features/profile/useSyncCatalogLanguage';
 import { isProfilePath } from '@/domain/social/links';
 import { takePendingDeepLink } from '@/lib/pendingDeepLink';
 import { useUiStore } from '@/store/ui';
@@ -19,6 +20,8 @@ import { colors } from '@/theme/tokens';
 const DISCOVER_PREFETCH_DELAY_MS = 1500;
 
 export default function TabsLayout() {
+  useSyncCatalogLanguage();
+
   // Connecté : jeton et fuseau tenus à jour (permission demandée si elle ne l'a jamais été),
   // notifications affichées l'app ouverte, taps sur les notifications (à chaud et à froid).
   useEffect(() => {

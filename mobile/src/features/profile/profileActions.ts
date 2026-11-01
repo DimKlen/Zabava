@@ -7,6 +7,7 @@ import { api } from '@/api/http';
 import { profileKey, type Profile, type ProfileUpdate } from '@/api/profile';
 import { queryClient } from '@/api/queryClient';
 import { signOut } from '@/api/session';
+import { currentLanguage, useLanguageStore, type LanguagePreference } from '@/i18n';
 import { toggleGroup, type ProviderGroup } from '@/domain/providers';
 import { unregisterPushToken } from '@/lib/notifications';
 import { openDialog, showToast } from '@/store/ui';
@@ -109,6 +110,19 @@ export async function changeCatalogSetting(
   }
   invalidateCatalog();
   return true;
+}
+
+/**
+ * Choix de la langue de l'app (« auto » : celle du téléphone). Le catalogue suit : la langue
+ * effective est enregistrée dans le profil, d'où TMDB renvoie titres et descriptions. Si
+ * l'enregistrement échoue, le choix d'avant revient.
+ */
+export async function chooseLanguage(preference: LanguagePreference): Promise<boolean> {
+  const { preference: before, setPreference } = useLanguageStore.getState();
+  setPreference(preference);
+  const ok = await changeCatalogSetting({ language: currentLanguage() });
+  if (!ok) setPreference(before);
+  return ok;
 }
 
 /** Coche ou décoche une plateforme (toutes ses formules) ; enregistré à chaque tap. */

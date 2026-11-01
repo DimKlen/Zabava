@@ -1,0 +1,32 @@
+/** Textes de référence (fr) : les autres langues suivent les mêmes clés. */
+export const fr = {
+  'tabs.list': 'Ma liste',
+  'tabs.discover': 'Découvrir',
+  'tabs.upcoming': 'À venir',
+  'tabs.profile': 'Profil',
+  'language.label': 'Langue',
+  'language.auto': 'Langue du téléphone',
+  'settings.preferences': 'Préférences',
+  'settings.region': 'Région',
+  'settings.platforms': 'Mes plateformes',
+  'settings.notifications': 'Notifications',
+  'notif.episodes': 'Nouveaux épisodes',
+  'notif.cinema': 'Sorties en salle',
+  'notif.streaming': 'Disponibilité en streaming',
+  'notif.seasons': 'Nouvelles saisons',
+  'settings.digest': 'Récapitulatif quotidien',
+  'settings.spoilerGroup': 'Anti-spoiler',
+  'settings.spoiler': 'Protection anti-spoiler',
+  'settings.about': 'À propos',
+  'settings.aboutText':
+    "Ce produit utilise l'API TMDB sans être approuvé ni certifié par TMDB. Plateformes de diffusion fournies par JustWatch. Notes via OMDb.",
+  'settings.version': 'Version {version}',
+  'settings.signOut': 'Se déconnecter',
+  'settings.deleteAccount': 'Supprimer mon compte',
+  'onboarding.language.title': 'Dans quelle langue ?',
+  'onboarding.language.text': "Choisis la langue de l'app, des titres et des descriptions.",
+  'onboarding.continue': 'Continuer',
+} as const;
+
+export type MessageKey = keyof typeof fr;
+export type Messages = Record<MessageKey, string>;

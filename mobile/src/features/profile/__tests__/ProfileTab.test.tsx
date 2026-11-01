@@ -93,7 +93,7 @@ async function renderProfile() {
       </QueryClientProvider>
     </SafeAreaProvider>,
   );
-  await screen.findByText('Français');
+  await screen.findByText('Langue du téléphone');
 }
 
 function pressDialogAction(label: string) {
@@ -121,7 +121,7 @@ describe('onglet Profil', () => {
     expect(screen.queryByLabelText(/Demandes d'amis/)).toBeNull();
     expect(screen.queryByText('Modifier le profil')).toBeNull();
     expect(screen.queryByText('dim@exemple.ca · Apple')).toBeNull();
-    expect(screen.getByText('Français')).toBeTruthy();
+    expect(screen.getByText('Langue du téléphone')).toBeTruthy();
     expect(await screen.findByText('Netflix, Crave')).toBeTruthy();
     expect(screen.getByText('9 h')).toBeTruthy();
     expect(screen.getByText('Version 1.0.0')).toBeTruthy();

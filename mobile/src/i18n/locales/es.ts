@@ -1,0 +1,30 @@
+import type { Messages } from './fr';
+
+export const es: Messages = {
+  'tabs.list': 'Mi lista',
+  'tabs.discover': 'Descubrir',
+  'tabs.upcoming': 'Próximamente',
+  'tabs.profile': 'Perfil',
+  'language.label': 'Idioma',
+  'language.auto': 'Idioma del teléfono',
+  'settings.preferences': 'Preferencias',
+  'settings.region': 'Región',
+  'settings.platforms': 'Mis plataformas',
+  'settings.notifications': 'Notificaciones',
+  'notif.episodes': 'Nuevos episodios',
+  'notif.cinema': 'Estrenos en cines',
+  'notif.streaming': 'Disponibilidad en streaming',
+  'notif.seasons': 'Nuevas temporadas',
+  'settings.digest': 'Resumen diario',
+  'settings.spoilerGroup': 'Antispoiler',
+  'settings.spoiler': 'Protección antispoiler',
+  'settings.about': 'Acerca de',
+  'settings.aboutText':
+    'Este producto usa la API de TMDB, pero TMDB no lo respalda ni lo certifica. Plataformas de streaming proporcionadas por JustWatch. Puntuaciones vía OMDb.',
+  'settings.version': 'Versión {version}',
+  'settings.signOut': 'Cerrar sesión',
+  'settings.deleteAccount': 'Eliminar mi cuenta',
+  'onboarding.language.title': '¿En qué idioma?',
+  'onboarding.language.text': 'Elige el idioma de la app, de los títulos y de las descripciones.',
+  'onboarding.continue': 'Continuar',
+};

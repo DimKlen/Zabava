@@ -51,7 +51,7 @@ public final class MeDtos {
      */
     public record ProfileUpdate(
             @Pattern(regexp = "CA|FR|BE|CH|US") String region,
-            @Pattern(regexp = "fr-CA|fr-FR|en-CA|en-US") String language,
+            @Pattern(regexp = "fr|en|es|pt|de|it|ja|fr-CA|fr-FR|en-CA|en-US") String language,
             Boolean spoilerProtection,
             @Valid NotificationPrefsUpdate notificationPrefs,
             Instant onboardedAt,

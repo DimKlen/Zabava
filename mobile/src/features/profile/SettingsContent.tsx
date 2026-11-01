@@ -18,7 +18,6 @@ import type { Profile } from '@/api/profile';
 import { Button } from '@/components/Button';
 import { Switch } from '@/components/Switch';
 import { Text } from '@/components/Text';
-import { LANGUAGES, languageChoice, languageLabel } from '@/domain/onboarding';
 import {
   DIGEST_HOURS,
   NOTIFICATION_SWITCHES,
@@ -28,6 +27,8 @@ import {
   regionLabel,
   type NotificationSwitch,
 } from '@/domain/profile';
+import { LANGUAGE_NAMES, useT, useLanguageStore } from '@/i18n';
+import { useLanguageOptions } from '@/i18n/useLanguageOptions';
 import { ensureNotificationPermission } from '@/lib/notifications';
 import { openActionSheet } from '@/store/ui';
 import { colors, spacing } from '@/theme/tokens';
@@ -36,6 +37,7 @@ import { fonts } from '@/theme/typography';
 import { PlatformsSheet } from './PlatformsSheet';
 import {
   changeCatalogSetting,
+  chooseLanguage,
   confirmDeleteAccount,
   confirmSignOut,
   updatePreference,
@@ -56,6 +58,9 @@ type Props = {
 
 /** Réglages (specs/docs/09 §9.2, specs/social/docs/04 §4.13), dans l'onglet Profil. */
 export function SettingsContent({ profile, first }: Props) {
+  const { t, language } = useT();
+  const languageOptions = useLanguageOptions();
+  const languagePreference = useLanguageStore((s) => s.preference);
   const [platformsOpen, setPlatformsOpen] = useState(false);
   // Pendant le chargement : rien plutôt qu'un « Aucune » trompeur.
   const providers = useProviders().data;
@@ -86,27 +91,29 @@ export function SettingsContent({ profile, first }: Props) {
     <>
       <View style={styles.groups}>
         {first}
-        <SettingsGroup label="Préférences">
+        <SettingsGroup label={t('settings.preferences')}>
           <SettingsRow
-            label="Langue"
+            label={t('language.label')}
             icon={TranslateIcon}
             onPress={() =>
               pick(
-                'Langue',
-                LANGUAGES,
-                languageChoice(profile.language),
-                (language) => void changeCatalogSetting({ language }),
+                t('language.label'),
+                languageOptions,
+                languagePreference,
+                (choice) => void chooseLanguage(choice),
               )
             }
           >
-            <Value text={languageLabel(profile.language)} />
+            <Value
+              text={languagePreference === 'auto' ? t('language.auto') : LANGUAGE_NAMES[language]}
+            />
           </SettingsRow>
           <SettingsRow
-            label="Région"
+            label={t('settings.region')}
             icon={GlobeHemisphereWestIcon}
             onPress={() =>
               pick(
-                'Région',
+                t('settings.region'),
                 REGIONS,
                 profile.region,
                 (region) => void changeCatalogSetting({ region }),
@@ -116,7 +123,7 @@ export function SettingsContent({ profile, first }: Props) {
             <Value text={regionLabel(profile.region)} />
           </SettingsRow>
           <SettingsRow
-            label="Mes plateformes"
+            label={t('settings.platforms')}
             icon={TelevisionSimpleIcon}
             onPress={() => setPlatformsOpen(true)}
           >
@@ -127,21 +134,21 @@ export function SettingsContent({ profile, first }: Props) {
           </SettingsRow>
         </SettingsGroup>
 
-        <SettingsGroup label="Notifications">
+        <SettingsGroup label={t('settings.notifications')}>
           {NOTIFICATION_SWITCHES.map((item) => (
-            <SettingsRow key={item.key} label={item.label}>
+            <SettingsRow key={item.key} label={t(`notif.${item.key}`)}>
               <Switch
                 value={prefs?.[item.key] ?? true}
                 onValueChange={(value) => void toggleNotification(item.key, value)}
-                accessibilityLabel={item.label}
+                accessibilityLabel={t(`notif.${item.key}`)}
               />
             </SettingsRow>
           ))}
           <SettingsRow
-            label="Récapitulatif quotidien"
+            label={t('settings.digest')}
             onPress={() =>
               pick(
-                'Récapitulatif quotidien',
+                t('settings.digest'),
                 DIGEST_HOURS,
                 String(prefs?.digestHour ?? 9),
                 (hour) =>
@@ -154,17 +161,17 @@ export function SettingsContent({ profile, first }: Props) {
         </SettingsGroup>
 
         {/* Déplacé des Préférences (specs/social/docs/04 §4.13). */}
-        <SettingsGroup label="Anti-spoiler">
-          <SettingsRow label="Protection anti-spoiler" icon={ShieldCheckIcon}>
+        <SettingsGroup label={t('settings.spoilerGroup')}>
+          <SettingsRow label={t('settings.spoiler')} icon={ShieldCheckIcon}>
             <Switch
               value={profile.spoilerProtection ?? false}
               onValueChange={(value) => void updatePreference({ spoilerProtection: value })}
-              accessibilityLabel="Protection anti-spoiler"
+              accessibilityLabel={t('settings.spoiler')}
             />
           </SettingsRow>
         </SettingsGroup>
 
-        <SettingsGroup label="À propos">
+        <SettingsGroup label={t('settings.about')}>
           <View style={styles.about}>
             <View style={styles.logos}>
               <Image
@@ -180,11 +187,10 @@ export function SettingsContent({ profile, first }: Props) {
                 accessibilityLabel="JustWatch"
               />
             </View>
-            <Text style={styles.aboutText}>
-              Ce produit utilise l&apos;API TMDB sans être approuvé ni certifié par TMDB.
-              Plateformes de diffusion fournies par JustWatch. Notes via OMDb.
+            <Text style={styles.aboutText}>{t('settings.aboutText')}</Text>
+            <Text style={styles.version}>
+              {t('settings.version', { version: Constants.expoConfig?.version ?? '' })}
             </Text>
-            <Text style={styles.version}>Version {Constants.expoConfig?.version ?? ''}</Text>
           </View>
         </SettingsGroup>
 
@@ -194,13 +200,13 @@ export function SettingsContent({ profile, first }: Props) {
             height={46}
             icon={SignOutIcon}
             iconSize={18}
-            label="Se déconnecter"
+            label={t('settings.signOut')}
             onPress={confirmSignOut}
           />
           <Button
             variant="ghost"
             height={44}
-            label="Supprimer mon compte"
+            label={t('settings.deleteAccount')}
             color={colors.neutral400}
             onPress={confirmDeleteAccount}
           />
