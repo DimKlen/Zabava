@@ -35,7 +35,7 @@ export const title = {
   'title.review.title': 'Ma note',
   'title.review.rate': 'Noter ce film',
   'title.review.a11y': 'Ma note : {value}. Modifier',
-  'title.review.outOf': '{rating} sur 10',
+  'title.review.outOf': '{rating} sur 5',
   'title.review.noneLower': 'pas de note',
   'title.series.follow': 'Suivre',
   'title.series.abandoned': 'Abandonnée',

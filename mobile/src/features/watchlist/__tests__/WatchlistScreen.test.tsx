@@ -10,6 +10,11 @@ import { WatchlistScreen } from '../WatchlistScreen';
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), navigate: jest.fn() },
   useScrollToTop: jest.fn(),
+  // Écran toujours « au premier plan » : le rappel s'exécute à l'affichage.
+  useFocusEffect: (callback: () => void) => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require('react').useEffect(callback, [callback]);
+  },
 }));
 jest.mock('@/api/profile', () => ({ useProfile: () => ({ data: { providerIds: [] } }) }));
 jest.mock('@/api/libraryActions', () => ({ toggleInList: jest.fn() }));
@@ -43,6 +48,16 @@ async function renderScreen() {
   );
   await act(() => jest.advanceTimersByTime(700));
 }
+
+describe('WatchlistScreen › arrivée sur l’onglet', () => {
+  it('repart de la liste complète : ni recherche par nom ni filtre actif', async () => {
+    await act(() => useUiStore.setState({ watchlistQuery: 'zzzz', filmFilter: 'mine' }));
+    await renderScreen();
+    expect(useUiStore.getState().watchlistQuery).toBeNull();
+    expect(useUiStore.getState().filmFilter).toBe('all');
+    expect(screen.getByText('Ma liste')).toBeTruthy();
+  });
+});
 
 describe('WatchlistScreen › filtre par nom', () => {
   it('la loupe filtre Ma liste, sans recherche ni filtres avancés', async () => {

@@ -17,7 +17,7 @@ export const common: Messages<typeof import('./fr').common> = {
   'common.poster.remove': 'Quitar {title}',
   'common.range.start': '{label}, inicio',
   'common.range.end': '{label}, fin',
-  'common.rating.outOf': '{value} sobre 10',
+  'common.rating.outOf': '{value} sobre 5',
   'common.rating.none': 'Sin nota',
   'common.rating.label': 'Nota',
   'common.username.label': 'Nombre de usuario',

@@ -36,7 +36,7 @@ export const title: Messages<typeof import('./fr').title> = {
   'title.review.title': '自分の評価',
   'title.review.rate': 'この映画を評価する',
   'title.review.a11y': '自分の評価：{value}。編集',
-  'title.review.outOf': '10点中{rating}点',
+  'title.review.outOf': '5点中{rating}点',
   'title.review.noneLower': '評価なし',
   'title.series.follow': 'フォローする',
   'title.series.abandoned': '視聴中止',

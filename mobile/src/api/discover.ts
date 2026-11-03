@@ -122,13 +122,13 @@ export function useStudioTitles(studioId: number) {
 }
 
 /** Résultats de la recherche avancée appliquée. */
-export function useAdvancedResults(filters: AdvancedFilters, enabled: boolean) {
-  return useDiscoverPages({ ...advancedQuery(filters) }, 'movie', enabled);
+export function useAdvancedResults(filters: AdvancedFilters, title: string, enabled: boolean) {
+  return useDiscoverPages({ ...advancedQuery(filters, title) }, 'movie', enabled);
 }
 
 /** Compteur en direct du pied de la sheet ; garde l'ancien nombre pendant le chargement. */
-export function useAdvancedCount(filters: AdvancedFilters, enabled: boolean) {
-  const params = advancedQuery(filters);
+export function useAdvancedCount(filters: AdvancedFilters, title: string, enabled: boolean) {
+  const params = advancedQuery(filters, title);
   return useQuery({
     queryKey: ['discoverCount', params],
     queryFn: async ({ signal }) =>

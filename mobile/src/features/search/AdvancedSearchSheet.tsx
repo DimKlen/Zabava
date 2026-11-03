@@ -46,18 +46,27 @@ const TOP_GAP = 56;
 type Props = {
   visible: boolean;
   filters: AdvancedFilters;
+  /** Titre saisi dans le champ de recherche : il s'ajoute aux filtres. */
+  title: string;
   onChange: (filters: AdvancedFilters) => void;
   onClose: () => void;
   onApply: () => void;
 };
 
 /** Recherche avancée (specs/docs/08 §8.2) : filtres et compteur en direct. */
-export function AdvancedSearchSheet({ visible, filters, onChange, onClose, onApply }: Props) {
+export function AdvancedSearchSheet({
+  visible,
+  filters,
+  title,
+  onChange,
+  onClose,
+  onApply,
+}: Props) {
   const { t } = useT();
   const { height } = useWindowDimensions();
   const currentYear = new Date().getFullYear();
   const counted = useDebouncedValue(filters, COUNT_DEBOUNCE_MS);
-  const count = useAdvancedCount(counted, visible).data;
+  const count = useAdvancedCount(counted, title, visible).data;
   const empty = count === 0;
 
   return (

@@ -49,7 +49,7 @@ export function MyReview({ movie, userTitle }: Props) {
           {rating ? (
             <>
               <StarRating value={rating} size={16} />
-              <Text style={styles.value}>{rating}/10</Text>
+              <Text style={styles.value}>{rating}/5</Text>
             </>
           ) : (
             <Text style={styles.value}>{t('title.rating.none')}</Text>

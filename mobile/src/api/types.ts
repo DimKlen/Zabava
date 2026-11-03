@@ -1690,6 +1690,7 @@ export interface operations {
         studio?: number;
         sort?: string;
         page?: number;
+        title?: string;
         list?: string;
       };
       header?: never;
@@ -1722,6 +1723,7 @@ export interface operations {
         lang?: string;
         maxRuntime?: number;
         studio?: number;
+        title?: string;
       };
       header?: never;
       path?: never;

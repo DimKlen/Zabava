@@ -43,6 +43,19 @@ class ProfileIT extends IntegrationTest {
                 .andExpect(jsonPath("$.providerIds", hasSize(0)));
     }
 
+    /** Changement de langue depuis les réglages : code court envoyé par l'app, relu ensuite. */
+    @Test
+    void changementDeLangue() throws Exception {
+        UUID user = createUser("alice@example.com");
+        mvc.perform(as(user, put("/api/v1/me/profile"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"language\": \"en\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.language").value("en"));
+        mvc.perform(as(user, get("/api/v1/me/profile")))
+                .andExpect(jsonPath("$.language").value("en"));
+    }
+
     @Test
     void miseAJourPartielleDuProfil() throws Exception {
         UUID user = createUser("alice@example.com");

@@ -20,6 +20,8 @@ import { ResultSortBar } from './ResultSortBar';
 
 type Props = {
   filters: AdvancedFilters;
+  /** Titre saisi, ajouté aux filtres (vide : aucun filtre de titre). */
+  title: string;
   order: ResultOrder;
   onOrderChange: (order: ResultOrder) => void;
   onEdit: () => void;
@@ -27,9 +29,9 @@ type Props = {
 };
 
 /** Mode « recherche avancée appliquée » : en-tête, grille d'affiches, chargement infini. */
-export function AdvancedResults({ filters, order, onOrderChange, onEdit, onExit }: Props) {
+export function AdvancedResults({ filters, title, order, onOrderChange, onEdit, onExit }: Props) {
   const { t } = useT();
-  const results = useAdvancedResults(filters, true);
+  const results = useAdvancedResults(filters, title, true);
   const isInList = useLibraryMembership();
   const myProviderIds = useMyProviderIds();
   const pages = results.data?.pages;

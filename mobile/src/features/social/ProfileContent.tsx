@@ -20,7 +20,6 @@ import { useT } from '@/i18n';
 import { colors, spacing } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
-import { useLibraryMembership } from '../catalog/useLibraryMembership';
 import { PROGRESS_HEIGHT, ProfilePoster } from './ProfilePoster';
 
 type Props = {
@@ -57,7 +56,6 @@ export function ProfileContent({
   onRefresh,
 }: Props) {
   useT();
-  const isInList = useLibraryMembership();
   const showLists = !notice;
   const segments = tab === 'movie' ? movieSegments() : seriesSegments();
 
@@ -77,7 +75,6 @@ export function ProfileContent({
     <PosterGrid
       data={showLists && !error ? (items ?? []) : []}
       keyExtractor={(item) => item.id}
-      extraData={isInList}
       rowGap={12}
       rowExtra={segment === 'in_progress' ? PROGRESS_HEIGHT : 0}
       paddingBottom={40}
@@ -103,9 +100,7 @@ export function ProfileContent({
         </View>
       }
       ListEmptyComponent={empty ? <>{empty}</> : null}
-      renderPoster={(item, width) => (
-        <ProfilePoster item={item} inList={isInList(item)} width={width} />
-      )}
+      renderPoster={(item, width) => <ProfilePoster item={item} width={width} />}
       onEndReached={onEndReached}
       onEndReachedThreshold={0.5}
       refreshControl={
