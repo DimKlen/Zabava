@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View, type AccessibilityActionEvent } from 'reac
 import { useT } from '@/i18n';
 import { colors } from '@/theme/tokens';
 
-export const MAX_RATING = 10;
+export const MAX_RATING = 5;
 const STARS = Array.from({ length: MAX_RATING }, (_, index) => index + 1);
 
 type Props = {
@@ -16,7 +16,7 @@ type Props = {
 };
 
 /**
- * Note de 1 à 10 en étoiles. Les 10 étoiles ne tiennent pas en zones de 44 pt : toute la rangée
+ * Note de 1 à 5 étoiles entières. Toute la rangée
  * (48 de haut) est une seule zone tactile, la note suit la position du doigt ; retoucher la note
  * en cours l'efface. Lecteur d'écran : réglable par « augmenter » / « diminuer ».
  */

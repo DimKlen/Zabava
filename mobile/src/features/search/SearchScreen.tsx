@@ -92,6 +92,7 @@ export function SearchScreen() {
     body = (
       <AdvancedResults
         filters={appliedFilters}
+        title={text}
         order={order}
         onOrderChange={setOrder}
         onEdit={openSheet}
@@ -168,6 +169,7 @@ export function SearchScreen() {
       <AdvancedSearchSheet
         visible={sheetOpen}
         filters={filters}
+        title={text}
         onChange={setFilters}
         onClose={() => setSheetOpen(false)}
         onApply={apply}

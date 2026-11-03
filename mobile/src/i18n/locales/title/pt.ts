@@ -36,7 +36,7 @@ export const title: Messages<typeof import('./fr').title> = {
   'title.review.title': 'Minha nota',
   'title.review.rate': 'Avaliar este filme',
   'title.review.a11y': 'Minha nota: {value}. Editar',
-  'title.review.outOf': '{rating} de 10',
+  'title.review.outOf': '{rating} de 5',
   'title.review.noneLower': 'sem nota',
   'title.series.follow': 'Acompanhar',
   'title.series.abandoned': 'Abandonada',

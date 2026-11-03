@@ -59,7 +59,7 @@ function RatingSheet({ sheet, open }: { sheet: RatingSheetState; open: boolean }
           </Text>
           <View style={styles.stars}>
             <StarRating value={rating} onChange={setRating} size={26} />
-            <Text style={styles.value}>{rating ? `${rating}/10` : t('title.rating.none')}</Text>
+            <Text style={styles.value}>{rating ? `${rating}/5` : t('title.rating.none')}</Text>
           </View>
           <TextField
             height={96}

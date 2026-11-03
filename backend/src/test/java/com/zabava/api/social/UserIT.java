@@ -158,7 +158,7 @@ class UserIT extends SocialTest {
         befriend(dim, "dim.k", lea, "lea.m");
         mvc.perform(json(lea, post("/api/v1/me/titles"), """
                         {"tmdbId": 603, "type": "movie", "status": "watched", "addedAt": "%s",
-                         "review": {"rating": 9, "comment": "Mon avis"}}
+                         "review": {"rating": 5, "comment": "Mon avis"}}
                         """.formatted(NOW)))
                 .andExpect(status().isCreated());
 

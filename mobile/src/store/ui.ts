@@ -100,6 +100,8 @@ type UiState = {
   /** Filtre par nom de Ma liste (loupe de l'en-tête) ; null = champ fermé. */
   watchlistQuery: string | null;
   setWatchlistQuery: (query: string | null) => void;
+  /** Arrivée sur Ma liste : liste complète, sans recherche par nom ni filtre actif. */
+  resetWatchlistView: () => void;
   /** Inverse le sens du tri courant (« Plus récents » ↔ « Plus anciens »). */
   toggleFilmSortDirection: () => void;
   setAlertsOff: (titleId: string, off: boolean) => void;
@@ -175,6 +177,7 @@ export const useUiStore = create<UiState>()((set, get) => ({
       filmSortReversed: s.filmSort === filmSort ? !s.filmSortReversed : false,
     })),
   setWatchlistQuery: (watchlistQuery) => set({ watchlistQuery }),
+  resetWatchlistView: () => set({ watchlistQuery: null, filmFilter: 'all' }),
   toggleFilmSortDirection: () => set((s) => ({ filmSortReversed: !s.filmSortReversed })),
   setAlertsOff: (titleId, off) => set((s) => ({ alertsOff: { ...s.alertsOff, [titleId]: off } })),
   toggleSection: (section) =>

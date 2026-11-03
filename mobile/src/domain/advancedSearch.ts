@@ -120,10 +120,12 @@ export type DiscoverQueryParams = {
   yearFrom: number;
   yearTo: number;
   providers?: 'mine';
+  /** Titre saisi, ajouté aux filtres ; absent s'il est vide ou fait d'espaces. */
+  title?: string;
 };
 
 /** Paramètres de `GET /discover` et `GET /discover/count`. */
-export function advancedQuery(filters: AdvancedFilters): DiscoverQueryParams {
+export function advancedQuery(filters: AdvancedFilters, title = ''): DiscoverQueryParams {
   const csv = (values: readonly (string | number)[]) =>
     values.length > 0 ? values.join(',') : undefined;
   return {
@@ -133,6 +135,7 @@ export function advancedQuery(filters: AdvancedFilters): DiscoverQueryParams {
     yearFrom: filters.yearFrom,
     yearTo: filters.yearTo,
     providers: filters.availability === 'mine' ? 'mine' : undefined,
+    title: title.trim() || undefined,
   };
 }
 

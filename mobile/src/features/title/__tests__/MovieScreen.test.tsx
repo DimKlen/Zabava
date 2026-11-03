@@ -176,17 +176,17 @@ describe('MovieScreen', () => {
         status: 'watched',
         addedAt: '2026-10-01T10:00:00Z',
         notificationsEnabled: true,
-        rating: 8,
+        rating: 4,
         comment: 'Grandiose',
       },
     });
     expect(screen.getByText('Ma note')).toBeTruthy();
-    expect(screen.getByText('8/10')).toBeTruthy();
+    expect(screen.getByText('4/5')).toBeTruthy();
     expect(screen.getByText('Grandiose')).toBeTruthy();
-    await fireEvent.press(screen.getByLabelText('Ma note : 8 sur 10, Grandiose. Modifier'));
+    await fireEvent.press(screen.getByLabelText('Ma note : 4 sur 5, Grandiose. Modifier'));
     expect(useUiStore.getState().ratingSheet).toMatchObject({
       mode: 'edit',
-      rating: 8,
+      rating: 4,
       comment: 'Grandiose',
     });
   });

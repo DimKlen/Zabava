@@ -47,31 +47,31 @@ beforeEach(async () => {
 });
 
 describe('StarRating', () => {
-  it('10 étoiles ; la note suit le doigt ; retoucher la note en cours l’efface', async () => {
+  it('5 étoiles ; la note suit le doigt ; retoucher la note en cours l’efface', async () => {
     const onChange = jest.fn();
     const { rerender } = await render(
       <StarRating value={undefined} onChange={onChange} size={20} />,
     );
-    await touchStars(209); // 7e étoile sur 10 (30 de large chacune)
-    expect(onChange).toHaveBeenLastCalledWith(7);
-    await rerender(<StarRating value={7} onChange={onChange} size={20} />);
-    await touchStars(200);
+    await touchStars(179); // 3e étoile sur 5 (60 de large chacune)
+    expect(onChange).toHaveBeenLastCalledWith(3);
+    await rerender(<StarRating value={3} onChange={onChange} size={20} />);
+    await touchStars(150);
     expect(onChange).toHaveBeenLastCalledWith(undefined);
     await touchStars(299);
-    expect(onChange).toHaveBeenLastCalledWith(10);
+    expect(onChange).toHaveBeenLastCalledWith(5);
     await touchStars(1);
     expect(onChange).toHaveBeenLastCalledWith(1);
   });
 
   it('lecteur d’écran : réglable, « augmenter » / « diminuer »', async () => {
     const onChange = jest.fn();
-    await render(<StarRating value={7} onChange={onChange} size={20} />);
+    await render(<StarRating value={3} onChange={onChange} size={20} />);
     const stars = screen.getByLabelText('Note');
-    expect(stars.props.accessibilityValue).toMatchObject({ now: 7, text: '7 sur 10' });
+    expect(stars.props.accessibilityValue).toMatchObject({ now: 3, text: '3 sur 5' });
     await fireEvent(stars, 'accessibilityAction', { nativeEvent: { actionName: 'increment' } });
-    expect(onChange).toHaveBeenLastCalledWith(8);
+    expect(onChange).toHaveBeenLastCalledWith(4);
     await fireEvent(stars, 'accessibilityAction', { nativeEvent: { actionName: 'decrement' } });
-    expect(onChange).toHaveBeenLastCalledWith(6);
+    expect(onChange).toHaveBeenLastCalledWith(2);
   });
 });
 
@@ -84,13 +84,13 @@ describe('RatingSheet', () => {
     expect(screen.getByText('Pas de note')).toBeTruthy();
     expect(screen.getByText('Visible seulement par toi.')).toBeTruthy();
 
-    await touchStars(239);
-    expect(screen.getByText('8/10')).toBeTruthy();
+    await touchStars(239); // 4e étoile
+    expect(screen.getByText('4/5')).toBeTruthy();
     await fireEvent.changeText(screen.getByLabelText('Commentaire'), 'Grandiose');
     await fireEvent.press(screen.getByText('Enregistrer'));
 
     expect(setMovieWatched).toHaveBeenCalledWith(odyssey, true, {
-      rating: 8,
+      rating: 4,
       comment: 'Grandiose',
     });
     expect(useUiStore.getState().ratingSheetOpen).toBe(false);
@@ -114,18 +114,18 @@ describe('RatingSheet', () => {
   });
 
   it('« Ma note » : pré-remplie ; « Annuler » ne change rien, « Enregistrer » la change', async () => {
-    await act(() => openRatingSheet({ title: odyssey, mode: 'edit', rating: 6, comment: 'Bien' }));
+    await act(() => openRatingSheet({ title: odyssey, mode: 'edit', rating: 3, comment: 'Bien' }));
     await showSheet();
-    expect(screen.getByText('6/10')).toBeTruthy();
+    expect(screen.getByText('3/5')).toBeTruthy();
     expect(screen.getByLabelText('Commentaire').props.value).toBe('Bien');
     await fireEvent.press(screen.getByText('Annuler'));
     expect(setMovieReview).not.toHaveBeenCalled();
     expect(setMovieWatched).not.toHaveBeenCalled();
 
     await act(() => closeRatingSheet());
-    await act(() => openRatingSheet({ title: odyssey, mode: 'edit', rating: 6, comment: 'Bien' }));
+    await act(() => openRatingSheet({ title: odyssey, mode: 'edit', rating: 3, comment: 'Bien' }));
     await touchStars(299);
     await fireEvent.press(screen.getByText('Enregistrer'));
-    expect(setMovieReview).toHaveBeenCalledWith(odyssey, { rating: 10, comment: 'Bien' });
+    expect(setMovieReview).toHaveBeenCalledWith(odyssey, { rating: 5, comment: 'Bien' });
   });
 });

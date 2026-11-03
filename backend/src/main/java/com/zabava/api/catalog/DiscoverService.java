@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
 
@@ -60,7 +61,14 @@ public class DiscoverService {
             Integer maxRuntime,
             Integer studio,
             String sort,
-            int page) {}
+            int page,
+            String title) {
+
+        /** Titre saisi, sans les espaces de bordure ; null s'il est vide (aucun filtre de titre). */
+        public String titleOrNull() {
+            return title == null || title.isBlank() ? null : title.strip();
+        }
+    }
 
     private final TmdbClient tmdb;
     private final PopularPeople popularPeople;
@@ -177,6 +185,7 @@ public class DiscoverService {
 
     public DiscoverResult discover(DiscoverQuery query, Prefs prefs) {
         if (!query.cast().isEmpty()) return discoverByCast(query, prefs);
+        if (query.titleOrNull() != null) return discoverByTitle(query, prefs);
         Map<String, TitleLite> results = new LinkedHashMap<>();
         int total = 0;
         for (MediaType type : query.types()) {
@@ -211,6 +220,51 @@ public class DiscoverService {
             variant.put("with_genres", TmdbMapper.ANIMATION_GENRE + "," + id);
             return variant;
         }).toList();
+    }
+
+    /** Pages de recherche TMDB examinées par type quand un titre est saisi avec des filtres. */
+    private static final int TITLE_SEARCH_PAGES = 5;
+
+    /**
+     * Titre saisi + filtres : TMDB ne combine pas la recherche par nom et les filtres. On cherche le
+     * titre, puis on garde les résultats qui respectent aussi les filtres (genre, années, note,
+     * langue d'origine). Les filtres plateforme, durée et studio ne s'appliquent pas ici (absents
+     * des résultats de recherche).
+     */
+    private DiscoverResult discoverByTitle(DiscoverQuery q, Prefs prefs) {
+        Map<String, TitleLite> found = new LinkedHashMap<>();
+        boolean wantMovie = q.types().contains(MediaType.MOVIE);
+        boolean wantTv = q.types().contains(MediaType.TV) || q.types().contains(MediaType.ANIME);
+        for (String tmdbType : List.of("movie", "tv")) {
+            if (tmdbType.equals("movie") ? !wantMovie : !wantTv) continue;
+            for (int page = 1; page <= TITLE_SEARCH_PAGES; page++) {
+                JsonNode body = tmdb.search("/search/" + tmdbType, TmdbClient.params(
+                        "query", q.titleOrNull(),
+                        "language", prefs.language(),
+                        "page", String.valueOf(page),
+                        "include_adult", "false"));
+                for (JsonNode node : Json.array(body, "results")) {
+                    if (!matches(q, node, "movie".equals(tmdbType))) continue;
+                    TitleLite lite = TmdbMapper.lite(node, tmdbType);
+                    if (q.types().stream().anyMatch(type -> type.key().equals(lite.type()))) {
+                        found.putIfAbsent(lite.id(), lite);
+                    }
+                }
+                if (page >= body.path("total_pages").asInt(1)) break;
+            }
+        }
+        List<TitleLite> all = found.values().stream().sorted(comparator(q.sort())).toList();
+        int from = Math.min((q.page() - 1) * PAGE_SIZE, all.size());
+        int to = Math.min(from + PAGE_SIZE, all.size());
+        return new DiscoverResult(all.subList(from, to), all.size(), q.page());
+    }
+
+    private static boolean titleMatches(String wanted, JsonNode node) {
+        if (wanted == null) return true;
+        String needle = wanted.toLowerCase(Locale.ROOT);
+        return Stream.of("title", "name", "original_title", "original_name")
+                .map(field -> Json.text(node, field))
+                .anyMatch(text -> text != null && text.toLowerCase(Locale.ROOT).contains(needle));
     }
 
     public int count(DiscoverQuery query, Prefs prefs) {
@@ -318,21 +372,24 @@ public class DiscoverService {
     }
 
     private static Predicate<JsonNode> castFilters(DiscoverQuery q) {
-        return node -> {
-            boolean movie = "movie".equals(Json.text(node, "media_type"));
-            if (!q.genres().isEmpty()) {
-                Set<Integer> ids = TmdbMapper.genreIds(node);
-                if (Genres.tmdbIds(q.genres(), movie).stream().noneMatch(ids::contains)) return false;
-            }
-            LocalDate date = TmdbMapper.date(Json.text(node, movie ? "release_date" : "first_air_date"));
-            if (q.yearFrom() != null && (date == null || date.getYear() < q.yearFrom())) return false;
-            if (q.yearTo() != null && (date == null || date.getYear() > q.yearTo())) return false;
-            if (q.minRating() != null && q.minRating() > 0) {
-                Double vote = Json.decimal(node, "vote_average");
-                if (vote == null || vote < q.minRating()) return false;
-            }
-            return q.lang() == null || q.lang().equals(Json.text(node, "original_language"));
-        };
+        return node -> matches(q, node, "movie".equals(Json.text(node, "media_type")))
+                && titleMatches(q.titleOrNull(), node);
+    }
+
+    /** Genre, années, note et langue d'origine d'un titre TMDB. */
+    private static boolean matches(DiscoverQuery q, JsonNode node, boolean movie) {
+        if (!q.genres().isEmpty()) {
+            Set<Integer> ids = TmdbMapper.genreIds(node);
+            if (Genres.tmdbIds(q.genres(), movie).stream().noneMatch(ids::contains)) return false;
+        }
+        LocalDate date = TmdbMapper.date(Json.text(node, movie ? "release_date" : "first_air_date"));
+        if (q.yearFrom() != null && (date == null || date.getYear() < q.yearFrom())) return false;
+        if (q.yearTo() != null && (date == null || date.getYear() > q.yearTo())) return false;
+        if (q.minRating() != null && q.minRating() > 0) {
+            Double vote = Json.decimal(node, "vote_average");
+            if (vote == null || vote < q.minRating()) return false;
+        }
+        return q.lang() == null || q.lang().equals(Json.text(node, "original_language"));
     }
 
     // ─── Découvrir : listes ───────────────────────────────────────────────────

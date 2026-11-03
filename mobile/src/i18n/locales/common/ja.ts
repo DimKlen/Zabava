@@ -17,7 +17,7 @@ export const common: Messages<typeof import('./fr').common> = {
   'common.poster.remove': '{title}を削除',
   'common.range.start': '{label}、開始',
   'common.range.end': '{label}、終了',
-  'common.rating.outOf': '10点中{value}点',
+  'common.rating.outOf': '5点中{value}点',
   'common.rating.none': '評価なし',
   'common.rating.label': '評価',
   'common.username.label': 'ユーザー名',

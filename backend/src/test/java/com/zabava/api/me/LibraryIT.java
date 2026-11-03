@@ -124,18 +124,18 @@ class LibraryIT extends IntegrationTest {
         // Marqué vu avec une note, hors liste : une seule requête.
         mvc.perform(json(post("/api/v1/me/titles"), """
                         {"tmdbId": 603, "type": "movie", "status": "watched",
-                         "review": {"rating": 8, "comment": "  Superbe photo.  "}}
+                         "review": {"rating": 4, "comment": "  Superbe photo.  "}}
                         """))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.rating").value(8))
+                .andExpect(jsonPath("$.rating").value(4))
                 .andExpect(jsonPath("$.comment").value("Superbe photo."));
         mvc.perform(as(user, get("/api/v1/titles/movie/603")))
-                .andExpect(jsonPath("$.userTitle.rating").value(8))
+                .andExpect(jsonPath("$.userTitle.rating").value(4))
                 .andExpect(jsonPath("$.userTitle.comment").value("Superbe photo."));
 
         // Autre changement : la note reste.
         mvc.perform(json(patch("/api/v1/me/titles/movie-603"), "{\"notificationsEnabled\": false}"))
-                .andExpect(jsonPath("$.rating").value(8));
+                .andExpect(jsonPath("$.rating").value(4));
         // Note seule : le commentaire est effacé ; vide, il compte comme absent.
         mvc.perform(json(patch("/api/v1/me/titles/movie-603"), "{\"review\": {\"rating\": 3, \"comment\": \" \"}}"))
                 .andExpect(jsonPath("$.rating").value(3))

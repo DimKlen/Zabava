@@ -26,6 +26,7 @@ describe('filtres par défaut', () => {
       yearFrom: 1990,
       yearTo: 2026,
       providers: undefined,
+      title: undefined,
     });
   });
 });
@@ -64,7 +65,15 @@ describe('advancedQuery', () => {
       yearFrom: 1990,
       yearTo: 2026,
       providers: 'mine',
+      title: undefined,
     });
+  });
+
+  it('titre rempli : ajouté aux filtres ; vide ou espaces : aucun filtre de titre', () => {
+    const filters = defaultFilters(NOW);
+    expect(advancedQuery(filters, '  Dune ').title).toBe('Dune');
+    expect(advancedQuery(filters, '').title).toBeUndefined();
+    expect(advancedQuery(filters, '   ').title).toBeUndefined();
   });
 
   it('toggleValue retire une valeur déjà choisie', () => {

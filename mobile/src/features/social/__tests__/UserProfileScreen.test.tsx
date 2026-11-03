@@ -140,11 +140,12 @@ describe('UserProfileScreen', () => {
     expect(useUiStore.getState().toast?.message).toBe('Suis ce membre pour voir ses listes');
   });
 
-  it('les affiches portent ma coche si le titre est dans ma liste ; le « + » l’ajoute', async () => {
+  it('liste d’un membre suivi en lecture seule : ni « + » ni coche, la fiche reste ouvrable', async () => {
     await renderScreen();
-    expect(await screen.findByLabelText('Retirer Dune : Deuxième partie')).toBeTruthy();
-    await fireEvent.press(screen.getByLabelText("Ajouter L'Odyssée"));
-    expect(toggleInList).toHaveBeenCalledWith(expect.objectContaining({ id: ODYSSEY.id }));
+    expect(await screen.findByLabelText("L'Odyssée")).toBeTruthy();
+    expect(screen.queryByLabelText("Ajouter L'Odyssée")).toBeNull();
+    expect(screen.queryByLabelText('Retirer Dune : Deuxième partie')).toBeNull();
+    expect(toggleInList).not.toHaveBeenCalled();
   });
 
   it('hors ligne : le bouton ne change pas, « Connexion requise »', async () => {

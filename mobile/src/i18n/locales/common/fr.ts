@@ -17,7 +17,7 @@ export const common = {
   'common.poster.remove': 'Retirer {title}',
   'common.range.start': '{label}, début',
   'common.range.end': '{label}, fin',
-  'common.rating.outOf': '{value} sur 10',
+  'common.rating.outOf': '{value} sur 5',
   'common.rating.none': 'Pas de note',
   'common.rating.label': 'Note',
   'common.username.label': 'Pseudo',

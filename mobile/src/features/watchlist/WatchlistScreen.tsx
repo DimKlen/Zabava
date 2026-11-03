@@ -1,4 +1,6 @@
+import { useFocusEffect } from 'expo-router';
 import { MagnifyingGlassIcon } from 'phosphor-react-native';
+import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -30,6 +32,10 @@ export function WatchlistScreen() {
   const setTab = useUiStore((s) => s.setWatchlistTab);
   const query = useUiStore((s) => s.watchlistQuery);
   const setQuery = useUiStore((s) => s.setWatchlistQuery);
+  const resetView = useUiStore((s) => s.resetWatchlistView);
+
+  // Chaque arrivée sur l'onglet repart de la liste complète : la recherche ne reste pas ouverte.
+  useFocusEffect(useCallback(() => resetView(), [resetView]));
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
