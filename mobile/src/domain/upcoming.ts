@@ -64,6 +64,11 @@ export function groupLabel(date: Date, now: Date): string {
 export function itemLine(event: UpcomingEvent): string {
   switch (event.kind) {
     case 'episode': {
+      // Saison sortie d'un coup : une seule ligne « Saison N », sans numéro d'épisode.
+      if (event.episode == null) {
+        const season = t('common.upcoming.wholeSeason', { season: event.season ?? 1 });
+        return event.airstamp ? `${season} · ${formatTime(new Date(event.airstamp))}` : season;
+      }
       const code = episodeCode(event.season ?? 0, event.episode ?? 0);
       return event.airstamp ? `${code} · ${formatTime(new Date(event.airstamp))}` : code;
     }

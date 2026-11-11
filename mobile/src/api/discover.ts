@@ -107,7 +107,8 @@ export function discoverListQuery(list: DiscoverList, type: MediaType) {
   return queryOptions({
     queryKey: ['discover', { list, type }],
     queryFn: async ({ signal }) => (await fetchDiscover({ list, type }, type, signal)).results,
-    staleTime: DAY,
+    // « Pour toi » suit la liste de l'utilisateur : à rafraîchir plus souvent.
+    staleTime: list === 'for_you' ? TEN_MINUTES : DAY,
   });
 }
 

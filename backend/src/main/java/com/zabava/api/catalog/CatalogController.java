@@ -90,7 +90,7 @@ public class CatalogController {
             @RequestParam(defaultValue = "1") @Min(1) @Max(500) int page,
             @RequestParam(required = false) @Size(max = 100) String title,
             @RequestParam(required = false)
-                    @Pattern(regexp = "trending|now_playing|upcoming|new_on_mine|top_rated|new_seasons|popular_on_mine|season_anime")
+                    @Pattern(regexp = "trending|now_playing|upcoming|new_on_mine|top_rated|new_seasons|popular_on_mine|season_anime|for_you")
                     String list) {
         Prefs prefs = prefs(user);
         DiscoverResult result = list != null

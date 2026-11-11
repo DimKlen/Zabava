@@ -96,6 +96,7 @@ describe('DiscoverScreen', () => {
       .filter(([path]) => path === '/discover')
       .map(([, options]) => options?.query?.list);
     expect(lists).toEqual([
+      'for_you',
       'trending',
       'new_seasons',
       'popular_on_mine',

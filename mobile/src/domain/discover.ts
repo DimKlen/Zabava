@@ -11,7 +11,8 @@ export type DiscoverList =
   | 'top_rated'
   | 'new_seasons'
   | 'popular_on_mine'
-  | 'season_anime';
+  | 'season_anime'
+  | 'for_you';
 
 export type DiscoverSection = { list: DiscoverList; title: string };
 
@@ -26,6 +27,7 @@ function section(list: DiscoverList, key: MessageKey): DiscoverSection {
 }
 
 const SERIES_SECTIONS: readonly DiscoverSection[] = [
+  section('for_you', 'common.discover.forYou'),
   section('trending', 'common.discover.trending'),
   section('new_seasons', 'common.discover.newSeasons'),
   section('popular_on_mine', 'common.discover.popularOnMine'),
@@ -35,6 +37,7 @@ const SERIES_SECTIONS: readonly DiscoverSection[] = [
 /** Carrousels d'un onglet, dans l'ordre de la spec. */
 export const DISCOVER_SECTIONS: Record<MediaType, readonly DiscoverSection[]> = {
   movie: [
+    section('for_you', 'common.discover.forYou'),
     section('trending', 'common.discover.trendingWeek'),
     section('now_playing', 'common.discover.nowPlaying'),
     section('upcoming', 'common.discover.upcoming'),

@@ -39,6 +39,7 @@ public class UpcomingService {
 
     /** La spec affiche 90 jours ; on tolère un peu plus pour les changements de fuseau. */
     private static final long MAX_RANGE_DAYS = 120;
+    private static final int BATCH_DROP_MIN_EPISODES = 3;
 
     private final LibraryStore library;
     private final TitleStore store;
@@ -97,16 +98,18 @@ public class UpcomingService {
         for (TitleRow title : series) {
             List<EpisodeRow> episodes = store.episodes(title.id()).stream().filter(e -> e.season() > 0).toList();
             boolean hasFutureDate = false;
+            List<UpcomingEvent> titleEvents = new ArrayList<>();
             for (EpisodeRow e : episodes) {
                 LocalDate date = localDate(e, zone);
                 if (date == null) continue;
                 if (!date.isBefore(today)) hasFutureDate = true;
                 if (watched.containsKey(e.id()) || !inRange(date, from, to)) continue;
                 if (e.airstamp() != null && e.airstamp().isBefore(clock.instant())) continue;
-                events.add(new UpcomingEvent(
+                titleEvents.add(new UpcomingEvent(
                         date, "episode", TitleService.lite(title), e.season(), e.number(), e.airstamp(),
                         platform(offers.get(title.id()), prefs.providerIds(), title.network())));
             }
+            events.addAll(collapseBatchDrops(titleEvents));
             // Série en production sans épisode daté : « Saison {n+1} annoncée, date à venir ».
             if (!hasFutureDate && !Boolean.TRUE.equals(title.ended())) {
                 int lastSeason = episodes.stream().mapToInt(EpisodeRow::season).max().orElse(0);
@@ -119,6 +122,29 @@ public class UpcomingService {
                 .thenComparing(UpcomingEvent::airstamp, Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(e -> e.title().title(), Comparator.nullsLast(Comparator.naturalOrder())));
         return new Upcoming(events, noDate);
+    }
+
+    /**
+     * Saison sortie d'un coup (Netflix) : trois épisodes ou plus de la même saison le même jour
+     * donnent une seule ligne « Saison N » (épisode absent) au lieu d'une par épisode.
+     */
+    static List<UpcomingEvent> collapseBatchDrops(List<UpcomingEvent> episodes) {
+        Map<List<Object>, List<UpcomingEvent>> bySeasonAndDay = episodes.stream()
+                .collect(Collectors.groupingBy(e -> List.<Object>of(e.season(), e.date()),
+                        java.util.LinkedHashMap::new, Collectors.toList()));
+        List<UpcomingEvent> result = new ArrayList<>();
+        for (List<UpcomingEvent> group : bySeasonAndDay.values()) {
+            if (group.size() < BATCH_DROP_MIN_EPISODES) {
+                result.addAll(group);
+                continue;
+            }
+            UpcomingEvent first = group.getFirst();
+            Instant earliest = group.stream().map(UpcomingEvent::airstamp)
+                    .filter(java.util.Objects::nonNull).min(Comparator.naturalOrder()).orElse(null);
+            result.add(new UpcomingEvent(first.date(), first.kind(), first.title(), first.season(), null,
+                    earliest, first.provider()));
+        }
+        return result;
     }
 
     /**

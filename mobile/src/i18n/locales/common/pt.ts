@@ -127,6 +127,7 @@ export const common: Messages<typeof import('./fr').common> = {
   'common.discover.upcoming': 'Em breve no cinema',
   'common.discover.newOnMine': 'Novidades nas minhas plataformas',
   'common.discover.topRated': 'Os mais bem avaliados',
+  'common.discover.forYou': 'Para ti',
   'common.discover.newSeasons': 'Novas temporadas esta semana',
   'common.discover.popularOnMine': 'Populares nas minhas plataformas',
   'common.discover.seasonAnime': 'Animes da temporada atual',
@@ -196,6 +197,7 @@ export const common: Messages<typeof import('./fr').common> = {
   'common.upcoming.digital': 'Disponível em digital',
   'common.upcoming.cinemaTag': 'Cinema',
   'common.upcoming.noDate': 'Temporada {season} anunciada, data por anunciar',
+  'common.upcoming.wholeSeason': 'Temporada {season}',
 
   'common.onboarding.tapPoster': 'Toca num cartaz para o adicionar',
   'common.onboarding.added.one': '{count} título adicionado',

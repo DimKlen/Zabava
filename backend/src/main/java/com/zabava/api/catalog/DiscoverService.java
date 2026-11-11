@@ -1,6 +1,7 @@
 package com.zabava.api.catalog;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -25,6 +26,8 @@ import com.zabava.api.catalog.dto.CatalogDtos.TitleLite;
 import com.zabava.api.common.ApiException;
 import com.zabava.api.common.Json;
 import com.zabava.api.common.MediaType;
+import com.zabava.api.me.LibraryStore;
+import com.zabava.api.me.LibraryStore.UserTitleRow;
 import com.zabava.api.me.ProfileService.Prefs;
 import com.zabava.api.tmdb.TmdbClient;
 
@@ -41,6 +44,8 @@ public class DiscoverService {
     /** Séries diffusées cette semaine examinées pour « Nouvelles saisons » et « Saison en cours ». */
     private static final int SEASON_CANDIDATE_PAGES = 3;
     private static final int ANIME_TRENDING_PAGES = 5;
+    /** Titres de la liste dont on lit les recommandations pour « Pour toi ». */
+    private static final int FOR_YOU_SEEDS = 6;
     /** Émissions où la personne joue son propre rôle : talk-shows, actualités, téléréalité. */
     private static final Set<Integer> NON_FICTION_TV = Set.of(10763, 10764, 10767);
     private static final java.util.regex.Pattern SELF =
@@ -74,8 +79,13 @@ public class DiscoverService {
     private final PopularPeople popularPeople;
     private final TitleFacts facts;
     private final Clock clock;
+    private final LibraryStore library;
+    private final TitleStore store;
 
-    public DiscoverService(TmdbClient tmdb, PopularPeople popularPeople, TitleFacts facts, Clock clock) {
+    public DiscoverService(TmdbClient tmdb, PopularPeople popularPeople, TitleFacts facts, Clock clock,
+            LibraryStore library, TitleStore store) {
+        this.library = library;
+        this.store = store;
         this.tmdb = tmdb;
         this.popularPeople = popularPeople;
         this.facts = facts;
@@ -411,6 +421,9 @@ public class DiscoverService {
             case "season_anime" -> {
                 return bySeason(base, type, today, DiscoverService::seasonInProgress);
             }
+            case "for_you" -> {
+                return forYou(base, type, page, prefs);
+            }
             case "trending" -> {
                 if (type == MediaType.ANIME) return animeTrending(base, page);
             }
@@ -450,6 +463,62 @@ public class DiscoverService {
             results = results.stream().filter(t -> t.releaseDate() != null && t.releaseDate().isAfter(today)).toList();
         }
         return new DiscoverResult(results, body.path("total_results").asInt(results.size()), page);
+    }
+
+    /**
+     * « Pour toi » : titres proches de ceux que l'utilisateur a vus ou ajoutés à sa liste. On part
+     * des plus récents titres du même type (les vus d'abord), on lit leurs recommandations TMDB, et
+     * on classe par nombre de titres de départ qui recommandent la même chose. Rien de ce qui est
+     * déjà dans la liste n'est proposé.
+     */
+    private DiscoverResult forYou(TreeMap<String, String> base, MediaType type, int page, Prefs prefs) {
+        if (page > 1) return new DiscoverResult(List.of(), 0, page);
+        List<UserTitleRow> rows = library.all(prefs.userId());
+        Map<Long, UserTitleRow> byId = rows.stream().collect(Collectors.toMap(UserTitleRow::titleId, r -> r, (a, b) -> a));
+        List<TitleStore.TitleRow> mine = store.findByIds(byId.keySet());
+        Set<String> owned = mine.stream()
+                .map(t -> MediaType.of(t.mediaType(), t.anime()).key() + ":" + t.tmdbId())
+                .collect(Collectors.toSet());
+        List<TitleStore.TitleRow> seeds = mine.stream()
+                .filter(t -> MediaType.of(t.mediaType(), t.anime()) == type)
+                .sorted(Comparator.comparing((TitleStore.TitleRow t) -> forYouRank(byId.get(t.id())))
+                        .thenComparing(t -> activity(byId.get(t.id())), Comparator.reverseOrder()))
+                .limit(FOR_YOU_SEEDS)
+                .toList();
+        if (seeds.isEmpty()) return new DiscoverResult(List.of(), 0, 1);
+
+        Map<String, Integer> votes = new LinkedHashMap<>();
+        Map<String, TitleLite> found = new LinkedHashMap<>();
+        for (List<TitleLite> recommended : facts.parallel(seeds, seed -> filterType(Json.map(
+                tmdb.get("/" + type.tmdbType() + "/" + seed.tmdbId() + "/recommendations", base),
+                "results", n -> TmdbMapper.lite(n, type.tmdbType())), type))) {
+            if (recommended == null) continue;
+            for (TitleLite t : recommended) {
+                if (owned.contains(type.key() + ":" + t.tmdbId())) continue;
+                votes.merge(t.id(), 1, Integer::sum);
+                found.putIfAbsent(t.id(), t);
+            }
+        }
+        List<TitleLite> list = found.values().stream()
+                .sorted(Comparator.comparingInt((TitleLite t) -> -votes.get(t.id()))
+                        .thenComparing(Comparator.comparing(TitleLite::voteAverage,
+                                Comparator.nullsFirst(Comparator.<Double>naturalOrder())).reversed()))
+                .limit(PAGE_SIZE)
+                .toList();
+        return new DiscoverResult(list, list.size(), 1);
+    }
+
+    /** Titres vus d'abord, puis ceux de la liste « À voir » ; les abandonnés ne comptent pas. */
+    private static int forYouRank(UserTitleRow row) {
+        return switch (row.status()) {
+            case "watched", "following" -> 0;
+            case "towatch" -> 1;
+            default -> 2;
+        };
+    }
+
+    private static Instant activity(UserTitleRow row) {
+        return row.watchedAt() != null ? row.watchedAt() : row.addedAt();
     }
 
     private static JsonNode movieOnly(MediaType type, java.util.function.Supplier<JsonNode> call) {
