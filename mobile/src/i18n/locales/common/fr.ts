@@ -132,6 +132,7 @@ export const common = {
   'common.discover.upcoming': 'Bientôt en salle',
   'common.discover.newOnMine': 'Nouveautés sur mes plateformes',
   'common.discover.topRated': 'Les mieux notés',
+  'common.discover.forYou': 'Pour toi',
   'common.discover.newSeasons': 'Nouvelles saisons cette semaine',
   'common.discover.popularOnMine': 'Populaires sur mes plateformes',
   'common.discover.seasonAnime': 'Animés de la saison en cours',
@@ -205,6 +206,7 @@ export const common = {
   'common.upcoming.digital': 'Disponible en numérique',
   'common.upcoming.cinemaTag': 'Cinéma',
   'common.upcoming.noDate': 'Saison {season} annoncée, date à venir',
+  'common.upcoming.wholeSeason': 'Saison {season}',
 
   // Onboarding
   'common.onboarding.tapPoster': "Touche une affiche pour l'ajouter",

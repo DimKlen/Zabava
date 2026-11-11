@@ -73,6 +73,18 @@ describe('jour et ligne', () => {
   });
 });
 
+describe('saison complète sortie le même jour', () => {
+  it('affiche « Saison N » sans numéro d épisode', () => {
+    const whole: UpcomingEvent = {
+      ...episode(bear, 1, 0),
+      season: 2,
+      episode: undefined,
+      airstamp: undefined,
+    };
+    expect(itemLine(whole)).toBe('Saison 2');
+  });
+});
+
 describe('groupUpcoming', () => {
   it('ordre : jour, heure, puis titre ; épisodes déjà diffusés et au-delà de 90 jours écartés', () => {
     const groups = groupUpcoming(

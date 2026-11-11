@@ -126,6 +126,7 @@ export const common: Messages<typeof import('./fr').common> = {
   'common.discover.upcoming': 'まもなく公開',
   'common.discover.newOnMine': '自分のサービスの新着',
   'common.discover.topRated': '高評価',
+  'common.discover.forYou': 'あなたへのおすすめ',
   'common.discover.newSeasons': '今週の新シーズン',
   'common.discover.popularOnMine': '自分のサービスで人気',
   'common.discover.seasonAnime': '今期のアニメ',
@@ -194,6 +195,7 @@ export const common: Messages<typeof import('./fr').common> = {
   'common.upcoming.digital': 'デジタル配信中',
   'common.upcoming.cinemaTag': '劇場',
   'common.upcoming.noDate': 'シーズン{season}発表済み、日程は未定',
+  'common.upcoming.wholeSeason': 'シーズン{season}',
 
   'common.onboarding.tapPoster': 'ポスターをタップして追加',
   'common.onboarding.added.one': '{count}作品を追加',
