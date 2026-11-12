@@ -174,13 +174,28 @@ public class DiscoverService {
         return new SearchResult(people, titles, page, body.path("total_pages").asInt(1));
     }
 
-    /** Titre exactement égal à la requête d'abord, puis le plus populaire (« Fight Club » de 1999 avant les homonymes). */
+    /**
+     * Pertinence, tous types confondus : titre égal à la requête, puis titre qui commence par elle (« The
+     * Rookie : Le flic de Los Angeles »), puis titre qui la contient, puis le reste ; à rang égal, le plus
+     * populaire d'abord (la série très suivie passe avant un film obscur du même nom).
+     */
     static Comparator<TitleLite> byRelevance(String query) {
         String wanted = query.strip().toLowerCase(Locale.ROOT);
-        Comparator<TitleLite> exact = Comparator.comparing(
-                t -> !wanted.equals(t.title() == null ? "" : t.title().strip().toLowerCase(Locale.ROOT)));
-        return exact.thenComparing(
+        Comparator<TitleLite> rank = Comparator.comparingInt(t -> matchRank(wanted, t));
+        return rank.thenComparing(
                 Comparator.comparingDouble((TitleLite t) -> t.popularity() == null ? 0 : t.popularity()).reversed());
+    }
+
+    private static int matchRank(String wanted, TitleLite t) {
+        int best = 3;
+        for (String name : new String[] {t.title(), t.originalTitle()}) {
+            if (name == null) continue;
+            String text = name.strip().toLowerCase(Locale.ROOT);
+            if (text.equals(wanted)) return 0;
+            if (text.startsWith(wanted)) best = Math.min(best, 1);
+            else if (text.contains(wanted)) best = Math.min(best, 2);
+        }
+        return best;
     }
 
     private static boolean matchesType(TitleLite lite, String type) {

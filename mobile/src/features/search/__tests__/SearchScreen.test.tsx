@@ -42,7 +42,6 @@ type Query = Record<string, unknown> | undefined;
 function route(path: string, query: Query): unknown {
   if (path === '/me/watchlist') return [];
   if (path === '/trending') return [DUNE];
-  if (path === '/discover/count') return { total: 2 };
   if (path === '/discover') return { results: [DUNE], total: 1, page: 1 };
   if (path === '/titles/badges') return [];
   if (path === '/me/recent-profiles') return [];
@@ -169,7 +168,7 @@ describe('SearchScreen', () => {
     await fireEvent.changeText(screen.getByLabelText('Rechercher'), 'zzzz');
     expect(await screen.findByText('Aucun résultat pour « zzzz »')).toBeTruthy();
     await fireEvent.press(screen.getByText('Essayer la recherche avancée'));
-    expect(await screen.findByText('Voir les 2 résultats')).toBeTruthy();
+    expect(await screen.findByText('Rechercher')).toBeTruthy();
   });
 
   it('valider au clavier ajoute la requête aux récentes', async () => {
@@ -190,7 +189,7 @@ describe('SearchScreen', () => {
   it('recherche avancée appliquée : taper ne la quitte pas, « Effacer » oui', async () => {
     await renderSearch();
     await fireEvent.press(screen.getByLabelText('Filtres'));
-    await fireEvent.press(await screen.findByText('Voir les 2 résultats'));
+    await fireEvent.press(await screen.findByText('Rechercher'));
     expect(await screen.findByText('Recherche avancée')).toBeTruthy();
     expect(await screen.findByText('1 résultat')).toBeTruthy();
 

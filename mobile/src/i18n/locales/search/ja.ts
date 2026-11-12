@@ -27,7 +27,7 @@ export const search: Messages<typeof import('./fr').search> = {
   'search.type.anime': 'アニメ',
   'search.availability.all': 'すべてのプラットフォーム',
   'search.availability.mine': 'マイプラットフォーム',
-  'search.advanced.apply': '結果を見る',
+  'search.advanced.apply': '検索',
   'search.actors.placeholder': '俳優・女優を追加',
   'search.actors.remove': '{name}を削除',
   'search.members.none': 'メンバーが見つかりません',

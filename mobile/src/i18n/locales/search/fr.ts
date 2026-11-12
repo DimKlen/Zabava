@@ -26,7 +26,7 @@ export const search = {
   'search.type.anime': 'Animés',
   'search.availability.all': 'Toutes les plateformes',
   'search.availability.mine': 'Mes plateformes',
-  'search.advanced.apply': 'Voir les résultats',
+  'search.advanced.apply': 'Rechercher',
   'search.actors.placeholder': 'Ajouter un acteur ou une actrice',
   'search.actors.remove': 'Retirer {name}',
   'search.members.none': 'Aucun membre trouvé',

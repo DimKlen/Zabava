@@ -1,6 +1,6 @@
 import { useLanguageStore } from '@/i18n';
 
-import { countButtonLabel, genreCountLabel, GENRES } from '../advancedSearch';
+import { genreCountLabel, GENRES } from '../advancedSearch';
 import { birthLine, generatedBiography } from '../person';
 import { resultsCountLabel } from '../search';
 import { noDateLine } from '../upcoming';
@@ -15,7 +15,6 @@ describe('textes du domaine dans les autres langues', () => {
     useLanguageStore.setState({ preference: 'en' });
     expect(resultsCountLabel(1)).toBe('1 result');
     expect(resultsCountLabel(1240)).toBe('1,240 results');
-    expect(countButtonLabel(0)).toBe('No results');
     expect(genreCountLabel(0, 'movie')).toBe('0 movies');
     expect(noDateLine(4)).toBe('Season 4 announced, date to come');
     expect(GENRES[0]?.label).toBe('Action');
