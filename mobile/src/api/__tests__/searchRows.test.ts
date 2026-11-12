@@ -17,7 +17,7 @@ describe('searchRows', () => {
     expect(rows.map((row) => (row.kind === 'title' ? row.title.tmdbId : 0))).toEqual([1, 2, 3, 4]);
   });
 
-  it('films puis séries puis animés, personnes à la fin', () => {
+  it('mélange films, séries et animés selon la pertinence du serveur, personnes à la fin', () => {
     const rows = searchRows([
       {
         people: [{ id: 9, name: 'P', knownFor: [] }],
@@ -26,6 +26,6 @@ describe('searchRows', () => {
         totalPages: 1,
       },
     ]);
-    expect(rows.map((row) => row.key)).toEqual(['movie-3', 'tv-1', 'tv-4', 'anime-2', 'person-9']);
+    expect(rows.map((row) => row.key)).toEqual(['tv-1', 'anime-2', 'movie-3', 'tv-4', 'person-9']);
   });
 });

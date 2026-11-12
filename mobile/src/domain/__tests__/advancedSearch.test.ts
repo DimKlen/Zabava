@@ -3,7 +3,6 @@ import {
   GENRE_MIN_RATING,
   addActor,
   advancedQuery,
-  countButtonLabel,
   defaultFilters,
   genreCountLabel,
   genreQuery,
@@ -78,18 +77,6 @@ describe('advancedQuery', () => {
 
   it('toggleValue retire une valeur déjà choisie', () => {
     expect(toggleValue(['movie', 'tv'], 'movie')).toEqual(['tv']);
-  });
-});
-
-describe('countButtonLabel', () => {
-  it.each([
-    [0, 'Aucun résultat'],
-    [1, 'Voir le résultat'],
-    [2, 'Voir les 2 résultats'],
-    [148, 'Voir les 148 résultats'],
-    [44774, `Voir les ${(44774).toLocaleString('fr')} résultats`],
-  ])('%p → %p', (count, label) => {
-    expect(countButtonLabel(count)).toBe(label);
   });
 });
 

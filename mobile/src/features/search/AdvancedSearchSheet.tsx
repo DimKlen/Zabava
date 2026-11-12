@@ -2,18 +2,15 @@ import { XIcon } from 'phosphor-react-native';
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 
-import { useAdvancedCount } from '@/api/discover';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { RangeSlider } from '@/components/RangeSlider';
 import { Text } from '@/components/Text';
 import {
-  COUNT_DEBOUNCE_MS,
   FIRST_YEAR,
   GENRES,
   addActor,
-  countButtonLabel,
   defaultFilters,
   removeActor,
   setYears,
@@ -23,7 +20,6 @@ import {
 } from '@/domain/advancedSearch';
 import type { MediaType } from '@/domain/types';
 import { useT, type MessageKey } from '@/i18n';
-import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { colors, durations } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
@@ -65,9 +61,6 @@ export function AdvancedSearchSheet({
   const { t } = useT();
   const { height } = useWindowDimensions();
   const currentYear = new Date().getFullYear();
-  const counted = useDebouncedValue(filters, COUNT_DEBOUNCE_MS);
-  const count = useAdvancedCount(counted, title, visible).data;
-  const empty = count === 0;
 
   return (
     <BottomSheet
@@ -174,8 +167,7 @@ export function AdvancedSearchSheet({
           variant="primary"
           height={50}
           fontSize={15}
-          label={count === undefined ? t('search.advanced.apply') : countButtonLabel(count)}
-          disabled={count === undefined || empty}
+          label={t('search.advanced.apply')}
           onPress={onApply}
           testID="advanced-apply"
         />

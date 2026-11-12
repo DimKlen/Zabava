@@ -27,7 +27,7 @@ export const search: Messages<typeof import('./fr').search> = {
   'search.type.anime': 'Anime',
   'search.availability.all': 'Alle Plattformen',
   'search.availability.mine': 'Meine Plattformen',
-  'search.advanced.apply': 'Ergebnisse anzeigen',
+  'search.advanced.apply': 'Suchen',
   'search.actors.placeholder': 'Schauspieler oder Schauspielerin hinzufügen',
   'search.actors.remove': '{name} entfernen',
   'search.members.none': 'Kein Mitglied gefunden',

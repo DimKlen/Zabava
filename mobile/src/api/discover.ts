@@ -1,5 +1,5 @@
 /** Découvrir, recherche avancée, liste par genre et fiche personne — specs/docs/08, 07 §7.3–7.4. */
-import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 import {
   advancedQuery,
@@ -22,7 +22,6 @@ import type { components } from './types';
 type ApiDiscoverResult = components['schemas']['DiscoverResult'];
 type ApiPersonDetail = components['schemas']['PersonDetail'];
 type ApiTitleLite = components['schemas']['TitleLite'];
-type ApiCount = components['schemas']['Count'];
 
 const DAY = 24 * 60 * 60 * 1000;
 const TEN_MINUTES = 10 * 60 * 1000;
@@ -125,19 +124,6 @@ export function useStudioTitles(studioId: number) {
 /** Résultats de la recherche avancée appliquée. */
 export function useAdvancedResults(filters: AdvancedFilters, title: string, enabled: boolean) {
   return useDiscoverPages({ ...advancedQuery(filters, title) }, 'movie', enabled);
-}
-
-/** Compteur en direct du pied de la sheet ; garde l'ancien nombre pendant le chargement. */
-export function useAdvancedCount(filters: AdvancedFilters, title: string, enabled: boolean) {
-  const params = advancedQuery(filters, title);
-  return useQuery({
-    queryKey: ['discoverCount', params],
-    queryFn: async ({ signal }) =>
-      (await api<ApiCount>('/discover/count', { query: params, signal })).total ?? 0,
-    enabled,
-    staleTime: TEN_MINUTES,
-    placeholderData: keepPreviousData,
-  });
 }
 
 export type PersonDetail = {

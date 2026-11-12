@@ -89,14 +89,12 @@ export function useSearch(q: string, tab: CatalogTab) {
 }
 
 /**
- * Rangées d'une recherche : films, puis séries, puis animés (ordre de pertinence du serveur
- * conservé dans chaque type, ou le tri choisi), puis les personnes (page 1 seulement), sans doublon.
+ * Rangées d'une recherche : les titres, tous types confondus, dans l'ordre de pertinence du serveur
+ * (ou le tri choisi), puis les personnes (page 1 seulement), sans doublon.
  */
 export type SearchRow =
   | { kind: 'person'; key: string; person: PersonResult }
   | { kind: 'title'; key: string; title: TitleResult };
-
-const TYPE_ORDER: Record<TitleResult['type'], number> = { movie: 0, tv: 1, anime: 2 };
 
 export function searchRows(
   pages: readonly SearchPage[] | undefined,
@@ -109,13 +107,9 @@ export function searchRows(
     seen.add(row.key);
     rows.push(row);
   };
-  // Tri stable : à type égal, on garde l'ordre de pertinence du serveur.
-  const byType = (pages ?? [])
-    .flatMap((page) => page.titles)
-    .sort((a, b) => TYPE_ORDER[a.type] - TYPE_ORDER[b.type]);
-  // Par pertinence, les types restent groupés ; sinon le tri choisi s'applique à tous les titres.
+  const byRelevance = (pages ?? []).flatMap((page) => page.titles);
   const titles =
-    order.sort === 'relevance' && !order.reversed ? byType : sortResults(byType, order);
+    order.sort === 'relevance' && !order.reversed ? byRelevance : sortResults(byRelevance, order);
   titles.forEach((title) => push({ kind: 'title', key: title.id, title }));
   for (const page of pages ?? []) {
     page.people.forEach((person) => push({ kind: 'person', key: `person-${person.id}`, person }));

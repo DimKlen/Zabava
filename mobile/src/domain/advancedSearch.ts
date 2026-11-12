@@ -1,5 +1,5 @@
 /** Recherche avancée — specs/docs/08 §8.2 (prototype : `advDefault`, `A.advFilter`). */
-import { currentLanguage, t } from '@/i18n';
+import { t } from '@/i18n';
 import { tPlural } from '@/lib/plural';
 
 import type { MediaType } from './types';
@@ -62,8 +62,6 @@ export const DEFAULT_YEAR_FROM = 1990;
 /** Autocomplétion des acteurs : à partir de 2 caractères, 4 suggestions au plus. */
 export const ACTOR_QUERY_MIN = 2;
 export const MAX_ACTOR_SUGGESTIONS = 4;
-/** Délai du compteur « Voir les N résultats ». */
-export const COUNT_DEBOUNCE_MS = 250;
 
 export function defaultFilters(now: Date): AdvancedFilters {
   return {
@@ -102,15 +100,6 @@ export function setYears(
 
 export function yearsLabel(filters: AdvancedFilters): string {
   return `${filters.yearFrom} – ${filters.yearTo}`;
-}
-
-/** Texte du bouton du pied de la sheet. */
-export function countButtonLabel(count: number): string {
-  if (count > 1) {
-    return t('common.results.seeMany', { count: count.toLocaleString(currentLanguage()) });
-  }
-  if (count === 1) return t('common.results.seeOne');
-  return t('common.results.none');
 }
 
 export type DiscoverQueryParams = {

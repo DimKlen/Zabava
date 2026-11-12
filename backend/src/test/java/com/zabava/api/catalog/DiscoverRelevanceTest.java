@@ -27,4 +27,16 @@ class DiscoverRelevanceTest {
 
         assertThat(titles).extracting(TitleLite::id).containsExactly("movie-3", "movie-2", "movie-1", "movie-4");
     }
+
+    @Test
+    void serieConnueAvantUnFilmQuiContientSeulementLaRequete() {
+        List<TitleLite> titles = new ArrayList<>(List.of(
+                title("movie-1", "Rookie of the Year", 90.0),
+                title("movie-2", "The Rookie Cop", 3.0),
+                title("tv-1", "The Rookie : Le flic de Los Angeles", 400.0)));
+
+        titles.sort(DiscoverService.byRelevance("the rookie"));
+
+        assertThat(titles).extracting(TitleLite::id).containsExactly("tv-1", "movie-2", "movie-1");
+    }
 }
