@@ -114,7 +114,7 @@ export function SeriesScreen({
         id={id}
         title={series?.title ?? preview?.title ?? ''}
         posterPath={series?.posterPath ?? preview?.posterPath}
-        backdropPath={series?.backdropPath}
+        backdropPath={series?.backdropPath ?? preview?.backdropPath}
         meta={
           series
             ? seriesMeta(series.year, seriesPlatform(series, myProviderIds), series.status)

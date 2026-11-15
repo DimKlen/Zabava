@@ -88,6 +88,24 @@ describe('chargement', () => {
     expect(screen.queryByTestId('title-skeleton')).toBeNull();
     expect(screen.getByText('Ajouter à ma liste')).toBeTruthy();
   });
+
+  it('image de fond connue par la liste : affichée avant l’arrivée de la fiche', async () => {
+    const preview = {
+      type: 'movie' as const,
+      tmdbId: 1,
+      title: base.title,
+      backdropPath: '/fond.jpg',
+    };
+    await render(
+      <SafeAreaProvider initialMetrics={metrics}>
+        <MovieScreen id="movie-1" preview={preview} />
+      </SafeAreaProvider>,
+    );
+    expect(screen.getByTestId('title-skeleton')).toBeTruthy();
+    expect(
+      screen.getByTestId('title-backdrop', { includeHiddenElements: true }).props.source,
+    ).toEqual([{ uri: 'https://image.tmdb.org/t/p/w780/fond.jpg' }]);
+  });
 });
 
 describe('MovieScreen', () => {

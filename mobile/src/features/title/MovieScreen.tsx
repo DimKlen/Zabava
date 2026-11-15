@@ -51,7 +51,7 @@ export function MovieScreen({ id, preview, movie, failure }: Props) {
         id={id}
         title={movie?.title ?? preview?.title ?? ''}
         posterPath={movie?.posterPath ?? preview?.posterPath}
-        backdropPath={movie?.backdropPath}
+        backdropPath={movie?.backdropPath ?? preview?.backdropPath}
         meta={movie ? movieMeta(movie) : ''}
         genres={movie?.genres ?? []}
         loading={!movie}
