@@ -52,7 +52,12 @@ export const DEFAULT_COLLAPSED: Readonly<Partial<Record<SeriesSection, boolean>>
   abandoned: true,
 };
 
-export type SeriesEntry<T extends LibrarySeries = LibrarySeries> = { series: T; info: SeriesInfo };
+export type SeriesEntry<T extends LibrarySeries = LibrarySeries> = {
+  series: T;
+  info: SeriesInfo;
+  /** Animé sans épisode à voir (à jour, ou pas encore sorti) : ligne grisée en bas de À regarder. */
+  waiting?: boolean;
+};
 
 export type SeriesGroup<T extends LibrarySeries = LibrarySeries> = {
   key: SeriesSection;
@@ -103,6 +108,51 @@ export function filterSeries<T extends LibrarySeries>(
 
 const time = (iso: string) => new Date(iso).getTime();
 
+/**
+ * Animés (retours du 2026-11-15) : ni « Pas encore commencées » ni « À jour ». Un animé non
+ * commencé dont un épisode est sorti est une carte de À regarder (S01 E01) ; sans épisode à voir
+ * (à jour, ou pas encore sorti), il passe en ligne grisée sous les cartes de À regarder.
+ */
+function animeEntry<T extends LibrarySeries>(
+  section: SeriesSection,
+  entry: SeriesEntry<T>,
+): [SeriesSection, SeriesEntry<T>] {
+  if (section === 'uptodate') return ['watch', { ...entry, waiting: true }];
+  if (section === 'notstarted') {
+    return ['watch', entry.info.next ? entry : { ...entry, waiting: true }];
+  }
+  return [section, entry];
+}
+
+/** Ligne grisée : prochaine diffusion la plus proche d'abord, puis les animés sans date. */
+function nextAirTime(entry: SeriesEntry): number {
+  const date = entry.info.upcoming ? episodeAirDate(entry.info.upcoming) : undefined;
+  return date?.getTime() ?? Number.POSITIVE_INFINITY;
+}
+
+function sortEntries<T extends LibrarySeries>(
+  entries: SeriesEntry<T>[],
+  kind: SectionKind,
+): SeriesEntry<T>[] {
+  if (kind !== 'cards') {
+    return entries.sort(
+      (a, b) => time(b.series.userTitle.addedAt) - time(a.series.userTitle.addedAt),
+    );
+  }
+  // Cartes : dernier visionnage le plus récent, les non commencées ensuite (ajout le plus récent).
+  const cards = entries
+    .filter((entry) => !entry.waiting)
+    .sort(
+      (a, b) =>
+        (b.info.lastWatchedAt ?? 0) - (a.info.lastWatchedAt ?? 0) ||
+        time(b.series.userTitle.addedAt) - time(a.series.userTitle.addedAt),
+    );
+  const waiting = entries
+    .filter((entry) => entry.waiting)
+    .sort((a, b) => nextAirTime(a) - nextAirTime(b));
+  return [...cards, ...waiting];
+}
+
 /** Sections non vides, dans l'ordre de la spec, avec leur tri. */
 export function groupSeries<T extends LibrarySeries>(
   list: readonly T[],
@@ -111,23 +161,19 @@ export function groupSeries<T extends LibrarySeries>(
   const groups = new Map<SeriesSection, SeriesEntry<T>[]>();
   for (const series of list) {
     const info = seriesInfo(series.episodes, now);
+    const anime = series.type === 'anime';
     // TMDB marque « terminée » des animés dont la suite est annoncée plus tard : on ne les
     // range jamais dans Terminées, pour ne rien promettre ni dans un sens ni dans l'autre.
-    const ended = series.type === 'anime' ? false : series.ended;
-    const key = seriesSection(series.userTitle, info, ended, now);
-    if (key) groups.set(key, [...(groups.get(key) ?? []), { series, info }]);
+    const section = seriesSection(series.userTitle, info, anime ? false : series.ended, now);
+    if (!section) continue;
+    const [key, entry] = anime
+      ? animeEntry(section, { series, info })
+      : [section, { series, info }];
+    groups.set(key, [...(groups.get(key) ?? []), entry]);
   }
   return SERIES_SECTIONS.flatMap(({ key, title, kind }) => {
     const entries = groups.get(key);
-    if (!entries) return [];
-    const sorted =
-      kind === 'cards'
-        ? // Dernier visionnage, le plus récent en premier.
-          entries.sort((a, b) => (b.info.lastWatchedAt ?? 0) - (a.info.lastWatchedAt ?? 0))
-        : entries.sort(
-            (a, b) => time(b.series.userTitle.addedAt) - time(a.series.userTitle.addedAt),
-          );
-    return [{ key, title, kind, entries: sorted }];
+    return entries ? [{ key, title, kind, entries: sortEntries(entries, kind) }] : [];
   });
 }
 
