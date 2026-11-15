@@ -194,6 +194,12 @@ class SearchAndListsIT extends IntegrationTest {
                 .andExpect(jsonPath("$[0].releaseTheatrical").value("2026-10-20"))
                 .andExpect(jsonPath("$[0].availability.sub[0].name").value("Netflix"))
                 .andExpect(jsonPath("$[0].availability.rent[0].name").value("Apple TV"))
+                // Badge allégé : ni achat, ni lien, ni logo (la fiche garde ses offres complètes).
+                .andExpect(jsonPath("$[0].availability.buy", hasSize(0)))
+                .andExpect(jsonPath("$[0].availability.link").doesNotExist())
+                .andExpect(jsonPath("$[0].availability.sub[0].link").doesNotExist())
+                .andExpect(jsonPath("$[0].availability.sub[0].logoPath").doesNotExist())
+                .andExpect(jsonPath("$[0].availability.sub[0].shortName").exists())
                 .andExpect(jsonPath("$[1].network").value("FX"))
                 .andExpect(jsonPath("$[1].ended").value(false))
                 .andExpect(jsonPath("$[1].availability.sub[0].name").value("Disney Plus"));

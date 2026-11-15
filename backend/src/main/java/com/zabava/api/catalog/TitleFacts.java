@@ -16,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.zabava.api.catalog.dto.CatalogDtos.Availability;
+import com.zabava.api.catalog.dto.CatalogDtos.Provider;
 import com.zabava.api.catalog.dto.CatalogDtos.TitleBadge;
 import com.zabava.api.catalog.dto.CatalogDtos.TitleLite;
 import com.zabava.api.common.Json;
@@ -61,10 +63,25 @@ public class TitleFacts {
                     ref.toString(),
                     byRegion.getOrDefault(region, Map.of()).get("salle"),
                     TitleService.digitalRelease(byRegion, region).date(),
-                    TitleService.availability(d),
+                    forBadge(TitleService.availability(d)),
                     movie ? null : TitleService.network(d),
                     movie ? null : TitleService.isEnded(Json.text(d, "status")));
         });
+    }
+
+    /**
+     * Offres d'un badge d'affiche, allégées : l'affiche ne lit que l'abonnement et la location
+     * (plateforme, « sur mes plateformes »), jamais l'achat, les liens ni les logos. Une page de
+     * Découvrir passe de ~200 à ~40 Ko ; la fiche garde ses offres complètes (« Où regarder »).
+     */
+    static Availability forBadge(Availability full) {
+        return new Availability(slim(full.sub()), slim(full.rent()), List.of(), null);
+    }
+
+    private static List<Provider> slim(List<Provider> providers) {
+        return providers.stream()
+                .map(p -> new Provider(p.id(), p.name(), p.shortName(), null, null, p.countries()))
+                .toList();
     }
 
     /** Titres complétés par leurs données de badge (titre sans fiche TMDB : sans badge). */
