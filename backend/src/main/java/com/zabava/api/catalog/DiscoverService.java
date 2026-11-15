@@ -57,6 +57,8 @@ public class DiscoverService {
     public record DiscoverQuery(
             List<MediaType> types,
             List<String> genres,
+            /** Sous-genres et ambiances ({@link Themes}) : au moins un de leurs mots-clés (OU). */
+            List<String> themes,
             List<Integer> cast,
             Integer yearFrom,
             Integer yearTo,
@@ -321,6 +323,7 @@ public class DiscoverService {
             p.put("vote_average.gte", String.valueOf(q.minRating()));
             p.put("vote_count.gte", "50");
         }
+        if (!q.themes().isEmpty()) p.put("with_keywords", join(Themes.keywordIds(q.themes()), "|"));
         if (q.lang() != null) p.put("with_original_language", q.lang());
         if (q.studio() != null) p.put("with_companies", String.valueOf(q.studio()));
         if (q.maxRuntime() != null) p.put("with_runtime.lte", String.valueOf(q.maxRuntime()));

@@ -1680,6 +1680,7 @@ export interface operations {
       query?: {
         type?: string;
         genres?: string;
+        themes?: string;
         cast?: string;
         yearFrom?: number;
         yearTo?: number;
@@ -1715,6 +1716,7 @@ export interface operations {
       query?: {
         type?: string;
         genres?: string;
+        themes?: string;
         cast?: string;
         yearFrom?: number;
         yearTo?: number;
