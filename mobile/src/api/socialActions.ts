@@ -21,7 +21,7 @@ import { queryClient } from './queryClient';
 import { userKey, type Page, type UserProfile } from './social';
 
 /** Requêtes où un membre peut apparaître (profils, listes, recherche, fil, fiches). */
-const MEMBER_ROOTS = new Set(['user', 'members', 'recentProfiles', 'feed', 'title']);
+const MEMBER_ROOTS = new Set(['user', 'members', 'recentProfiles', 'title']);
 
 const isMemberQuery = ({ queryKey }: { queryKey: QueryKey }) =>
   MEMBER_ROOTS.has(String(queryKey[0]));
@@ -109,11 +109,10 @@ function reloadMyFollowing(): void {
   if (me) void queryClient.invalidateQueries({ queryKey: ['user', me, 'friends'] });
 }
 
-/** Après un changement de suivi : fil et blocs des fiches à recharger. */
+/** Après un changement de suivi : blocs sociaux des fiches à recharger. */
 function invalidateSocial(): void {
   void queryClient.invalidateQueries({
-    predicate: ({ queryKey }) =>
-      queryKey[0] === 'feed' || (queryKey[0] === 'title' && queryKey.at(-1) === 'social'),
+    predicate: ({ queryKey }) => queryKey[0] === 'title' && queryKey.at(-1) === 'social',
   });
 }
 

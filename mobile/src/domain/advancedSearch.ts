@@ -2,6 +2,7 @@
 import { t } from '@/i18n';
 import { tPlural } from '@/lib/plural';
 
+import type { ThemeKey } from './themes';
 import type { MediaType } from './types';
 
 export type GenreKey =
@@ -162,11 +163,19 @@ export const GENRE_SORTS: readonly { key: AdvancedSort; label: string }[] = [
 /** Chip « Note 7+ ». */
 export const GENRE_MIN_RATING = 7;
 
-/** Paramètres de `GET /discover` pour la liste d'un genre. */
-export function genreQuery(type: MediaType, genre: GenreKey, filters: GenreFilters) {
+/**
+ * Paramètres de `GET /discover` pour la liste d'un genre, d'un de ses sous-genres, ou d'une
+ * ambiance (sans genre).
+ */
+export function genreQuery(
+  type: MediaType,
+  category: { genre?: GenreKey; theme?: ThemeKey },
+  filters: GenreFilters,
+) {
   return {
     type,
-    genres: genre,
+    genres: category.genre,
+    themes: category.theme,
     sort: filters.sort,
     providers: filters.mine ? ('mine' as const) : undefined,
     minRating: filters.minRating > 0 ? filters.minRating : undefined,

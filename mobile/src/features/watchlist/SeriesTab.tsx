@@ -80,7 +80,9 @@ export function SeriesTab({ type }: { type: 'tv' | 'anime' }) {
   const now = new Date();
   const named = filterByName(watchlist.data, query);
   const groups = groupSeries(filterSeries(named, filter, myProviderIds, now), now);
-  const hasCards = groups.some((group) => group.key === 'watch');
+  const hasCards = groups.some(
+    (group) => group.key === 'watch' && group.entries.some((entry) => !entry.waiting),
+  );
 
   // Section repliée : son en-tête seul. Carrousel « Pas encore commencées » : un seul élément.
   const sections: Section[] = groups.map((group) => ({
@@ -172,7 +174,8 @@ function SectionItem({
   spoilerProtection: boolean;
 }) {
   if (!('series' in item)) return <NotStartedCarousel entries={item.entries} />;
-  const cards = group.kind === 'cards';
+  // Animé en attente : ligne grisée sous les cartes de À regarder.
+  const cards = group.kind === 'cards' && !item.waiting;
   const gap = first ? 4 : cards ? 8 : 4;
   return (
     <View style={[styles.item, { paddingTop: gap }]}>

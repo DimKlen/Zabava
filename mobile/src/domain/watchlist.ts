@@ -1,5 +1,6 @@
 /** Ma liste › Films : segments, filtres et tris — specs/docs/06 (`vals()` › watchlist). */
 import { currentLanguage, t, type MessageKey } from '@/i18n';
+import { tPlural } from '@/lib/plural';
 
 import { isOnMyPlatforms, movieState, type MovieAvailability } from './availability';
 import { parseLocalDate } from './dates';
@@ -166,9 +167,9 @@ export function sortWatched<T extends LibraryMovie>(films: readonly T[]): T[] {
   return [...films].sort((a, b) => time(b.userTitle.watchedAt) - time(a.userTitle.watchedAt));
 }
 
-/** « 1 film » / « {n} films · appui long pour plus d'options ». */
+/** « 1 film » / « {n} films », dans la langue de l'app. */
 export function filmCountLabel(count: number): string {
-  return `${count} ${count > 1 ? 'films' : 'film'} · appui long pour plus d'options`;
+  return tPlural('common.genreCount.movie', count);
 }
 
 /** Texte comparable : minuscules, sans accents ni ponctuation, espaces simples. */

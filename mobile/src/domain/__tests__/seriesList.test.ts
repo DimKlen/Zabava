@@ -31,11 +31,13 @@ describe('filterSeries', () => {
 });
 
 describe('groupSeries', () => {
-  it('un animé « terminé » selon TMDB reste dans À jour, jamais dans Terminées', () => {
+  it('un animé « terminé » selon TMDB n’est jamais dans Terminées : ligne grisée de À regarder', () => {
     const andor = protoSeries('andor');
     expect(groupSeries([andor], TODAY).map((g) => g.key)).toEqual(['done']);
     const anime = { ...andor, type: 'anime' as const };
-    expect(groupSeries([anime], TODAY).map((g) => g.key)).toEqual(['uptodate']);
+    const groups = groupSeries([anime], TODAY);
+    expect(groups.map((g) => g.key)).toEqual(['watch']);
+    expect(groups[0]?.entries[0]?.waiting).toBe(true);
   });
 
   it('Séries du prototype : sections dans l’ordre, vides absentes', () => {
@@ -50,13 +52,46 @@ describe('groupSeries', () => {
     ]);
   });
 
-  it('Animés du prototype', () => {
+  it('Animés du prototype : ni « Pas encore commencées » ni « À jour », tout dans À regarder', () => {
     const groups = groupSeries(PROTOTYPE_ANIME, TODAY);
-    expect(groups.map((g) => [g.key, g.entries.map((e) => e.series.title)])).toEqual([
-      // Comme la capture 09 : Dandadan (tout vu, saison en cours) est À jour.
-      ['watch', ['Frieren', 'Jujutsu Kaisen']],
-      ['notstarted', ['Spy × Family']],
-      ['uptodate', ['Dandadan', 'Solo Leveling']],
+    expect(
+      groups.map((g) => [
+        g.key,
+        g.entries.map((e) => `${e.series.title}${e.waiting ? ' (grisé)' : ''}`),
+      ]),
+    ).toEqual([
+      // Spy × Family, jamais commencé, devient une carte (S01 E01) après les animés en cours ;
+      // Dandadan et Solo Leveling, à jour, sont grisés en dessous.
+      [
+        'watch',
+        ['Frieren', 'Jujutsu Kaisen', 'Spy × Family', 'Dandadan (grisé)', 'Solo Leveling (grisé)'],
+      ],
+    ]);
+    const spy = groups[0]?.entries.find((e) => e.series.title === 'Spy × Family');
+    expect([spy?.info.next?.season, spy?.info.next?.number]).toEqual([1, 1]);
+  });
+
+  it('animé pas encore sorti : ligne grisée, la diffusion la plus proche d’abord', () => {
+    const base = protoSeries('spy');
+    const future = (id: string, airDate: string) => ({
+      ...base,
+      id,
+      title: id,
+      type: 'anime' as const,
+      episodes: [{ id: 1, season: 1, number: 1, airDate }],
+    });
+    const groups = groupSeries(
+      [future('tard', '2099-05-01'), future('bientôt', '2099-01-01')],
+      TODAY,
+    );
+    expect(groups.map((g) => [g.key, g.entries.map((e) => [e.series.title, e.waiting])])).toEqual([
+      [
+        'watch',
+        [
+          ['bientôt', true],
+          ['tard', true],
+        ],
+      ],
     ]);
   });
 

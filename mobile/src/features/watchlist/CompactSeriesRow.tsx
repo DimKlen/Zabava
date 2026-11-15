@@ -5,7 +5,7 @@ import { Poster } from '@/components/Poster';
 import { Text } from '@/components/Text';
 import type { SeriesSection } from '@/domain/series';
 import { compactRowLabel, type SeriesEntry } from '@/domain/seriesList';
-import { colors, radii } from '@/theme/tokens';
+import { colors, opacity, radii } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
 import { openSeries } from './openSeries';
@@ -13,8 +13,11 @@ import { pressTitle, previewOf } from '../title/openTitle';
 
 type Props = { entry: SeriesEntry; section: SeriesSection };
 
-/** Ligne compacte (À jour, Terminées, Abandonnées) : affiche 44, nom, libellé, chevron. */
-export function CompactSeriesRow({ entry: { series, info }, section }: Props) {
+/**
+ * Ligne compacte (À jour, Terminées, Abandonnées) : affiche 44, nom, libellé, chevron. Un animé en
+ * attente (`waiting`, dans À regarder) est grisé : rien à voir pour l'instant, la fiche reste ouvrable.
+ */
+export function CompactSeriesRow({ entry: { series, info, waiting }, section }: Props) {
   const label = compactRowLabel(section, info);
   return (
     <Pressable
@@ -22,7 +25,7 @@ export function CompactSeriesRow({ entry: { series, info }, section }: Props) {
       accessibilityLabel={`${series.title}, ${label}`}
       onPress={() => openSeries(series, undefined, 'w185')}
       onPressIn={() => pressTitle(previewOf(series, 'w185'))}
-      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.row, waiting && styles.waiting, pressed && styles.pressed]}
     >
       {/* Affiche décorative : le tap revient à la ligne. */}
       <View pointerEvents="none">
@@ -45,6 +48,9 @@ const styles = StyleSheet.create({
     padding: 6,
     marginHorizontal: -6,
     borderRadius: radii.rMd,
+  },
+  waiting: {
+    opacity: opacity.disabled,
   },
   pressed: {
     backgroundColor: colors.surface,

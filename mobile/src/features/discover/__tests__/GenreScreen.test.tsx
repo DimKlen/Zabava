@@ -3,6 +3,8 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { api } from '@/api/http';
+import type { GenreKey } from '@/domain/advancedSearch';
+import type { ThemeKey } from '@/domain/themes';
 
 import { GenreScreen } from '../GenreScreen';
 
@@ -35,12 +37,14 @@ beforeEach(() => {
   });
 });
 
-async function renderGenre() {
+type Category = { genre: GenreKey; mood?: never } | { genre?: never; mood: ThemeKey };
+
+async function renderGenre(category: Category = { genre: 'animation' }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   await render(
     <SafeAreaProvider initialMetrics={METRICS}>
       <QueryClientProvider client={client}>
-        <GenreScreen type="movie" genre="animation" />
+        <GenreScreen type="movie" {...category} />
       </QueryClientProvider>
     </SafeAreaProvider>,
   );
@@ -63,4 +67,28 @@ it('liste par genre : plus récents par défaut, puis tri et filtres', async () 
   });
   expect(screen.getByRole('button', { name: 'Note 7+', selected: true })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Plus récents', selected: false })).toBeTruthy();
+});
+
+it('sous-genres : « Tout », puis un sous-genre ajoute ses mots-clés au genre', async () => {
+  await renderGenre({ genre: 'action' });
+  expect(await screen.findByText('1 film')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Tout', selected: true })).toBeTruthy();
+  expect(discoverCalls()[0]).toMatchObject({ genres: 'action', themes: undefined });
+
+  await fireEvent.press(screen.getByText('Braquage'));
+  expect(discoverCalls().at(-1)).toMatchObject({ genres: 'action', themes: 'braquage' });
+  expect(screen.getByRole('button', { name: 'Braquage', selected: true })).toBeTruthy();
+
+  // Retour à « Tout » : la liste du genre revient du cache, sans nouvel appel.
+  const calls = discoverCalls().length;
+  await fireEvent.press(screen.getByText('Tout'));
+  expect(screen.getByRole('button', { name: 'Tout', selected: true })).toBeTruthy();
+  expect(discoverCalls()).toHaveLength(calls);
+});
+
+it('ambiance : son nom en titre, sans genre ni rangée de sous-genres', async () => {
+  await renderGenre({ mood: 'boucle-temporelle' });
+  expect(await screen.findByText('Boucle temporelle')).toBeTruthy();
+  expect(screen.queryByTestId('subgenres')).toBeNull();
+  expect(discoverCalls()[0]).toMatchObject({ genres: undefined, themes: 'boucle-temporelle' });
 });

@@ -66,9 +66,10 @@ const posterTitles = () =>
   screen.getAllByTestId('poster').map((poster) => poster.props.accessibilityLabel as string);
 
 describe('FilmsTab', () => {
-  it('affiche les films À voir, avec la ligne d’aide et les badges', async () => {
+  it('affiche les films À voir, le nombre de films sans « appui long », et les badges', async () => {
     await renderTab();
-    expect(screen.getByText("9 films · appui long pour plus d'options")).toBeTruthy();
+    expect(screen.getByText('9 films')).toBeTruthy();
+    expect(screen.queryByText(/appui long/)).toBeNull();
     expect(posterTitles()[0]).toBe('Dune : Troisième partie');
     // Dune 3 et Avengers sortent le même jour ; « Au cinéma » est aussi un filtre.
     expect(screen.getAllByText('18 déc.')).toHaveLength(2);
@@ -188,6 +189,6 @@ describe('FilmsTab', () => {
     await first.unmount();
 
     await render(<FilmsTab />);
-    expect(screen.getByText("9 films · appui long pour plus d'options")).toBeTruthy();
+    expect(screen.getByText('9 films')).toBeTruthy();
   });
 });

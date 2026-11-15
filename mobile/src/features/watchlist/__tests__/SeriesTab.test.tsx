@@ -1,10 +1,12 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import { StyleSheet } from 'react-native';
 
 import { setEpisodesWatched } from '@/api/libraryActions';
-import { PROTOTYPE_TV, protoSeries } from '@/domain/__fixtures__/prototypeSeries';
+import { PROTOTYPE_ANIME, PROTOTYPE_TV, protoSeries } from '@/domain/__fixtures__/prototypeSeries';
 import { DEFAULT_COLLAPSED, type LibrarySeries } from '@/domain/seriesList';
 import { useUiStore } from '@/store/ui';
+import { opacity } from '@/theme/tokens';
 
 import { SeriesTab } from '../SeriesTab';
 
@@ -136,6 +138,20 @@ describe('SeriesTab', () => {
 
     await renderTab('anime');
     expect(screen.getByText('Aucun animé suivi')).toBeTruthy();
+  });
+
+  it('Animés : une seule section À regarder, carte S01 E01 pour un non commencé, à jour grisé', async () => {
+    mockSeries = PROTOTYPE_ANIME;
+    await renderTab('anime');
+    expect(screen.getByText('À regarder')).toBeTruthy();
+    expect(screen.queryByText('Pas encore commencées')).toBeNull();
+    expect(screen.queryByText('À jour')).toBeNull();
+    expect(screen.queryByText('Commencer')).toBeNull();
+    // Spy × Family, jamais commencé : carte sur le premier épisode.
+    expect(screen.getByText(/^S01 E01 · /)).toBeTruthy();
+    // Dandadan, à jour : ligne grisée (opacité « désactivé ») sous les cartes.
+    const dandadan = screen.getByRole('button', { name: /^Dandadan, / });
+    expect(StyleSheet.flatten(dandadan.props.style).opacity).toBe(opacity.disabled);
   });
 
   it('pas de ligne d’aide sans carte « À regarder »', async () => {

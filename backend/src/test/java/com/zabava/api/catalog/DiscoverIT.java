@@ -156,6 +156,34 @@ class DiscoverIT extends IntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    /** Sous-genre dans un genre : le genre ET au moins un mot-clé du sous-genre (OU entre eux). */
+    @Test
+    void sousGenreEnMotsClesAvecLeGenre() throws Exception {
+        WIREMOCK.stubFor(get(urlPathEqualTo("/tmdb/discover/movie")).willReturn(okJson("{\"total_results\": 0, \"results\": []}")));
+        mvc.perform(as(user, MockMvcRequestBuilders.get("/api/v1/discover?type=movie&genres=action&themes=braquage")))
+                .andExpect(status().isOk());
+        WIREMOCK.verify(getRequestedFor(urlPathEqualTo("/tmdb/discover/movie"))
+                .withQueryParam("with_genres", equalTo("28"))
+                .withQueryParam("with_keywords", equalTo("10051|191845|250043")));
+    }
+
+    /** Ambiance seule (sans genre), pour un animé : Animation japonaise ET le mot-clé. */
+    @Test
+    void ambianceSurLesAnimes() throws Exception {
+        WIREMOCK.stubFor(get(urlPathEqualTo("/tmdb/discover/tv")).willReturn(okJson("{\"total_results\": 0, \"results\": []}")));
+        mvc.perform(as(user, MockMvcRequestBuilders.get("/api/v1/discover?type=anime&themes=boucle-temporelle")))
+                .andExpect(status().isOk());
+        WIREMOCK.verify(getRequestedFor(urlPathEqualTo("/tmdb/discover/tv"))
+                .withQueryParam("with_genres", equalTo("16"))
+                .withQueryParam("with_keywords", equalTo("10854")));
+    }
+
+    @Test
+    void themeInconnuRefuse() throws Exception {
+        mvc.perform(as(user, MockMvcRequestBuilders.get("/api/v1/discover?themes=western-spaghetti")))
+                .andExpect(status().isBadRequest());
+    }
+
     /** Deux acteurs choisis : seuls les titres où ils jouent ensemble (specs/docs/08 §8.2). */
     @Test
     void acteursEnsemble() throws Exception {

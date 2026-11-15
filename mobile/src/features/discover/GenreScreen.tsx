@@ -18,6 +18,7 @@ import {
   type GenreFilters,
   type GenreKey,
 } from '@/domain/advancedSearch';
+import { SUBGENRES, themeLabel, type ThemeKey } from '@/domain/themes';
 import type { MediaType } from '@/domain/types';
 import { useT } from '@/i18n';
 import { goBack } from '@/lib/navigation';
@@ -28,14 +29,21 @@ import { CatalogPoster } from '../catalog/CatalogPoster';
 import { GridSkeleton, GridFooter } from '../catalog/GridSkeleton';
 import { useLibraryMembership, useMyProviderIds } from '../catalog/useLibraryMembership';
 
-type Props = { type: MediaType; genre: GenreKey };
+/** Un genre (avec ses sous-genres), ou une ambiance de « Par ambiance ». */
+type Props = { type: MediaType } & (
+  { genre: GenreKey; mood?: never } | { genre?: never; mood: ThemeKey }
+);
 
-/** Liste par genre (specs/docs/07 §7.4) : tri et filtres, plus récents d'abord, chargement infini. */
-export function GenreScreen({ type, genre }: Props) {
+/**
+ * Liste par genre (specs/docs/07 §7.4) ou par ambiance : sous-genres (genre seulement), tri et
+ * filtres, plus récents d'abord, chargement infini.
+ */
+export function GenreScreen({ type, genre, mood }: Props) {
   const { t } = useT();
   const insets = useSafeAreaInsets();
   const [filters, setFilters] = useState<GenreFilters>(DEFAULT_GENRE_FILTERS);
-  const query = useGenreTitles(type, genre, filters);
+  const [subgenre, setSubgenre] = useState<ThemeKey | undefined>(undefined);
+  const query = useGenreTitles(type, { genre, theme: mood ?? subgenre }, filters);
   const isInList = useLibraryMembership();
   const myProviderIds = useMyProviderIds();
   const titles = flattenPages(query.data?.pages);
@@ -55,13 +63,14 @@ export function GenreScreen({ type, genre }: Props) {
         />
         <View>
           <Text accessibilityRole="header" style={styles.title}>
-            {genreLabel(genre)}
+            {genre ? genreLabel(genre) : themeLabel(mood)}
           </Text>
           {total !== undefined ? (
             <Text style={styles.count}>{genreCountLabel(total, type)}</Text>
           ) : null}
         </View>
       </View>
+      {genre ? <SubgenreChips genre={genre} selected={subgenre} onChange={setSubgenre} /> : null}
       <GenreFilterChips filters={filters} onChange={setFilters} />
       {showsLoadError(query) ? (
         <LoadError onRetry={() => void query.refetch()} />
@@ -96,6 +105,42 @@ export function GenreScreen({ type, genre }: Props) {
         />
       )}
     </View>
+  );
+}
+
+/** « Tout » puis les sous-genres du genre (un seul actif). */
+function SubgenreChips({
+  genre,
+  selected,
+  onChange,
+}: {
+  genre: GenreKey;
+  selected: ThemeKey | undefined;
+  onChange: (subgenre: ThemeKey | undefined) => void;
+}) {
+  const { t } = useT();
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.chips}
+      style={styles.chipsRow}
+      testID="subgenres"
+    >
+      <Chip
+        label={t('discover.subgenre.all')}
+        active={selected === undefined}
+        onPress={() => onChange(undefined)}
+      />
+      {SUBGENRES[genre].map((key) => (
+        <Chip
+          key={key}
+          label={themeLabel(key)}
+          active={selected === key}
+          onPress={() => onChange(key)}
+        />
+      ))}
+    </ScrollView>
   );
 }
 

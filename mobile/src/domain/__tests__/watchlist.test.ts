@@ -110,8 +110,8 @@ describe('sortFilms', () => {
 
 describe('filmCountLabel', () => {
   it('accorde au singulier et au pluriel', () => {
-    expect(filmCountLabel(1)).toBe("1 film · appui long pour plus d'options");
-    expect(filmCountLabel(9)).toBe("9 films · appui long pour plus d'options");
+    expect(filmCountLabel(1)).toBe('1 film');
+    expect(filmCountLabel(9)).toBe('9 films');
   });
 });
 

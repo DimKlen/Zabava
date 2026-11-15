@@ -10,6 +10,7 @@ import {
 } from '@/domain/advancedSearch';
 import type { DiscoverList } from '@/domain/discover';
 import type { PersonRole } from '@/domain/person';
+import type { ThemeKey } from '@/domain/themes';
 import type { MediaType } from '@/domain/types';
 
 import { toBadgeData, type BadgeData } from './badges';
@@ -111,9 +112,16 @@ export function discoverListQuery(list: DiscoverList, type: MediaType) {
   });
 }
 
-/** Liste par genre, triée et filtrée (le plus récent d'abord par défaut), chargement infini. */
-export function useGenreTitles(type: MediaType, genre: GenreKey, filters: GenreFilters) {
-  return useDiscoverPages(genreQuery(type, genre, filters), type);
+/**
+ * Liste d'un genre, d'un sous-genre ou d'une ambiance, triée et filtrée (le plus récent d'abord par
+ * défaut), chargement infini.
+ */
+export function useGenreTitles(
+  type: MediaType,
+  category: { genre?: GenreKey; theme?: ThemeKey },
+  filters: GenreFilters,
+) {
+  return useDiscoverPages(genreQuery(type, category, filters), type);
 }
 
 /** Animés d'un studio, par pertinence (popularité), chargement infini. */

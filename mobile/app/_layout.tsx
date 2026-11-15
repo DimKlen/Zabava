@@ -81,10 +81,10 @@ export default function RootLayout() {
             <Stack.Screen name="title/[type]/[id]" options={pushOptions} />
             <Stack.Screen name="person/[id]" options={pushOptions} />
             <Stack.Screen name="genre/[type]/[genre]" options={pushOptions} />
+            <Stack.Screen name="theme/[type]/[theme]" options={pushOptions} />
             <Stack.Screen name="studio/[id]" options={pushOptions} />
             <Stack.Screen name="u/[username]/index" options={pushOptions} />
             <Stack.Screen name="u/[username]/friends" options={pushOptions} />
-            <Stack.Screen name="feed" options={pushOptions} />
             <Stack.Screen
               name="scan"
               options={{ presentation: 'fullScreenModal', animation: 'fade' }}
