@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 
 import { prefetchTitle } from '@/api/titles';
@@ -5,6 +6,7 @@ import { prefetchTitle } from '@/api/titles';
 import { openTitle, pressTitle, previewOf, titlePreview } from '../openTitle';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+jest.mock('expo-image', () => ({ Image: { prefetch: jest.fn(() => Promise.resolve(true)) } }));
 jest.mock('@/api/titles', () => ({ prefetchTitle: jest.fn() }));
 
 beforeEach(() => jest.clearAllMocks());
@@ -29,6 +31,7 @@ it('ouvre la fiche et garde ce que la liste savait du titre', () => {
     title: 'Dune',
     posterPath: undefined,
     year: 2021,
+    backdropPath: undefined,
     posterSize: 'w342',
   });
 });
@@ -45,6 +48,17 @@ it('le début de l’appui précharge la fiche', () => {
   pressTitle(previewOf(dune, 'w92'));
   expect(prefetchTitle).toHaveBeenCalledWith('movie', 438631);
   expect(titlePreview('movie-438631')?.posterSize).toBe('w92');
+  // Sans image de fond connue, rien à précharger.
+  expect(Image.prefetch).not.toHaveBeenCalled();
+});
+
+it('le début de l’appui précharge aussi l’image de fond de la fiche, à la taille de l’en-tête', () => {
+  pressTitle(previewOf({ ...dune, backdropPath: '/fond.jpg' }, 'w342'));
+  expect(Image.prefetch).toHaveBeenCalledWith(
+    'https://image.tmdb.org/t/p/w780/fond.jpg',
+    'memory-disk',
+  );
+  expect(titlePreview('movie-438631')?.backdropPath).toBe('/fond.jpg');
 });
 
 it('ne garde que les 50 aperçus les plus récents', () => {

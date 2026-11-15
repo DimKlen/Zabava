@@ -15,7 +15,7 @@ import { goBack } from '@/lib/navigation';
 import { colors, durations } from '@/theme/tokens';
 import { typography } from '@/theme/typography';
 
-import { titlePreview } from './openTitle';
+import { BACKDROP_SIZE, titlePreview } from './openTitle';
 import { HeaderTextSkeleton } from './TitleSkeleton';
 
 type Props = {
@@ -51,7 +51,7 @@ export function TitleHeader({
 }: Props) {
   const { t } = useT();
   const insets = useSafeAreaInsets();
-  const backdrop = tmdbImage(backdropPath, 'w780');
+  const backdrop = tmdbImage(backdropPath, BACKDROP_SIZE);
   // Affiche déjà chargée par la liste d'où vient l'utilisateur (recherche, À venir : w92).
   const listSize = titlePreview(id)?.posterSize;
   const placeholderSize = listSize === 'w92' || listSize === 'w185' ? listSize : undefined;
@@ -62,6 +62,7 @@ export function TitleHeader({
         <GradientFill gradientKey={id} />
         {backdrop ? (
           <Image
+            testID="title-backdrop"
             source={{ uri: backdrop }}
             contentFit="cover"
             transition={durations.posterFadeIn}
