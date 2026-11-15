@@ -2,7 +2,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 import { episodeCode } from '@/domain/format';
-import type { ActivityType, FeedActivity } from '@/domain/social/feed';
 import type { TitleHolder, TitleSocial, TitleStatus } from '@/domain/social/followingSummary';
 import type { FollowState, Member } from '@/domain/social/members';
 import type { ProfileGridItem, ProfileSegment } from '@/domain/social/profileLists';
@@ -18,8 +17,6 @@ type ApiMember = components['schemas']['MemberLite'];
 type ApiUserProfile = components['schemas']['UserProfile'];
 type ApiMemberPage = components['schemas']['PageMemberLite'];
 type ApiTitlePage = components['schemas']['PageProfileTitle'];
-type ApiActivity = components['schemas']['Activity'];
-type ApiActivityPage = components['schemas']['PageActivity'];
 type ApiTitleSocial = components['schemas']['TitleSocial'];
 type ApiFollowingStatus = components['schemas']['FollowingStatus'];
 export type UsernameAvailability = components['schemas']['UsernameAvailability'];
@@ -34,13 +31,6 @@ export type Page<T> = { items: T[]; nextCursor?: string };
 
 const MINUTE = 60 * 1000;
 const FOLLOW_STATES: ReadonlySet<string> = new Set(['none', 'following']);
-const ACTIVITY_TYPES: ReadonlySet<string> = new Set([
-  'added',
-  'watched_movie',
-  'started_show',
-  'watched_episodes',
-  'finished_show',
-]);
 const TITLE_STATUSES: ReadonlySet<string> = new Set([
   'watched',
   'towatch',
@@ -230,60 +220,6 @@ export function useRecentProfiles(enabled = true) {
       ),
     enabled,
     staleTime: 10 * MINUTE,
-  });
-}
-
-// ─── Fil d'activité ────────────────────────────────────────────────────────
-
-export const feedKey = ['feed'] as const;
-
-/** Activité du fil, ou null si elle est incomplète (type inconnu, titre ou personne absents). */
-export function toActivity(item: ApiActivity): FeedActivity | null {
-  const actor = item.actor ? toMember(item.actor) : null;
-  if (!item.id || !item.createdAt || !actor || !ACTIVITY_TYPES.has(item.type ?? '')) return null;
-  const type = item.type as ActivityType;
-  const title = item.title ? toPosterTitle(item.title, 'movie') : null;
-  if (!title) return null;
-  const episode = item.episode;
-  return {
-    id: item.id,
-    createdAt: item.createdAt,
-    actor,
-    type,
-    title,
-    episode:
-      episode?.id !== undefined && episode.season !== undefined && episode.number !== undefined
-        ? {
-            id: episode.id,
-            season: episode.season,
-            number: episode.number,
-            name: episode.name,
-            stillPath: episode.stillPath,
-          }
-        : undefined,
-    count: item.count ?? 1,
-    inMyList: item.inMyList ?? false,
-  };
-}
-
-function toActivityPage(page: ApiActivityPage): Page<FeedActivity> {
-  return {
-    items: (page.items ?? []).map(toActivity).filter((a): a is FeedActivity => a !== null),
-    nextCursor: page.nextCursor,
-  };
-}
-
-/** Activités de mes amis, plus récentes d'abord, par 30 ; 1re page gardée hors ligne. */
-export function useFeed() {
-  return useInfiniteQuery({
-    queryKey: feedKey,
-    queryFn: ({ pageParam, signal }) =>
-      api<ApiActivityPage>('/me/feed', { query: { cursor: pageParam }, signal }).then(
-        toActivityPage,
-      ),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (page) => page.nextCursor,
-    staleTime: 2 * MINUTE,
   });
 }
 

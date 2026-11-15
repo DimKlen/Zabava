@@ -88,6 +88,18 @@ describe('DiscoverScreen', () => {
     expect(router.push).toHaveBeenCalledWith('/genre/anime/science-fiction');
   });
 
+  it('« Par ambiance » sous les genres : 4 groupes, une pastille ouvre la liste de l’ambiance', async () => {
+    await renderDiscover();
+    expect(await screen.findByText('Par ambiance')).toBeTruthy();
+    for (const group of ['Narration', 'Psychologie', 'Tension', 'Concepts']) {
+      expect(screen.getByText(group)).toBeTruthy();
+    }
+    // Plus de section d'activité de mes abonnements.
+    expect(screen.queryByText('Activité de tes abonnements')).toBeNull();
+    await fireEvent.press(screen.getByText('Boucle temporelle'));
+    expect(router.push).toHaveBeenCalledWith('/theme/movie/boucle-temporelle');
+  });
+
   it('onglet Animés : la section de la saison en cours en plus', async () => {
     await act(() => useUiStore.setState({ discoverTab: 'anime' }));
     await renderDiscover();
