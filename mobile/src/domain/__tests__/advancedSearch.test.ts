@@ -91,9 +91,10 @@ describe('genreCountLabel', () => {
 
 describe('liste par genre', () => {
   it('plus récents par défaut, sans filtre', () => {
-    expect(genreQuery('movie', 'animation', DEFAULT_GENRE_FILTERS)).toEqual({
+    expect(genreQuery('movie', { genre: 'animation' }, DEFAULT_GENRE_FILTERS)).toEqual({
       type: 'movie',
       genres: 'animation',
+      themes: undefined,
       sort: 'recent',
       providers: undefined,
       minRating: undefined,
@@ -102,7 +103,27 @@ describe('liste par genre', () => {
 
   it('mes plateformes et note minimale', () => {
     expect(
-      genreQuery('tv', 'drame', { sort: 'rating', mine: true, minRating: GENRE_MIN_RATING }),
-    ).toEqual({ type: 'tv', genres: 'drame', sort: 'rating', providers: 'mine', minRating: 7 });
+      genreQuery(
+        'tv',
+        { genre: 'drame' },
+        { sort: 'rating', mine: true, minRating: GENRE_MIN_RATING },
+      ),
+    ).toEqual({
+      type: 'tv',
+      genres: 'drame',
+      themes: undefined,
+      sort: 'rating',
+      providers: 'mine',
+      minRating: 7,
+    });
+  });
+
+  it('sous-genre : le genre et le thème ; ambiance : le thème seul', () => {
+    expect(
+      genreQuery('movie', { genre: 'action', theme: 'braquage' }, DEFAULT_GENRE_FILTERS),
+    ).toMatchObject({ genres: 'action', themes: 'braquage' });
+    expect(
+      genreQuery('anime', { theme: 'boucle-temporelle' }, DEFAULT_GENRE_FILTERS),
+    ).toMatchObject({ type: 'anime', genres: undefined, themes: 'boucle-temporelle' });
   });
 });

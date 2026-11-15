@@ -1,16 +1,21 @@
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
+import { Chip } from '@/components/Chip';
 import { GradientFill } from '@/components/GradientFill';
 import { PressableScale } from '@/components/PressableScale';
 import { Text } from '@/components/Text';
 import { GENRES } from '@/domain/advancedSearch';
+import { MOODS, moodLabel, themeLabel } from '@/domain/themes';
 import type { MediaType } from '@/domain/types';
 import { useT } from '@/i18n';
 import { colors, motion, radii, spacing } from '@/theme/tokens';
 import { fonts, typography } from '@/theme/typography';
 
-/** « Par genre » : 10 tuiles en 2 colonnes, tap → liste du genre pour le type de l'onglet. */
+/**
+ * Bas de Découvrir : « Par genre », 10 tuiles en 2 colonnes (tap → liste du genre), puis « Par
+ * ambiance », 4 groupes de pastilles (tap → liste de l'ambiance), pour le type de l'onglet.
+ */
 export function GenreGrid({ type }: { type: MediaType }) {
   const { t } = useT();
   return (
@@ -35,6 +40,24 @@ export function GenreGrid({ type }: { type: MediaType }) {
           </PressableScale>
         ))}
       </View>
+      <Text accessibilityRole="header" style={[styles.title, styles.moodTitle]}>
+        {t('discover.mood.title')}
+      </Text>
+      {MOODS.map((mood) => (
+        <View key={mood.key} style={styles.mood}>
+          <Text style={styles.moodLabel}>{moodLabel(mood.key)}</Text>
+          <View style={styles.chips}>
+            {mood.themes.map((theme) => (
+              <Chip
+                key={theme}
+                label={themeLabel(theme)}
+                active={false}
+                onPress={() => router.push(`/theme/${type}/${theme}`)}
+              />
+            ))}
+          </View>
+        </View>
+      ))}
     </View>
   );
 }
@@ -63,6 +86,22 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
     paddingHorizontal: 14,
+  },
+  moodTitle: {
+    marginTop: spacing.discoverGenreGap,
+  },
+  mood: {
+    marginBottom: 14,
+  },
+  moodLabel: {
+    ...typography.small,
+    color: colors.neutral400,
+    marginBottom: 8,
+  },
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   label: {
     fontFamily: fonts.medium,
